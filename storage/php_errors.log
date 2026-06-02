@@ -1,0 +1,157 @@
+[16-Apr-2026 14:01:09 America/Bogota] [Limaro SGC] SQLSTATE[HY000] [1045] Access denied for user 'limarocloud_limaro'@'localhost' (using password: YES) en /home/limarocloud/limaro.limaro.cloud/app/core/Database.php:35
+[16-Apr-2026 14:03:21 America/Bogota] [Limaro SGC] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'v.id_empleado_elaboro' in 'ON' en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[16-Apr-2026 14:05:17 America/Bogota] [Limaro SGC] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'v.id_empleado_elaboro' in 'ON' en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[16-Apr-2026 14:10:47 America/Bogota] [Limaro SGC] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'v.id_empleado_elaboro' in 'ON' en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[16-Apr-2026 14:22:28 America/Bogota] [Limaro SGC] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'v.id_empleado_elaboro' in 'ON' en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[16-Apr-2026 14:25:08 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/macroprocesos/index.php:6
+[16-Apr-2026 14:25:11 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/procesos/index.php:4
+[16-Apr-2026 14:25:34 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/tipo_documentos/index.php:4
+[16-Apr-2026 14:26:08 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/macroprocesos/index.php:6
+[16-Apr-2026 14:26:20 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/procesos/index.php:4
+[16-Apr-2026 14:27:48 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/procesos/index.php:4
+[16-Apr-2026 14:27:49 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/tipo_documentos/index.php:4
+[16-Apr-2026 14:28:36 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/procesos/index.php:4
+[16-Apr-2026 14:28:40 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/documentos/index.php:4
+[16-Apr-2026 14:29:28 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/seguridad/usuarios/index.php:4
+[16-Apr-2026 14:29:47 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/seguridad/cargos/index.php:4
+[16-Apr-2026 14:30:58 America/Bogota] [Limaro SGC] Class "Auth" not found en /home/limarocloud/limaro.limaro.cloud/app/views/empresa/acuerdos/index.php:4
+[22-Apr-2026 08:36:29 America/Bogota] [Limaro SGC] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'limarocloud_limaro.acuerdos' doesn't exist en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[28-Apr-2026 16:47:40 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 6
+[28-Apr-2026 16:47:40 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 18
+[28-Apr-2026 16:48:14 America/Bogota] [Limaro SGC] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'limarocloud_limaro.acuerdos' doesn't exist en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[28-Apr-2026 16:48:19 America/Bogota] [Limaro SGC] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'limarocloud_limaro.acuerdos' doesn't exist en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[28-Apr-2026 16:51:03 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 6
+[28-Apr-2026 16:51:03 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 18
+[28-Apr-2026 16:51:12 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 6
+[28-Apr-2026 16:51:12 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 18
+[28-Apr-2026 16:51:21 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 6
+[28-Apr-2026 16:51:21 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 18
+[28-Apr-2026 16:51:43 America/Bogota] [Limaro SGC] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'limarocloud_limaro.acuerdos' doesn't exist en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[28-Apr-2026 16:51:53 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/empresa/documentos/form.php on line 24
+[28-Apr-2026 16:52:19 America/Bogota] [Limaro SGC] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'limarocloud_limaro.acuerdos' doesn't exist en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[28-Apr-2026 16:52:26 America/Bogota] [Limaro SGC] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'limarocloud_limaro.acuerdos' doesn't exist en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[28-Apr-2026 16:52:38 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 6
+[28-Apr-2026 16:52:38 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 18
+[26-May-2026 10:39:16 America/Bogota] [Limaro SGC] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'limarocloud_limaro.acuerdos' doesn't exist en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[26-May-2026 10:39:27 America/Bogota] [Limaro SGC] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'limarocloud_limaro.acuerdos' doesn't exist en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[27-May-2026 07:35:29 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 6
+[27-May-2026 07:35:29 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 18
+[27-May-2026 07:36:11 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 6
+[27-May-2026 07:36:11 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 18
+[27-May-2026 07:49:09 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 6
+[27-May-2026 07:49:09 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 18
+[27-May-2026 07:49:23 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 6
+[27-May-2026 07:49:23 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 18
+[27-May-2026 07:50:22 America/Bogota] [Limaro SGC] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'sc.id_empleado' in 'ON' en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[27-May-2026 14:21:52 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 24
+[27-May-2026 14:21:59 America/Bogota] PHP Warning:  filesize(): stat failed for /tmp/CADA QUIEN_1779909719.zip in /home/limarocloud/limaro.limaro.cloud/app/controllers/VersionamientoController.php on line 73
+[27-May-2026 14:21:59 America/Bogota] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/limarocloud/limaro.limaro.cloud/app/controllers/VersionamientoController.php:73) in /home/limarocloud/limaro.limaro.cloud/app/controllers/VersionamientoController.php on line 73
+[27-May-2026 14:21:59 America/Bogota] PHP Warning:  Cannot modify header information - headers already sent by (output started at /home/limarocloud/limaro.limaro.cloud/app/controllers/VersionamientoController.php:73) in /home/limarocloud/limaro.limaro.cloud/app/controllers/VersionamientoController.php on line 74
+[27-May-2026 14:21:59 America/Bogota] PHP Warning:  readfile(/tmp/CADA QUIEN_1779909719.zip): Failed to open stream: No such file or directory in /home/limarocloud/limaro.limaro.cloud/app/controllers/VersionamientoController.php on line 75
+[27-May-2026 14:21:59 America/Bogota] PHP Warning:  unlink(/tmp/CADA QUIEN_1779909719.zip): No such file or directory in /home/limarocloud/limaro.limaro.cloud/app/controllers/VersionamientoController.php on line 76
+[27-May-2026 14:22:10 America/Bogota] PHP Warning:  Undefined array key "codigo_documento" in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_detalle.php on line 24
+[28-May-2026 07:38:01 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/DocumentoModel.php:621
+[28-May-2026 07:38:04 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/DocumentoModel.php:621
+[28-May-2026 07:38:08 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/DocumentoModel.php:621
+[28-May-2026 07:38:10 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/DocumentoModel.php:621
+[28-May-2026 07:38:14 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/DocumentoModel.php:621
+[28-May-2026 07:38:16 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/DocumentoModel.php:621
+[28-May-2026 07:38:33 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/DocumentoModel.php:621
+[28-May-2026 07:38:39 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/DocumentoModel.php:621
+[28-May-2026 07:41:37 America/Bogota] [Limaro SGC] syntax error, unexpected token "public", expecting end of file en /home/limarocloud/limaro.limaro.cloud/app/controllers/DocumentoController.php:217
+[28-May-2026 07:43:25 America/Bogota] [Limaro SGC] syntax error, unexpected token "public", expecting end of file en /home/limarocloud/limaro.limaro.cloud/app/controllers/DocumentoController.php:217
+[28-May-2026 07:43:34 America/Bogota] [Limaro SGC] syntax error, unexpected token "public", expecting end of file en /home/limarocloud/limaro.limaro.cloud/app/controllers/DocumentoController.php:217
+[28-May-2026 07:43:45 America/Bogota] [Limaro SGC] syntax error, unexpected token "public", expecting end of file en /home/limarocloud/limaro.limaro.cloud/app/controllers/DocumentoController.php:217
+[28-May-2026 07:43:45 America/Bogota] [Limaro SGC] syntax error, unexpected token "public", expecting end of file en /home/limarocloud/limaro.limaro.cloud/app/controllers/DocumentoController.php:217
+[28-May-2026 07:43:46 America/Bogota] [Limaro SGC] syntax error, unexpected token "public", expecting end of file en /home/limarocloud/limaro.limaro.cloud/app/controllers/DocumentoController.php:217
+[28-May-2026 07:43:46 America/Bogota] [Limaro SGC] syntax error, unexpected token "public", expecting end of file en /home/limarocloud/limaro.limaro.cloud/app/controllers/DocumentoController.php:217
+[28-May-2026 07:45:19 America/Bogota] [Limaro SGC] Unclosed '{' on line 21 en /home/limarocloud/limaro.limaro.cloud/app/controllers/DocumentoController.php:264
+[28-May-2026 07:45:22 America/Bogota] [Limaro SGC] Unclosed '{' on line 21 en /home/limarocloud/limaro.limaro.cloud/app/controllers/DocumentoController.php:264
+[28-May-2026 07:46:55 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php:156
+[28-May-2026 09:31:39 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php:156
+[28-May-2026 09:32:02 America/Bogota] [Limaro SGC] syntax error, unexpected token "*", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php:156
+[28-May-2026 09:39:20 America/Bogota] [Limaro SGC] App\Controllers\ArchivoController::descargar(): Argument #1 ($id) must be of type int, string given, called in /home/limarocloud/limaro.limaro.cloud/app/core/Router.php on line 159 en /home/limarocloud/limaro.limaro.cloud/app/controllers/ArchivoController.php:19
+[28-May-2026 09:57:49 America/Bogota] [Limaro SGC] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'sc.id_empleado' in 'ON' en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:40
+[28-May-2026 09:58:58 America/Bogota] [Limaro SGC] SQLSTATE[42000]: Syntax error or access violation: 1318 Incorrect number of arguments for PROCEDURE limarocloud_limaro.create_tarea; expected 2, got 1 en /home/limarocloud/limaro.limaro.cloud/app/core/Model.php:41
+[28-May-2026 15:45:00 America/Bogota] [Limaro SGC] Call to undefined method App\Core\Auth::setModulos() en /home/limarocloud/limaro.limaro.cloud/app/controllers/AuthController.php:83
+[28-May-2026 15:45:24 America/Bogota] [Limaro SGC] Call to undefined method App\Core\Auth::modulos() en /home/limarocloud/limaro.limaro.cloud/public/index.php:81
+[28-May-2026 15:45:26 America/Bogota] [Limaro SGC] Call to undefined method App\Core\Auth::modulos() en /home/limarocloud/limaro.limaro.cloud/public/index.php:81
+[28-May-2026 15:45:28 America/Bogota] [Limaro SGC] Call to undefined method App\Core\Auth::modulos() en /home/limarocloud/limaro.limaro.cloud/public/index.php:81
+[28-May-2026 15:45:30 America/Bogota] [Limaro SGC] Call to undefined method App\Core\Auth::modulos() en /home/limarocloud/limaro.limaro.cloud/public/index.php:81
+[29-May-2026 07:17:47 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[29-May-2026 07:17:47 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[29-May-2026 07:17:51 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[29-May-2026 07:17:51 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[29-May-2026 07:19:26 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:33:24 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:33:33 America/Bogota] PHP Fatal error:  A never-returning function must not return in /home/limarocloud/limaro.limaro.cloud/app/controllers/SolicitudController.php on line 123
+[29-May-2026 07:33:36 America/Bogota] PHP Fatal error:  A never-returning function must not return in /home/limarocloud/limaro.limaro.cloud/app/controllers/SolicitudController.php on line 123
+[29-May-2026 07:33:38 America/Bogota] PHP Fatal error:  A never-returning function must not return in /home/limarocloud/limaro.limaro.cloud/app/controllers/SolicitudController.php on line 123
+[29-May-2026 07:33:46 America/Bogota] PHP Fatal error:  A never-returning function must not return in /home/limarocloud/limaro.limaro.cloud/app/controllers/SolicitudController.php on line 123
+[29-May-2026 07:33:49 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:33:53 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:33:55 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:33:57 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:33:59 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:43:38 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:43:48 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:43:57 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[29-May-2026 07:51:15 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[30-May-2026 09:19:50 America/Bogota] [Limaro SGC] syntax error, unexpected token "if", expecting "function" en /home/limarocloud/limaro.limaro.cloud/app/core/Request.php:100
+[30-May-2026 09:30:40 America/Bogota] PHP Fatal error:  Declaration of App\Models\SolicitudModel::count(): int must be compatible with App\Core\Model::count(string $where = '', array $params = []): int in /home/limarocloud/limaro.limaro.cloud/app/models/SolicitudModel.php on line 292
+[30-May-2026 09:31:36 America/Bogota] PHP Fatal error:  Declaration of App\Models\SolicitudModel::count(): int must be compatible with App\Core\Model::count(string $where = '', array $params = []): int in /home/limarocloud/limaro.limaro.cloud/app/models/SolicitudModel.php on line 292
+[30-May-2026 09:34:43 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\TareaModel::crearViaSP() in /home/limarocloud/limaro.limaro.cloud/app/models/TareaModel.php on line 268
+[30-May-2026 09:36:13 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[30-May-2026 10:44:09 America/Bogota] [Limaro SGC] Call to undefined method App\Models\UsuarioModel::permisosPorUsuario() en /home/limarocloud/limaro.limaro.cloud/app/controllers/AuthController.php:82
+[30-May-2026 10:48:54 America/Bogota] [Limaro SGC] syntax error, unexpected token "." en /home/limarocloud/limaro.limaro.cloud/app/controllers/UsuarioController.php:140
+[30-May-2026 11:32:57 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[30-May-2026 11:32:57 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[30-May-2026 11:32:59 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[30-May-2026 11:32:59 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[30-May-2026 11:36:42 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[30-May-2026 11:36:42 America/Bogota] PHP Warning:  Undefined array key "rol" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[30-May-2026 11:36:46 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[30-May-2026 11:36:46 America/Bogota] PHP Warning:  Undefined array key "rol" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[30-May-2026 11:36:51 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[30-May-2026 11:36:51 America/Bogota] PHP Warning:  Undefined array key "rol" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[30-May-2026 11:36:53 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[30-May-2026 11:36:53 America/Bogota] PHP Warning:  Undefined array key "rol" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[30-May-2026 11:44:43 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[30-May-2026 11:44:47 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[30-May-2026 11:45:17 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[31-May-2026 11:31:48 America/Bogota] [Limaro SGC] Cannot access offset of type string on string en /home/limarocloud/limaro.limaro.cloud/app/views/reportes/_filtros.php:42
+[31-May-2026 11:32:02 America/Bogota] [Limaro SGC] Cannot access offset of type string on string en /home/limarocloud/limaro.limaro.cloud/app/views/reportes/_filtros.php:42
+[31-May-2026 11:34:11 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[31-May-2026 11:36:07 America/Bogota] PHP Warning:  Undefined variable $usuarios in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:07 America/Bogota] PHP Warning:  foreach() argument must be of type array|object, null given in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:13 America/Bogota] PHP Warning:  Undefined variable $usuarios in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:13 America/Bogota] PHP Warning:  foreach() argument must be of type array|object, null given in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:17 America/Bogota] PHP Warning:  Undefined variable $usuarios in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:17 America/Bogota] PHP Warning:  foreach() argument must be of type array|object, null given in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:21 America/Bogota] PHP Warning:  Undefined variable $usuarios in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:21 America/Bogota] PHP Warning:  foreach() argument must be of type array|object, null given in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:26 America/Bogota] PHP Warning:  Undefined variable $usuarios in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:26 America/Bogota] PHP Warning:  foreach() argument must be of type array|object, null given in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[31-May-2026 11:36:50 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[31-May-2026 11:36:51 America/Bogota] PHP Fatal error:  Cannot redeclare App\Models\VersionamientoModel::listar() in /home/limarocloud/limaro.limaro.cloud/app/models/VersionamientoModel.php on line 236
+[31-May-2026 11:38:13 America/Bogota] PHP Warning:  Undefined array key "fecha_estado" in /home/limarocloud/limaro.limaro.cloud/app/views/tareas/_detalle_tarea.php on line 46
+[31-May-2026 11:41:26 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[31-May-2026 11:41:26 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[31-May-2026 11:41:43 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[31-May-2026 11:41:43 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[31-May-2026 11:41:48 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[31-May-2026 11:41:48 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[31-May-2026 11:41:58 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[31-May-2026 11:41:58 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[31-May-2026 11:43:23 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[31-May-2026 11:43:23 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[31-May-2026 11:47:02 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 18
+[31-May-2026 11:47:02 America/Bogota] PHP Warning:  Undefined array key "rol_nombre" in /home/limarocloud/limaro.limaro.cloud/app/views/perfil/index.php on line 47
+[01-Jun-2026 07:31:57 America/Bogota] PHP Warning:  Undefined variable $usuarios in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[01-Jun-2026 07:31:57 America/Bogota] PHP Warning:  foreach() argument must be of type array|object, null given in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[01-Jun-2026 07:32:07 America/Bogota] PHP Warning:  Undefined variable $usuarios in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[01-Jun-2026 07:32:07 America/Bogota] PHP Warning:  foreach() argument must be of type array|object, null given in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[01-Jun-2026 07:34:10 America/Bogota] PHP Warning:  Undefined variable $usuarios in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[01-Jun-2026 07:34:10 America/Bogota] PHP Warning:  foreach() argument must be of type array|object, null given in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[01-Jun-2026 15:12:49 America/Bogota] PHP Warning:  Undefined variable $usuarios in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77
+[01-Jun-2026 15:12:49 America/Bogota] PHP Warning:  foreach() argument must be of type array|object, null given in /home/limarocloud/limaro.limaro.cloud/app/views/documentos/versionamiento_form.php on line 77

@@ -1,0 +1,167 @@
+<?php
+$isEdit = !is_null($item);
+$action = $isEdit
+    ? e(APP_URL).'/auditoria-interna/editar/'.$item['id']
+    : e(APP_URL).'/auditoria-interna/crear';
+?>
+<div class="page-header">
+    <div>
+        <h2><i class="bi bi-clipboard-check me-2"></i><?= e($pageTitle) ?></h2>
+        <nav><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="<?= e(APP_URL) ?>/auditoria-interna">Auditoría Interna</a></li>
+            <li class="breadcrumb-item active"><?= e($pageTitle) ?></li>
+        </ol></nav>
+    </div>
+</div>
+<div class="row g-4">
+<div class="col-lg-7">
+<div class="card mb-4">
+    <div class="card-header">Datos del Programa</div>
+    <div class="card-body">
+        <form action="<?= $action ?>" method="POST">
+            <?= csrfField() ?>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Año <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" name="anio" min="2020" max="2099"
+                           value="<?= $isEdit ? e($item['anio']) : date('Y') ?>" required>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select" name="estado">
+                        <?php foreach (['PROGRAMADA','EN_CURSO','FINALIZADA','CANCELADA'] as $est): ?>
+                        <option value="<?= $est ?>" <?= ($isEdit && $item['estado']===$est)?'selected':'' ?>>
+                            <?= ucfirst(strtolower(str_replace('_',' ',$est))) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Descripción <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="descripcion" required
+                       value="<?= $isEdit ? e($item['descripcion']) : '' ?>" maxlength="500">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Objetivo de la Auditoría</label>
+                <textarea class="form-control" name="objetivo" rows="2"><?= $isEdit ? e($item['objetivo']) : '' ?></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Alcance</label>
+                <textarea class="form-control" name="alcance" rows="2"><?= $isEdit ? e($item['alcance']) : '' ?></textarea>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Auditor Líder <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="auditor_lider" required
+                           value="<?= $isEdit ? e($item['auditor_lider']) : '' ?>">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Equipo Auditor</label>
+                    <input type="text" class="form-control" name="auditores" placeholder="Nombres separados por coma"
+                           value="<?= $isEdit ? e($item['auditores']) : '' ?>">
+                </div>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" name="fecha_inicio"
+                           value="<?= $isEdit ? e($item['fecha_inicio']??'') : '' ?>">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" name="fecha_fin"
+                           value="<?= $isEdit ? e($item['fecha_fin']??'') : '' ?>">
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-lim-primary"><i class="bi bi-save me-1"></i>Guardar</button>
+                <a href="<?= e(APP_URL) ?>/auditoria-interna" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+<?php if ($isEdit): ?>
+<div class="col-lg-5">
+<!-- Registrar hallazgo -->
+<div class="card mb-3">
+    <div class="card-header"><i class="bi bi-exclamation-triangle me-1 text-warning"></i>Registrar Hallazgo</div>
+    <div class="card-body">
+        <form action="<?= e(APP_URL) ?>/auditoria-interna/hallazgo/<?= (int)$item['id'] ?>" method="POST">
+            <?= csrfField() ?>
+            <div class="mb-2">
+                <label class="form-label" style="font-size:12px;">Tipo</label>
+                <select class="form-select form-select-sm" name="tipo">
+                    <option value="NO_CONFORMIDAD">No Conformidad</option>
+                    <option value="OBSERVACION" selected>Observación</option>
+                    <option value="OPORTUNIDAD">Oportunidad de Mejora</option>
+                    <option value="FORTALEZA">Fortaleza</option>
+                </select>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-5">
+                    <label class="form-label" style="font-size:12px;">Cláusula ISO</label>
+                    <input type="text" class="form-control form-control-sm" name="clausula_iso" placeholder="Ej: 7.5.3">
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label" style="font-size:12px;">Proceso Auditado</label>
+                    <input type="text" class="form-control form-control-sm" name="proceso_auditado">
+                </div>
+            </div>
+            <div class="mb-2">
+                <label class="form-label" style="font-size:12px;">Descripción <span class="text-danger">*</span></label>
+                <textarea class="form-control form-control-sm" name="descripcion" rows="2" required></textarea>
+            </div>
+            <div class="mb-2">
+                <label class="form-label" style="font-size:12px;">Acción Correctiva</label>
+                <textarea class="form-control form-control-sm" name="accion_correctiva" rows="2"></textarea>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-7">
+                    <label class="form-label" style="font-size:12px;">Responsable</label>
+                    <input type="text" class="form-control form-control-sm" name="responsable">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label" style="font-size:12px;">F. Cierre</label>
+                    <input type="date" class="form-control form-control-sm" name="fecha_cierre">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-warning btn-sm w-100">
+                <i class="bi bi-plus-circle me-1"></i>Agregar Hallazgo
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Lista hallazgos -->
+<?php if (!empty($hallazgos)): ?>
+<div class="card">
+    <div class="card-header">Hallazgos (<?= count($hallazgos) ?>)</div>
+    <div class="list-group list-group-flush">
+        <?php foreach ($hallazgos as $h): ?>
+        <div class="list-group-item py-2">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <span class="badge <?= $h['tipo']==='NO_CONFORMIDAD' ? 'bg-danger' : ($h['tipo']==='FORTALEZA' ? 'bg-success' : 'bg-warning text-dark') ?> me-1" style="font-size:10px;">
+                        <?= str_replace('_',' ',$h['tipo']) ?>
+                    </span>
+                    <?php if ($h['clausula_iso']): ?>
+                    <code style="font-size:10px;"><?= e($h['clausula_iso']) ?></code>
+                    <?php endif; ?>
+                </div>
+                <?= badgeEstado($h['estado']) ?>
+            </div>
+            <p class="mb-0 mt-1" style="font-size:12px;"><?= e(truncar($h['descripcion'],100)) ?></p>
+            <?php if ($h['responsable']): ?>
+            <small class="text-muted"><i class="bi bi-person me-1"></i><?= e($h['responsable']) ?></small>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
+</div>
+<?php endif; ?>
+</div>
