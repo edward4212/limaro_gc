@@ -102,7 +102,7 @@
                     <td style="max-width:100px;"><?= e($h['proceso_nombre']??$h['proceso_auditado']??'—') ?></td>
                     <td style="max-width:200px;"><?= e(mb_strimwidth($h['descripcion']??'',0,80,'…')) ?></td>
                     <td><?= e($h['responsable_nombre']??$h['responsable']??'—') ?></td>
-                    <td style="white-space:normal;">
+                    <td style="white-space:nowrap;">
                         <?php if ($h['fecha_cierre']): ?>
                             <?php $dias = (strtotime($h['fecha_cierre']) - time()) / 86400; ?>
                             <span class="<?= $dias < 0 ? 'text-danger fw-bold' : ($dias < 7 ? 'text-warning' : '') ?>">

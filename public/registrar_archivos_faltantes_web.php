@@ -136,7 +136,7 @@ echo '</div>';
     </table>
     <p class="warn mt-2">⚠️ El nombre del archivo en el nuevo servidor puede ser diferente —
     lo que importa es que esté en la carpeta correcta. Después de copiarlo,
-    vuelve a ejecutar <span>migrar_archivos_versionamiento_web.php</span>.</p>
+    vuelve a ejecutar <code>migrar_archivos_versionamiento_web.php</code>.</p>
 </div>
 
 </body></html>

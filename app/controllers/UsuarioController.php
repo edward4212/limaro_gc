@@ -153,8 +153,8 @@ class UsuarioController extends Controller
                         <p>Hola <strong>" . htmlspecialchars(trim($data['nombre_completo'])) . "</strong>,</p>
                         <p>Se ha creado tu usuario en el sistema. Tus credenciales de acceso son:</p>
                         <table style='border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
-                          <tr style='background:#f8fafc;'><td style='padding:10px 16px;font-weight:600;'>Usuario:</td><td style='padding:10px 16px;'><span>" . htmlspecialchars(trim($data['usuario'])) . "</span></td></tr>
-                          <tr><td style='padding:10px 16px;font-weight:600;'>Contraseña temporal:</td><td style='padding:10px 16px;'><span>" . htmlspecialchars($claveTexto) . "</span></td></tr>
+                          <tr style='background:#f8fafc;'><td style='padding:10px 16px;font-weight:600;'>Usuario:</td><td style='padding:10px 16px;'><code>" . htmlspecialchars(trim($data['usuario'])) . "</code></td></tr>
+                          <tr><td style='padding:10px 16px;font-weight:600;'>Contraseña temporal:</td><td style='padding:10px 16px;'><code>" . htmlspecialchars($claveTexto) . "</code></td></tr>
                         </table>
                         <br>
                         <div style='background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:12px 16px;'>
@@ -277,11 +277,11 @@ class UsuarioController extends Controller
                     <table style='border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
                       <tr style='background:#f8fafc;'>
                         <td style='padding:10px 16px;font-weight:600;'>Usuario:</td>
-                        <td style='padding:10px 16px;'><span>" . htmlspecialchars($usuario) . "</span></td>
+                        <td style='padding:10px 16px;'><code>" . htmlspecialchars($usuario) . "</code></td>
                       </tr>
                       <tr>
                         <td style='padding:10px 16px;font-weight:600;'>Contraseña temporal:</td>
-                        <td style='padding:10px 16px;'><span>" . htmlspecialchars($nuevaClave) . "</span></td>
+                        <td style='padding:10px 16px;'><code>" . htmlspecialchars($nuevaClave) . "</code></td>
                       </tr>
                     </table>
                     <br>

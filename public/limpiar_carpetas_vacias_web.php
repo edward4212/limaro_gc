@@ -88,7 +88,7 @@ echo '</div>';
 
 <?php if ($dryRun): ?>
 <div class="box">
-    <p class="warn">👆 Para eliminar realmente: quita el <span>&dry</span> de la URL</p>
+    <p class="warn">👆 Para eliminar realmente: quita el <code>&dry</code> de la URL</p>
 </div>
 <?php elseif ($eliminadas > 0): ?>
 <div class="box">

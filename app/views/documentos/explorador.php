@@ -176,7 +176,7 @@ function renderSubprocesos(subprocesos, tiposDirectos, idProceso) {
                      onclick="abrirSubproceso(${s.id_subproceso},'${esc(s.subproceso)}',${idProceso})">
                     <i class="bi bi-folder2 text-info mb-1" style="font-size:1.5rem;"></i>
                     <div style="font-size:13px;font-weight:600;">${esc(s.subproceso)}</div>
-                    <span style="font-size:11px;">${esc(s.sigla_subproceso)}</span>
+                    <code style="font-size:11px;">${esc(s.sigla_subproceso)}</code>
                 </div>
             </div>`;
         });
@@ -335,7 +335,7 @@ function renderDocumentos(docs, pagina) {
             : '—';
         const desc = d.descripcion_version || d.objetivo_documento || '';
         html += `<tr>
-            <td><span style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px;">${esc(d.codigo)}</span></td>
+            <td><code style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px;">${esc(d.codigo)}</code></td>
             <td>
                 <div style="font-size:13px;font-weight:500;">${dot}${esc(d.nombre_documento)}</div>
                 ${desc ? `<small class="text-muted d-block" style="font-size:11px;">${esc(desc).substring(0,100)}${desc.length>100?'...':''}</small>` : ''}

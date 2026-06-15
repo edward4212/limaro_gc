@@ -34,12 +34,12 @@
                 <td style="font-size:12px;"><?= e($p['nombre_macroproceso'] ?? '—') ?></td>
                 <td style="font-size:13px;font-weight:600;"><?= e($p['proceso']) ?></td>
                 <td class="text-center">
-                    <span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">
+                    <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">
                         <?= e($p['sigla_proceso'] ?? '—') ?>
-                    </span>
+                    </code>
                 </td>
-                <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:normal;">
-                    <?= e(truncar($p['objetivo'] ?? '', 500)) ?>
+                <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    <?= e(truncar($p['objetivo'] ?? '', 60)) ?>
                 </td>
                 <td class="text-center">
                     <span class="badge <?= $p['estado'] === 'ACTIVO' ? 'bg-success' : 'bg-secondary' ?>">

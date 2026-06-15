@@ -67,7 +67,7 @@
             <div class="card-body">
                 <div class="row mb-2">
                     <div class="col-sm-3 fw-semibold text-muted">Código:</div>
-                    <div class="col-sm-9"><span><?= e($item['codigo']) ?></span></div>
+                    <div class="col-sm-9"><code><?= e($item['codigo']) ?></code></div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-sm-3 fw-semibold text-muted">Título:</div>
@@ -134,7 +134,7 @@
             <div class="card-body py-2">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <span class="fw-bold" style="color:var(--lim-blue);"><?= e($programa['codigo']) ?></span>
+                        <code class="fw-bold" style="color:var(--lim-blue);"><?= e($programa['codigo']) ?></code>
                         <small class="text-muted ms-2">Estado: igual al plan</small>
                     </div>
                     <a href="<?= e(APP_URL) ?>/auditoria/programa/<?= (int)$programa['id'] ?>"
@@ -180,7 +180,7 @@
                 <ul class="list-group list-group-flush">
                     <?php foreach ($item['procesos'] as $proc): ?>
                     <li class="list-group-item py-1 px-3" style="font-size:12px;">
-                        <span style="font-size:10px;"><?= e($proc['sigla_proceso'] ?? '') ?></span>
+                        <code style="font-size:10px;"><?= e($proc['sigla_proceso'] ?? '') ?></code>
                         <?= e($proc['proceso']) ?>
                     </li>
                     <?php endforeach; ?>

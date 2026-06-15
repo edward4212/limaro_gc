@@ -188,7 +188,7 @@ echo '</div>';
 <?php if ($no_encontrados): ?>
 <div class="box">
     <h3 class="warn">📁 Archivos que no están en disco</h3>
-    <p>Copiar desde el servidor antiguo a: <span>public/storage/acuerdos/AÑO/</span></p>
+    <p>Copiar desde el servidor antiguo a: <code>public/storage/acuerdos/AÑO/</code></p>
     <?php foreach ($no_encontrados as $f): ?>
     <div class="warn">→ <?= htmlspecialchars($f) ?></div>
     <?php endforeach; ?>

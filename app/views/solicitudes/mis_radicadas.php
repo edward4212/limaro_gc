@@ -79,7 +79,7 @@ endif; ?>
                         <span class="text-muted" style="font-size:11px;">—</span>
                         <?php endif; ?>
                     </td>
-                    <td class="text-center" style="white-space:normal;">
+                    <td class="text-center" style="white-space:nowrap;">
                         <a href="<?= e(APP_URL) ?>/solicitudes/ver/<?= $s['id_solicitud'] ?>"
                            class="btn btn-sm btn-outline-info py-0 px-2" title="Ver detalle">
                             <i class="bi bi-eye"></i>

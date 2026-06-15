@@ -413,7 +413,7 @@ class SolicitudController extends Controller
                     <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
                       <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:160px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#{$id}</strong></td></tr>
                       <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>" . htmlspecialchars($sol['tipo_solicitud'] ?? '') . "</td></tr>
-                      <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Documento:</td><td style='padding:10px 16px;'><span>" . htmlspecialchars($sol['codigo_documento'] ?? '') . "</span></td></tr>
+                      <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Documento:</td><td style='padding:10px 16px;'><code>" . htmlspecialchars($sol['codigo_documento'] ?? '') . "</code></td></tr>
                     </table>
                     <br>
                     <a href='" . APP_URL . "/solicitudes/ver/{$id}'

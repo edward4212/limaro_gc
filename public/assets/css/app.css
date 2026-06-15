@@ -422,35 +422,32 @@ table.dataTable, table.dataTable th, table.dataTable td {
 }
 
 /* ── Alineación global de tablas ── */
-table td, table.dataTable td {
-    vertical-align: middle !important;   /* centrado vertical */
-    text-align: left !important;         /* izquierda por defecto */
-}
-table th, table.dataTable th {
+/* Centrado vertical en TODAS las celdas */
+table td, table th,
+table.dataTable td, table.dataTable th,
+table > tbody > tr > td,
+table > thead > tr > th {
     vertical-align: middle !important;
-    text-align: left !important;
 }
-/* Columnas numéricas / badge centradas */
-table td.text-center, table th.text-center,
-table td .badge, table td code {
-    text-align: center !important;
-}
-/* Columnas de texto largo: justificado */
-table td.text-justify,
-table td p,
-table td.col-objetivo,
-table td.col-descripcion {
+/* Texto justificado en TODAS las celdas de datos */
+table td, table.dataTable td {
     text-align: justify !important;
     text-justify: inter-word !important;
 }
-/* Centrado vertical de TODAS las celdas de tabla */
-table > tbody > tr > td,
-table.dataTable > tbody > tr > td {
-    vertical-align: middle !important;
+/* Encabezados alineados a la izquierda */
+table th, table.dataTable th {
+    text-align: left !important;
 }
-/* Párrafos dentro de celdas también justificados */
-table td > p, table td > span:only-child {
-    text-align: inherit;
+/* Excepciones: columnas con centrado explícito (badges, versiones, acciones) */
+table td.text-center, table th.text-center,
+table td.text-right, table th.text-right {
+    text-align: center !important;
+    text-justify: none !important;
+}
+/* Badges y códigos dentro de celdas: centrar inline */
+table td .badge, table td code,
+table td .btn, table td .btn-group {
+    text-align: center !important;
 }
 table.dataTable tbody tr:hover { background-color: var(--lim-blue-light) !important; }
 table.dataTable tfoot { background: #EAF3F8; }

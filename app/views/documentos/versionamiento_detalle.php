@@ -66,7 +66,7 @@ $soloConsulta = \App\Core\Request::get('consulta') === '1';
         <div class="row g-2">
             <div class="col-md-2">
                 <div class="text-muted" style="font-size:11px;">CÓDIGO</div>
-                <span class="fs-6"><?= e($documento['codigo'] ?? $documento['codigo_documento'] ?? '') ?></span>
+                <code class="fs-6"><?= e($documento['codigo'] ?? $documento['codigo_documento'] ?? '') ?></code>
                 <!--<?php if (!empty($documento['codigo_anterior'])): ?>-->
                 <!--<div class="form-text">Antes: <del><?= e($documento['codigo_anterior']) ?></del></div>-->
                 <!--<?php endif; ?>-->

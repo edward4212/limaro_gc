@@ -29,7 +29,7 @@ $badgeH = match($h['estado']) {
                 <dt class="col-5">Tipo:</dt>
                 <dd class="col-7"><span class="badge bg-warning text-dark"><?= str_replace('_',' ',$h['tipo']) ?></span></dd>
                 <dt class="col-5">Cláusula ISO:</dt>
-                <dd class="col-7"><span><?= e($h['clausula_iso'] ?? '—') ?></span></dd>
+                <dd class="col-7"><code><?= e($h['clausula_iso'] ?? '—') ?></code></dd>
                 <dt class="col-5">Proceso:</dt>
                 <dd class="col-7"><?= e($h['proceso_auditado'] ?? '—') ?></dd>
                 <dt class="col-5">Descripción:</dt>
@@ -115,7 +115,7 @@ $badgeH = match($h['estado']) {
                 <?php foreach ($acs as $ac): ?>
                 <option value="<?= $ac['id'] ?>"
                         <?= (int)($h['id_accion_correctiva'] ?? 0) === (int)$ac['id'] ? 'selected' : '' ?>>
-                    <?= e($ac['codigo']) ?> — <?= e(truncar($ac['descripcion_nc'] ?? '', 500)) ?>
+                    <?= e($ac['codigo']) ?> — <?= e(truncar($ac['descripcion_nc'] ?? '', 60)) ?>
                     (<?= $ac['estado'] ?>)
                 </option>
                 <?php endforeach; ?>

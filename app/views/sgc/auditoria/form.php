@@ -248,7 +248,7 @@ document.addEventListener('DOMContentLoaded', actualizarNombreAuditor);
                         <?= str_replace('_',' ',$h['tipo']) ?>
                     </span>
                     <?php if ($h['clausula_iso']): ?>
-                    <span style="font-size:10px;"><?= e($h['clausula_iso']) ?></span>
+                    <code style="font-size:10px;"><?= e($h['clausula_iso']) ?></code>
                     <?php endif; ?>
                 </div>
                 <?= badgeEstado($h['estado']) ?>

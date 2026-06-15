@@ -28,7 +28,7 @@
                 <tr>
                     <td><?= e($m['id_macroproceso']) ?></td>
                     <td><strong><?= e($m['macroproceso']) ?></strong></td>
-                    <td class="col-objetivo"><?= e(truncar($m['objetivo'] ?? '', 500)) ?></td>
+                    <td class="col-objetivo"><?= e(truncar($m['objetivo'] ?? '', 80)) ?></td>
                     <td><span class="badge bg-info text-dark"><?= e($m['total_procesos']) ?></span></td>
                     <td><?= badgeEstado($m['estado']) ?></td>
                     <td>

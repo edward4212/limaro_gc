@@ -83,7 +83,7 @@
                     <?= $rev['fecha_revision'] ? date('d/m/Y', strtotime($rev['fecha_revision'])) : '—' ?>
                 </td>
                 <td style="font-size:12px;"><?= e($rev['convocado_por'] ?? '—') ?></td>
-                <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:normal;">
+                <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                     <?= e(truncar($rev['participantes'] ?? '—', 50)) ?>
                 </td>
                 <td class="text-center">

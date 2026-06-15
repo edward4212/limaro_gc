@@ -1691,7 +1691,7 @@
 [13-Jun-2026 12:54:40 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 12:54:40 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr>
 [13-Jun-2026 12:54:40 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Código:</td>
-[13-Jun-2026 12:54:40 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>TI-FO-001</span></td>
+[13-Jun-2026 12:54:40 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code>TI-FO-001</code></td>
 [13-Jun-2026 12:54:40 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 12:54:40 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'>
 [13-Jun-2026 12:54:40 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Versión:</td>
@@ -1842,7 +1842,7 @@
 [13-Jun-2026 12:57:23 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 12:57:23 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr>
 [13-Jun-2026 12:57:23 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Código:</td>
-[13-Jun-2026 12:57:23 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>TI-FO-001</span></td>
+[13-Jun-2026 12:57:23 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code>TI-FO-001</code></td>
 [13-Jun-2026 12:57:23 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 12:57:23 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'>
 [13-Jun-2026 12:57:23 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Versión:</td>
@@ -1993,7 +1993,7 @@
 [13-Jun-2026 13:07:11 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 13:07:11 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr>
 [13-Jun-2026 13:07:11 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Código:</td>
-[13-Jun-2026 13:07:11 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>PROC-04</span></td>
+[13-Jun-2026 13:07:11 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code>PROC-04</code></td>
 [13-Jun-2026 13:07:11 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 13:07:11 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'>
 [13-Jun-2026 13:07:11 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Versión:</td>
@@ -2118,7 +2118,7 @@
 [13-Jun-2026 13:26:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [13-Jun-2026 13:26:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#16</strong></td></tr>
 [13-Jun-2026 13:26:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>Creación de Documento</td></tr>
-[13-Jun-2026 13:26:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span></span> </td></tr>
+[13-Jun-2026 13:26:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code></code> </td></tr>
 [13-Jun-2026 13:26:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>⚪ Normal</td></tr>
 [13-Jun-2026 13:26:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>13/06/2026 13:26</td></tr>
 [13-Jun-2026 13:26:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>aSSASas</td></tr>
@@ -2230,7 +2230,7 @@
 [13-Jun-2026 13:26:56 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [13-Jun-2026 13:26:56 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#17</strong></td></tr>
 [13-Jun-2026 13:26:56 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>Creación de Documento</td></tr>
-[13-Jun-2026 13:26:56 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span></span> </td></tr>
+[13-Jun-2026 13:26:56 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code></code> </td></tr>
 [13-Jun-2026 13:26:56 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>⚪ Normal</td></tr>
 [13-Jun-2026 13:26:56 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>13/06/2026 13:26</td></tr>
 [13-Jun-2026 13:26:56 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>sASaA</td></tr>
@@ -2342,7 +2342,7 @@
 [13-Jun-2026 13:27:12 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [13-Jun-2026 13:27:12 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#18</strong></td></tr>
 [13-Jun-2026 13:27:12 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>Actualización de Documento</td></tr>
-[13-Jun-2026 13:27:12 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>GC-FO-001</span> </td></tr>
+[13-Jun-2026 13:27:12 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code>GC-FO-001</code> </td></tr>
 [13-Jun-2026 13:27:12 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>⚪ Normal</td></tr>
 [13-Jun-2026 13:27:12 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>13/06/2026 13:27</td></tr>
 [13-Jun-2026 13:27:12 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>asas</td></tr>
@@ -2454,7 +2454,7 @@
 [13-Jun-2026 13:27:34 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [13-Jun-2026 13:27:34 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#19</strong></td></tr>
 [13-Jun-2026 13:27:34 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>Eliminación de Documento</td></tr>
-[13-Jun-2026 13:27:34 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>AS-FO-001</span> </td></tr>
+[13-Jun-2026 13:27:34 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code>AS-FO-001</code> </td></tr>
 [13-Jun-2026 13:27:34 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>⚪ Normal</td></tr>
 [13-Jun-2026 13:27:34 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>13/06/2026 13:27</td></tr>
 [13-Jun-2026 13:27:34 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>asdfg</td></tr>
@@ -2566,7 +2566,7 @@
 [13-Jun-2026 13:27:49 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [13-Jun-2026 13:27:49 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#20</strong></td></tr>
 [13-Jun-2026 13:27:49 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>Creación de Documento</td></tr>
-[13-Jun-2026 13:27:49 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span></span> </td></tr>
+[13-Jun-2026 13:27:49 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code></code> </td></tr>
 [13-Jun-2026 13:27:49 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>⚪ Normal</td></tr>
 [13-Jun-2026 13:27:49 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>13/06/2026 13:27</td></tr>
 [13-Jun-2026 13:27:49 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>sasdfgfh</td></tr>
@@ -2678,7 +2678,7 @@
 [13-Jun-2026 13:27:54 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [13-Jun-2026 13:27:54 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#21</strong></td></tr>
 [13-Jun-2026 13:27:54 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>Creación de Documento</td></tr>
-[13-Jun-2026 13:27:54 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span></span> </td></tr>
+[13-Jun-2026 13:27:54 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code></code> </td></tr>
 [13-Jun-2026 13:27:54 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>⚪ Normal</td></tr>
 [13-Jun-2026 13:27:54 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>13/06/2026 13:27</td></tr>
 [13-Jun-2026 13:27:54 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>SADSFGHJJKK</td></tr>
@@ -2790,7 +2790,7 @@
 [13-Jun-2026 13:27:59 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [13-Jun-2026 13:27:59 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#22</strong></td></tr>
 [13-Jun-2026 13:27:59 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>Creación de Documento</td></tr>
-[13-Jun-2026 13:27:59 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span></span> </td></tr>
+[13-Jun-2026 13:27:59 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code></code> </td></tr>
 [13-Jun-2026 13:27:59 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>⚪ Normal</td></tr>
 [13-Jun-2026 13:27:59 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>13/06/2026 13:27</td></tr>
 [13-Jun-2026 13:27:59 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>asdfxghj</td></tr>
@@ -2902,7 +2902,7 @@
 [13-Jun-2026 13:28:04 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [13-Jun-2026 13:28:04 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#23</strong></td></tr>
 [13-Jun-2026 13:28:04 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>Creación de Documento</td></tr>
-[13-Jun-2026 13:28:04 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span></span> </td></tr>
+[13-Jun-2026 13:28:04 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code></code> </td></tr>
 [13-Jun-2026 13:28:04 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>⚪ Normal</td></tr>
 [13-Jun-2026 13:28:04 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>13/06/2026 13:28</td></tr>
 [13-Jun-2026 13:28:04 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>aefefwf</td></tr>
@@ -3014,7 +3014,7 @@
 [13-Jun-2026 13:28:09 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [13-Jun-2026 13:28:09 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#24</strong></td></tr>
 [13-Jun-2026 13:28:09 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>Creación de Documento</td></tr>
-[13-Jun-2026 13:28:09 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span></span> </td></tr>
+[13-Jun-2026 13:28:09 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code></code> </td></tr>
 [13-Jun-2026 13:28:09 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>⚪ Normal</td></tr>
 [13-Jun-2026 13:28:09 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>13/06/2026 13:28</td></tr>
 [13-Jun-2026 13:28:09 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>qeghseda&lt;c</td></tr>
@@ -3160,7 +3160,7 @@
 [13-Jun-2026 14:03:48 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 14:03:48 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'>
 [13-Jun-2026 14:03:48 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Documento:</td>
-[13-Jun-2026 14:03:48 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;'><span>PROC-01</span></td>
+[13-Jun-2026 14:03:48 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;'><code>PROC-01</code></td>
 [13-Jun-2026 14:03:48 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 14:03:48 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             </table>
 [13-Jun-2026 14:03:48 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <br>
@@ -3308,7 +3308,7 @@
 [13-Jun-2026 14:03:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 14:03:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'>
 [13-Jun-2026 14:03:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Documento:</td>
-[13-Jun-2026 14:03:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;'><span>PROC-01</span></td>
+[13-Jun-2026 14:03:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;'><code>PROC-01</code></td>
 [13-Jun-2026 14:03:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [13-Jun-2026 14:03:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             </table>
 [13-Jun-2026 14:03:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:             <br>
@@ -3442,11 +3442,11 @@
 [14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                     <table style='border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       <tr style='background:#f8fafc;'>
 [14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;font-weight:600;'>Usuario:</td>
-[14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><span>eizquierdo</span></td>
+[14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><code>eizquierdo</code></td>
 [14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       </tr>
 [14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       <tr>
 [14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;font-weight:600;'>Contraseña temporal:</td>
-[14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><span>7nCTvE!jKLJs</span></td>
+[14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><code>7nCTvE!jKLJs</code></td>
 [14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       </tr>
 [14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                     </table>
 [14-Jun-2026 12:15:43 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                     <br>
@@ -3595,7 +3595,7 @@
 [14-Jun-2026 16:32:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [14-Jun-2026 16:32:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr>
 [14-Jun-2026 16:32:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Código:</td>
-[14-Jun-2026 16:32:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>TH-FO-037</span></td>
+[14-Jun-2026 16:32:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code>TH-FO-037</code></td>
 [14-Jun-2026 16:32:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [14-Jun-2026 16:32:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'>
 [14-Jun-2026 16:32:45 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Versión:</td>
@@ -3773,7 +3773,7 @@
 [14-Jun-2026 16:32:47 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [14-Jun-2026 16:32:47 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr>
 [14-Jun-2026 16:32:47 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Código:</td>
-[14-Jun-2026 16:32:47 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>TH-FO-037</span></td>
+[14-Jun-2026 16:32:47 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code>TH-FO-037</code></td>
 [14-Jun-2026 16:32:47 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               </tr>
 [14-Jun-2026 16:32:47 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:               <tr style='background:#f8fafc;'>
 [14-Jun-2026 16:32:47 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Versión:</td>
@@ -3941,11 +3941,11 @@
 [14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                     <table style='border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       <tr style='background:#f8fafc;'>
 [14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;font-weight:600;'>Usuario:</td>
-[14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><span>eizquierdo</span></td>
+[14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><code>eizquierdo</code></td>
 [14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       </tr>
 [14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       <tr>
 [14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;font-weight:600;'>Contraseña temporal:</td>
-[14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><span>V8S#Q7e@uyLT</span></td>
+[14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><code>V8S#Q7e@uyLT</code></td>
 [14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       </tr>
 [14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                     </table>
 [14-Jun-2026 16:37:58 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                     <br>
@@ -4071,11 +4071,11 @@
 [14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                     <table style='border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
 [14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       <tr style='background:#f8fafc;'>
 [14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;font-weight:600;'>Usuario:</td>
-[14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><span>eizquierdo</span></td>
+[14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><code>eizquierdo</code></td>
 [14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       </tr>
 [14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       <tr>
 [14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;font-weight:600;'>Contraseña temporal:</td>
-[14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><span>!ASkwEM*t75H</span></td>
+[14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                         <td style='padding:10px 16px;'><code>!ASkwEM*t75H</code></td>
 [14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                       </tr>
 [14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                     </table>
 [14-Jun-2026 16:39:13 America/Bogota] [SMTP DEBUG] CLIENT -> SERVER:                     <br>

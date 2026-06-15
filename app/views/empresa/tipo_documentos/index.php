@@ -18,7 +18,7 @@
                 <tr>
                     <td><?= e($t['id_tipo_documento']) ?></td>
                     <td><strong><?= e($t['tipo_documento']) ?></strong></td>
-                    <td><span class="bg-light px-2 py-1 rounded"><?= e($t['sigla_tipo_documento']) ?></span></td>
+                    <td><code class="bg-light px-2 py-1 rounded"><?= e($t['sigla_tipo_documento']) ?></code></td>
                     <td>
                         <?php $totalTipo = ($t['total_docs'] ?? 0) + ($t['total_acuerdos'] ?? 0); ?>
                         <span class="badge <?= $totalTipo > 0 ? 'bg-primary' : 'bg-secondary' ?>">

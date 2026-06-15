@@ -41,7 +41,7 @@
             <?php foreach ($documentos as $d): ?>
             <tr>
                 <td><?= e(($d['macroproceso'] ?? '') . ' — ' . ($d['proceso'] ?? '')) ?></td>
-                <td><span style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($d['codigo'] ?? '') ?></span></td>
+                <td><code style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($d['codigo'] ?? '') ?></code></td>
                 <td style="font-size:12px;"><?= e($d['nombre_documento'] ?? '') ?></td>
                 <td><span class="badge bg-secondary" style="font-size:10px;line-height:1.4;"><?= e($d['sigla_tipo_documento'] ?? '') ?><br><small style='font-size:9px;font-weight:normal;opacity:.85;'><?= e($d['tipo_documento'] ?? '') ?></small></span></td>
                 <td class="text-center"><span class="badge bg-dark">V<?= e($d['numero_version'] ?? 0) ?></span></td>

@@ -39,7 +39,7 @@ $borrador  = count(array_filter($planes, fn($p) => $p['estado']==='BORRADOR'));
             <tbody>
             <?php foreach($planes as $p): ?>
             <tr>
-                <td><a href="<?= e(APP_URL) ?>/auditoria/plan/<?= (int)$p['id'] ?>"><span><?= e($p['codigo']) ?></span></a></td>
+                <td><a href="<?= e(APP_URL) ?>/auditoria/plan/<?= (int)$p['id'] ?>"><code><?= e($p['codigo']) ?></code></a></td>
                 <td><?= e(mb_strimwidth($p['titulo']??'',0,50,'…')) ?></td>
                 <td><?= e($p['tipo_auditoria']??'—') ?></td>
                 <td><?= e($p['auditor_nombre']??'—') ?></td>

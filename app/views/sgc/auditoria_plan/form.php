@@ -134,7 +134,7 @@ $procSeleccionados = array_column($item['procesos'] ?? [], 'id_proceso');
                                <?= in_array($proc['id_proceso'], $procSeleccionados) ? 'checked' : '' ?>>
                         <label class="form-check-label" for="proc_<?= $proc['id_proceso'] ?>"
                                style="font-size:12px;">
-                            <span style="font-size:10px;"><?= e($proc['sigla_proceso'] ?? '') ?></span>
+                            <code style="font-size:10px;"><?= e($proc['sigla_proceso'] ?? '') ?></code>
                             <?= e($proc['proceso']) ?>
                         </label>
                     </div>

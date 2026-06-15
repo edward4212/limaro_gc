@@ -380,7 +380,7 @@ if (!function_exists('notifVersionCreada')) {
               </tr>
               <tr>
                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Código:</td>
-                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>{$codigo}</span></td>
+                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code>{$codigo}</code></td>
               </tr>
               <tr style='background:#f8fafc;'>
                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Versión:</td>
@@ -460,7 +460,7 @@ if (!function_exists('notifSolicitudCreada')) {
             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#{$idSol}</strong></td></tr>
               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$tipo}</td></tr>
-              <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>{$codDoc}</span> {$tipDoc}</td></tr>
+              <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><code>{$codDoc}</code> {$tipDoc}</td></tr>
               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$prio}</td></tr>
               <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$fecha}</td></tr>
               <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>{$justif}</td></tr>

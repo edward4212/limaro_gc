@@ -34,7 +34,7 @@ $BASE   = '/home/limarocloud/limaro.limaro.cloud/public/storage/documentos/';
 <a class="btn" href="?tok=limaro2026&dry">🔍 Simular</a>
 <a class="btn green" href="?tok=limaro2026">▶ Ejecutar</a>
 <p class="<?= $dryRun?'warn':'ok' ?>"><?= $dryRun?'⚠️ SIMULACIÓN':'✅ MODO REAL' ?></p>
-<p class="info">Convierte: <span>AD-DT-1-NOMBRE</span> → <span>AD-DT-001-NOMBRE</span></p>
+<p class="info">Convierte: <code>AD-DT-1-NOMBRE</code> → <code>AD-DT-001-NOMBRE</code></p>
 <hr>
 
 <?php
@@ -113,7 +113,7 @@ echo '</div>';
 
 <?php if (!$dryRun && $renombradas > 0): ?>
 <div class="box">
-    <p class="ok">✅ Listo. Ahora ejecuta <span>migrar_archivos_versionamiento_web.php</span>
+    <p class="ok">✅ Listo. Ahora ejecuta <code>migrar_archivos_versionamiento_web.php</code>
     para actualizar las rutas en BD.</p>
     <p class="warn">⚠️ Borrar este archivo después de verificar.</p>
 </div>

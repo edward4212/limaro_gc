@@ -138,7 +138,7 @@ $total = array_sum($stats);
                         <i class="bi <?= $icono ?> me-1"></i><?= $label ?>
                     </span>
                 </td>
-                <td style="font-size:12px;color:#6b7280;white-space:normal;">
+                <td style="font-size:12px;color:#6b7280;white-space:nowrap;">
                     <?= !empty($t['fecha_ultimo_estado'])
                         ? date('d/m/Y', strtotime($t['fecha_ultimo_estado'])) : '—' ?>
                 </td>

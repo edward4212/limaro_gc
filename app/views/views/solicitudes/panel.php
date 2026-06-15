@@ -118,11 +118,11 @@ $totalNum = array_sum($statsMap);
                 </td>
                 <td style="max-width:200px;">
                     <?php if (!empty($s['codigo_documento']) && $s['codigo_documento'] !== '00000'): ?>
-                    <span style="font-size:12px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">
+                    <code style="font-size:12px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">
                         <?= e($s['codigo_documento']) ?>
-                    </span><br>
+                    </code><br>
                     <?php endif; ?>
-                    <small style="font-size:12px;display:block;white-space:normal;overflow:hidden;
+                    <small style="font-size:12px;display:block;white-space:nowrap;overflow:hidden;
                                   text-overflow:ellipsis;max-width:190px;color:#6b7280;">
                         <?= e($s['solicitud'] ?? '') ?>
                     </small>
@@ -144,10 +144,10 @@ $totalNum = array_sum($statsMap);
                 <td>
                     <span class="badge <?= $prio[0] ?>" style="font-size:12px;"><?= $prio[1] ?></span>
                 </td>
-                <td style="font-size:12px;white-space:normal;overflow:hidden;text-overflow:ellipsis;max-width:130px;">
+                <td style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">
                     <?= e($s['solicitante'] ?? '—') ?>
                 </td>
-                <td style="font-size:12px;white-space:normal;overflow:hidden;text-overflow:ellipsis;max-width:130px;">
+                <td style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">
                     <?php if (!empty($s['funcionario_asignado']) && !str_contains($s['funcionario_asignado'], '<')): ?>
                         <?= e($s['funcionario_asignado']) ?>
                     <?php elseif (!empty($s['nombre_asignado'] ?? '')): ?>
@@ -161,7 +161,7 @@ $totalNum = array_sum($statsMap);
                         <i class="bi <?= $icono ?> me-1"></i><?= $label ?>
                     </span>
                 </td>
-                <td style="font-size:12px;color:#6b7280;white-space:normal;">
+                <td style="font-size:12px;color:#6b7280;white-space:nowrap;">
                     <?= !empty($s['fecha_solicitud'])
                         ? date('d/m/Y', strtotime($s['fecha_solicitud']))
                         : '—' ?>

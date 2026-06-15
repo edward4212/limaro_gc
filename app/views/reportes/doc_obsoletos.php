@@ -9,7 +9,7 @@
 <thead><tr><th>Código</th><th>Documento</th><th>Tipo</th><th>Proceso</th><th>Versión</th><th>F. Aprobación</th><th>F. Obsoleto</th><th>Aprobó</th></tr></thead>
 <tbody>
 <?php foreach ($datos as $d): ?>
-<tr><td class="col-objetivo"><span><?= e($d['codigo']) ?></span></td><td><?= e($d['nombre_documento']) ?></td>
+<tr><td class="col-objetivo"><code><?= e($d['codigo']) ?></code></td><td><?= e($d['nombre_documento']) ?></td>
 <td><?= e($d['sigla_tipo_documento']) ?></td><td style="font-size:12px;"><?= e($d['proceso']) ?></td>
 <td class="text-center"><span class="badge bg-secondary">V<?= e($d['numero_version']) ?></span></td>
 <td style="font-size:12px;"><?= fechaEs($d['fecha_aprobacion']) ?></td>

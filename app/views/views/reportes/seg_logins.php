@@ -15,9 +15,9 @@ $opciones = [
 <tbody>
 <?php foreach ($datos as $d): ?>
 <tr class="<?= $d['resultado']==='FALLIDO' ? 'table-warning' : '' ?>">
-<td><span><?= e($d['usuario']) ?></span></td>
+<td><code><?= e($d['usuario']) ?></code></td>
 <td style="font-size:12px;"><?= e($d['nombre_completo'] ?? '—') ?></td>
-<td><span style="font-size:12px;"><?= e($d['ip']) ?></span></td>
+<td><code style="font-size:12px;"><?= e($d['ip']) ?></code></td>
 <td><?= $d['resultado']==='EXITOSO' ? '<span class="badge bg-success">EXITOSO</span>' : '<span class="badge bg-danger">FALLIDO</span>' ?></td>
 <td style="font-size:12px;"><?= e($d['fecha']) ?></td>
 </tr>

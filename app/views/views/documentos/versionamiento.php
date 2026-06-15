@@ -34,7 +34,7 @@
             <?php foreach ($versiones as $v): ?>
             <tr>
                 <td><?= e(($v['macroproceso'] ?? '') . ' — ' . ($v['proceso'] ?? '')) ?></td>
-                <td><span style="font-size:12px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($v['codigo'] ?? '') ?></span></td>
+                <td><code style="font-size:12px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($v['codigo'] ?? '') ?></code></td>
                 <td style="font-size:12px;"><?= e($v['nombre_documento'] ?? '') ?></td>
                 <td><span class="badge bg-secondary" style="font-size:12px;line-height:1.4;"><?= e($v['sigla_tipo'] ?? '') ?><br><small style='font-size:12px;font-weight:normal;opacity:.85;'><?= e($v['tipo_documento'] ?? '') ?></small></span></td>
                 <td class="text-center"><span class="badge bg-primary">V<?= e($v['max_version'] ?? 0) ?></span></td>

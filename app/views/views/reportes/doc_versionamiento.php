@@ -15,7 +15,7 @@
             <tbody>
                 <?php foreach ($datos as $d): ?>
                 <tr>
-                    <td><span style="font-size:12px;"><?= e($d['codigo']) ?></span></td>
+                    <td><code style="font-size:12px;"><?= e($d['codigo']) ?></code></td>
                     <td style="font-size:12px;"><?= e(truncar($d['nombre_documento'],45)) ?></td>
                     <td style="font-size:12px;"><?= e($d['proceso']) ?></td>
                     <td class="text-center"><span class="badge bg-<?= $d['estado_version']==='VIGENTE'?'success':($d['estado_version']==='OBSOLETO'?'secondary':'primary') ?>">V<?= e($d['numero_version']) ?></span></td>

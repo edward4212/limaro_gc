@@ -344,8 +344,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         li.style.cursor = 'pointer';
                         li.style.fontSize = '13px';
                         const sigla = (d.sigla_tipo_documento || '') + (d.tipo_documento ? ' - ' + d.tipo_documento : '');
-                        li.innerHTML = '<span style="font-size:11px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">'
-                            + (d.codigo || d.codigo_documento) + '</span> '
+                        li.innerHTML = '<code style="font-size:11px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">'
+                            + (d.codigo || d.codigo_documento) + '</code> '
                             + '<span class="ms-1">' + d.nombre_documento + '</span>'
                             + (sigla ? '<span class="badge bg-secondary ms-2" style="font-size:10px;">' + sigla + '</span>' : '');
                         li.addEventListener('click', function () {

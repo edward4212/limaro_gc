@@ -44,7 +44,7 @@ include APP_ROOT . '/app/views/partials/kpi_cards.php';
                     <td class="text-center"><span class="badge bg-danger"><?= (int)$p['nc'] ?></span></td>
                     <td class="text-center"><span class="badge bg-success"><?= (int)$p['cerrados'] ?>/<?= (int)$p['total_hallazgos'] ?></span></td>
                     <td><?= badgeEstado($p['estado']) ?></td>
-                    <td class="text-center" style="white-space:normal;">
+                    <td class="text-center" style="white-space:nowrap;">
                         <?php if (($p['estado'] ?? '') === 'FINALIZADA'): ?>
                         <!-- CA-1: auditorías finalizadas → solo Ver detalle -->
                         <a href="<?= e(APP_URL) ?>/auditoria-interna/ver/<?= (int)$p['id'] ?>"

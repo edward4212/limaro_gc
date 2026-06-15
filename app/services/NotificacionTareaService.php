@@ -42,7 +42,7 @@ class NotificacionTareaService
               </tr>
               <tr style='background:#f8fafc;'>
                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Documento:</td>
-                <td style='padding:10px 16px;'><span>{$codigo}</span></td>
+                <td style='padding:10px 16px;'><code>{$codigo}</code></td>
               </tr>
             </table>";
     }

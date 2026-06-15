@@ -78,7 +78,7 @@ $imgSrc = e(APP_URL) . '/foto-usuario/' . (int)(Auth::id() ?? 0);
             <div class="card-body">
                 <dl class="row">
                     <dt class="col-sm-4">Usuario:</dt>
-                    <dd class="col-sm-8"><span><?= e($user['usuario']) ?></span></dd>
+                    <dd class="col-sm-8"><code><?= e($user['usuario']) ?></code></dd>
                     <dt class="col-sm-4">Nombre Completo:</dt>
                     <dd class="col-sm-8"><?= e($user['nombre_completo']) ?></dd>
                     <dt class="col-sm-4">Correo:</dt>

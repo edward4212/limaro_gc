@@ -16,7 +16,7 @@
             <?php foreach ($modulos as $m): ?>
             <tr>
                 <td><?= $m['id_modulo'] ?></td>
-                <td><span style="font-size:11px;"><?= e($m['codigo']) ?></span></td>
+                <td><code style="font-size:11px;"><?= e($m['codigo']) ?></code></td>
                 <td>
                     <i class="bi <?= e($m['icono'] ?? 'bi-circle') ?> me-1 text-primary"></i>
                     <?= e($m['nombre']) ?>

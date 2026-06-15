@@ -152,8 +152,8 @@ $estadosAct  = ['PENDIENTE','EN_CURSO','COMPLETADA','CANCELADA'];
                     <tbody>
                         <?php foreach ($actividades as $a): ?>
                         <tr>
-                            <td style="white-space:normal;"><?= fechaEs($a['fecha']) ?></td>
-                            <td style="white-space:normal;">
+                            <td style="white-space:nowrap;"><?= fechaEs($a['fecha']) ?></td>
+                            <td style="white-space:nowrap;">
                                 <?= $a['hora_inicio'] ? substr($a['hora_inicio'],0,5) : '—' ?>
                                 <?= $a['hora_fin'] ? '→'.substr($a['hora_fin'],0,5) : '' ?>
                                 <?php if ($a['duracion_minutos']): ?>
