@@ -58,18 +58,27 @@ class EmpresaController extends Controller
             return;
         }
 
+
+        // Helper: construye array para subirArchivo soportando base64 (app.js) y multipart
+        $prepFile = function(string $campo) {
+            $file = $_FILES[$campo] ?? ['error' => UPLOAD_ERR_NO_FILE];
+            $file['field_name'] = $campo; // necesario para que subirArchivo busque {campo}_b64
+            $tieneNativo = ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK;
+            $tieneB64    = !empty($_POST[$campo . '_b64']);
+            return ['file' => $file, 'tiene' => $tieneNativo || $tieneB64];
+        };
         // ── Logo ────────────────────────────────────────────────────────
-        if (Request::hasFile('logo') && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+        $fLogo = $prepFile('logo');
+        if ($fLogo['tiene']) {
             try {
-                // Eliminar logo anterior si existe en storage
                 if (!empty($empresa['logo']) && str_starts_with($empresa['logo'], '/storage/')) {
                     eliminarArchivo($empresa['logo']);
                 }
                 $upload       = subirArchivo(
-                    $_FILES['logo'],
+                    $fLogo['file'],
                     'empresa/logo',
                     ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-                    5242880 // 5 MB
+                    5242880
                 );
                 $data['logo'] = $upload['ruta_relativa'];
             } catch (\RuntimeException $e) {
@@ -80,16 +89,17 @@ class EmpresaController extends Controller
         }
 
         // ── Organigrama ─────────────────────────────────────────────────
-        if (Request::hasFile('organigrama') && $_FILES['organigrama']['error'] === UPLOAD_ERR_OK) {
+        $fOrg = $prepFile('organigrama');
+        if ($fOrg['tiene']) {
             try {
                 if (!empty($empresa['organigrama']) && str_starts_with($empresa['organigrama'], '/storage/')) {
                     eliminarArchivo($empresa['organigrama']);
                 }
                 $upload              = subirArchivo(
-                    $_FILES['organigrama'],
+                    $fOrg['file'],
                     'empresa/organigrama',
                     ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
-                    20971520 // 20 MB
+                    20971520
                 );
                 $data['organigrama'] = $upload['ruta_relativa'];
             } catch (\RuntimeException $e) {
@@ -100,16 +110,17 @@ class EmpresaController extends Controller
         }
 
         // ── Mapa de Procesos ─────────────────────────────────────────────
-        if (Request::hasFile('mapa_procesos') && $_FILES['mapa_procesos']['error'] === UPLOAD_ERR_OK) {
+        $fMapa = $prepFile('mapa_procesos');
+        if ($fMapa['tiene']) {
             try {
                 if (!empty($empresa['mapa_procesos']) && str_starts_with($empresa['mapa_procesos'], '/storage/')) {
                     eliminarArchivo($empresa['mapa_procesos']);
                 }
                 $upload                = subirArchivo(
-                    $_FILES['mapa_procesos'],
+                    $fMapa['file'],
                     'empresa/mapa_procesos',
                     ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
-                    20971520 // 20 MB
+                    20971520
                 );
                 $data['mapa_procesos'] = $upload['ruta_relativa'];
             } catch (\RuntimeException $e) {

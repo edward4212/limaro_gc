@@ -1,0 +1,23 @@
+# ════════════════════════════════════════════════════════════════════
+# ACCESO DIRECTO DENEGADO — ISO 9001:2015 §7.5.3 (control de acceso a
+# la información documentada).
+#
+# Los archivos de este directorio contienen información documentada
+# controlada del SGC (versionamientos, soportes de solicitudes, tareas).
+# NUNCA deben servirse directamente por Apache: todo acceso pasa por
+# los controladores PHP con autenticación y registro:
+#   /archivo/{id}            → ArchivoController@descargar
+#   /archivo/v/{id}          → ArchivoController@porVersion (legacy)
+#   /archivo/acta/{id}       → ArchivoController@acta
+#   /foto-usuario/{id}       → FotoController@perfil
+#   /empresa-img/{tipo}      → EmpresaImgController@servir
+# ════════════════════════════════════════════════════════════════════
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order Deny,Allow
+    Deny from all
+</IfModule>

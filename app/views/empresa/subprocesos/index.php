@@ -26,9 +26,9 @@
                 <?php foreach ($subprocesos as $s): ?>
                 <tr>
                     <td><span class="badge bg-secondary"><?= e($s['nombre_macroproceso']) ?></span></td>
-                    <td><?= e($s['nombre_proceso']) ?> <code class="ms-1"><?= e($s['sigla_proceso']) ?></code></td>
+                    <td><?= e($s['nombre_proceso']) ?> <span class="ms-1"><?= e($s['sigla_proceso']) ?></span></td>
                     <td><strong><?= e($s['subproceso']) ?></strong></td>
-                    <td><code><?= e($s['sigla_subproceso']) ?></code></td>
+                    <td><span><?= e($s['sigla_subproceso']) ?></span></td>
                     <td><?= badgeEstado($s['estado']) ?></td>
                     <td>
                         <?php if (Auth::puede('subprocesos', 'editar')): ?>
@@ -37,15 +37,25 @@
                             <i class="bi bi-pencil"></i>
                         </a>
                         <?php endif; ?>
-                        <?php if (Auth::puede('subprocesos', 'eliminar') && $s['estado'] === 'ACTIVO'): ?>
-                        <button class="btn btn-sm btn-outline-danger py-0"
-                                data-bs-toggle="modal" data-bs-target="#modalConfirm"
+                        <?php if (Auth::puede('subprocesos', 'eliminar') && $s['estado'] === 'ACTIVO'):
+                            $nDocS = $conteosDocumentos[$s['id_subproceso']] ?? 0;
+                        ?>
+                        <?php if ($nDocS > 0): ?>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                disabled
+                                title="No se puede inactivar: tiene <?= $nDocS ?> documento(s) activo(s)">
+                            <i class="bi bi-slash-circle"></i>
+                        </button>
+                        
+                        <?php else: ?>
+                        <button class="btn btn-sm btn-outline-danger py-0 px-2"
                                 onclick="setModalConfirm(
                                     '<?= e(APP_URL) ?>/subprocesos/eliminar/<?= $s['id_subproceso'] ?>',
                                     '¿Inactivar el subproceso: <?= e(addslashes($s['subproceso'])) ?>?'
                                 )">
                             <i class="bi bi-slash-circle"></i>
                         </button>
+                        <?php endif; ?>
                         <?php endif; ?>
                     </td>
                 </tr>

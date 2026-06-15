@@ -5,34 +5,82 @@
 'use strict';
 
 // -----------------------------------------------------------------------
-// Sidebar toggle
+// Sidebar toggle — desktop: colapsa | móvil: drawer
 // -----------------------------------------------------------------------
+(function () {
+    // Crear overlay ANTES del DOMContentLoaded para que esté disponible
+    var overlay = document.createElement('div');
+    overlay.id = 'sidebar-overlay';
+    document.addEventListener('DOMContentLoaded', function () {
+        document.body.insertBefore(overlay, document.body.firstChild);
+    });
+
+    var MOBILE = 991;
+    function isMobile() { return window.innerWidth <= MOBILE; }
+
+    function openDrawer(sidebar) {
+        sidebar.classList.add('show');
+        sidebar.classList.remove('collapsed');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer(sidebar) {
+        sidebar.classList.remove('show');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var sidebar = document.getElementById('sidebar');
+        var body    = document.body;
+        var toggle  = document.getElementById('sidebar-toggle');
+
+        if (!sidebar || !toggle) return;
+
+        // Restaurar estado desktop
+        if (!isMobile() && localStorage.getItem('sidebar_collapsed') === '1') {
+            sidebar.classList.add('collapsed');
+            body.classList.add('sidebar-collapsed');
+        }
+
+        // Toggle principal
+        toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (isMobile()) {
+                sidebar.classList.contains('show') ? closeDrawer(sidebar) : openDrawer(sidebar);
+            } else {
+                var collapsed = sidebar.classList.toggle('collapsed');
+                body.classList.toggle('sidebar-collapsed', collapsed);
+                localStorage.setItem('sidebar_collapsed', collapsed ? '1' : '0');
+            }
+        });
+
+        // Overlay cierra el drawer
+        overlay.addEventListener('click', function () { closeDrawer(sidebar); });
+
+        // Escape cierra el drawer
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && isMobile()) closeDrawer(sidebar);
+        });
+
+        // Links del sidebar cierran el drawer en móvil
+        sidebar.querySelectorAll('.sidebar-link[href]').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (isMobile()) closeDrawer(sidebar);
+            });
+        });
+
+        // Resize: limpiar estado móvil
+        window.addEventListener('resize', function () {
+            if (!isMobile()) closeDrawer(sidebar);
+        });
+    });
+})();
+
 document.addEventListener('DOMContentLoaded', function () {
     const sidebar = document.getElementById('sidebar');
     const body    = document.body;
     const toggle  = document.getElementById('sidebar-toggle');
-
-    if (localStorage.getItem('sidebar_collapsed') === '1') {
-        sidebar?.classList.add('collapsed');
-        body.classList.add('sidebar-collapsed');
-    }
-
-    if (toggle) {
-        toggle.addEventListener('click', function () {
-            const collapsed = sidebar.classList.toggle('collapsed');
-            body.classList.toggle('sidebar-collapsed', collapsed);
-            localStorage.setItem('sidebar_collapsed', collapsed ? '1' : '0');
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        if (window.innerWidth <= 768 && sidebar && !sidebar.contains(e.target) && e.target !== toggle) {
-            sidebar.classList.remove('show');
-        }
-    });
-    toggle?.addEventListener('click', function () {
-        if (window.innerWidth <= 768) sidebar.classList.toggle('show');
-    });
 
     const currentPath = window.location.pathname;
     document.querySelectorAll('.sidebar-link[href]').forEach(function (link) {
@@ -61,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Columnas que NO tendrán filtro ni ordenamiento
     var SKIP_COLS = ['acciones', 'avatar', 'descarga', 'archivo', 'acta'];
 
-    document.querySelectorAll('table.datatable').forEach(function (tabla) {
+    document.querySelectorAll('table.datatable:not([data-no-datatable])').forEach(function (tabla) {
         if ($.fn.dataTable.isDataTable(tabla)) return;
 
         var thead   = tabla.querySelector('thead');
@@ -109,6 +157,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // ── Inicializar DataTables ──────────────────────────────────────
+        // Soporte de data-order="[[col,dir],...]" para orden inicial personalizado
+        var dataOrder = tabla.getAttribute('data-order');
+        var orderInit = dataOrder ? JSON.parse(dataOrder) : [[0, 'asc']];
+
         try {
             var dt = $(tabla).DataTable({
                 language  : { url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' },
@@ -117,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 responsive: true,
                 autoWidth : false,
                 orderCellsTop: true,
+                order     : orderInit,
                 columnDefs: [
                     { orderable: true,  targets: '_all'     },  // primero habilitar todo
                     { orderable: false, searchable: false, targets: noOrderIdx } // luego deshabilitar acciones
@@ -238,37 +291,105 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // -----------------------------------------------------------------------
-// Autocomplete de documentos
+// Autocomplete de documentos — auto-rellena y bloquea Tipo de Documento
 // -----------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', function () {
     const inputDoc = document.getElementById('doc_search');
     const hiddenId = document.getElementById('id_documento');
     const listEl   = document.getElementById('doc_list');
     if (!inputDoc || !hiddenId || !listEl) return;
+
+    const selTipo  = document.getElementById('sel_tipo_documento');
+    const hidTipo  = document.getElementById('hid_tipo_documento');
+    // Sincronizar hidden cuando el select cambia manualmente
+    if (selTipo && hidTipo) {
+        selTipo.addEventListener('change', function () { hidTipo.value = this.value; });
+    }
+    const selInfo  = document.getElementById('doc_selected');
+    const btnClr   = document.getElementById('doc_clear');
     let debounce;
+
+    function limpiarSeleccion() {
+        hiddenId.value = '';
+        if (selTipo) { selTipo.value = ''; }
+        if (hidTipo) hidTipo.value = '';
+        var cc = document.getElementById('campo_codigo_doc');
+        var dd = document.getElementById('div_codigo_doc');
+        if (cc) cc.value = '';
+        if (dd) dd.style.display = 'none';
+        if (selInfo) selInfo.style.display = 'none';
+        if (btnClr)  btnClr.style.display  = 'none';
+        listEl.style.display = 'none';
+        listEl.innerHTML     = '';
+    }
+
     inputDoc.addEventListener('input', function () {
         clearTimeout(debounce);
+        // Si el usuario edita, limpiar selección previa
+        if (hiddenId.value) limpiarSeleccion();
         const q = this.value.trim();
-        if (q.length < 2) { listEl.innerHTML = ''; return; }
+        if (q.length < 2) { listEl.style.display = 'none'; listEl.innerHTML = ''; return; }
         debounce = setTimeout(function () {
             fetch(APP_URL + '/documentos?ajax=buscar&q=' + encodeURIComponent(q))
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     listEl.innerHTML = '';
+                    if (!data || data.length === 0) {
+                        listEl.innerHTML = '<li class="list-group-item text-muted py-2 ps-3" style="font-size:12px;">Sin resultados</li>';
+                        listEl.style.display = 'block'; return;
+                    }
                     data.forEach(function (d) {
                         var li = document.createElement('li');
-                        li.className = 'list-group-item list-group-item-action';
-                        li.textContent = d.codigo_documento + ' — ' + d.nombre_documento;
+                        li.className = 'list-group-item list-group-item-action py-2 ps-3';
                         li.style.cursor = 'pointer';
+                        li.style.fontSize = '13px';
+                        const sigla = (d.sigla_tipo_documento || '') + (d.tipo_documento ? ' - ' + d.tipo_documento : '');
+                        li.innerHTML = '<span style="font-size:11px;background:#f1f5f9;padding:1px 4px;border-radius:3px;">'
+                            + (d.codigo || d.codigo_documento) + '</span> '
+                            + '<span class="ms-1">' + d.nombre_documento + '</span>'
+                            + (sigla ? '<span class="badge bg-secondary ms-2" style="font-size:10px;">' + sigla + '</span>' : '');
                         li.addEventListener('click', function () {
-                            inputDoc.value = d.codigo_documento + ' — ' + d.nombre_documento;
+                            inputDoc.value = (d.codigo || d.codigo_documento) + ' — ' + d.nombre_documento;
                             hiddenId.value = d.id_documento;
+                            listEl.style.display = 'none';
                             listEl.innerHTML = '';
+
+                            // Auto-rellenar y BLOQUEAR Tipo de Documento
+                            if (selTipo && d.id_tipo_documento) {
+                                selTipo.value = d.id_tipo_documento;
+                            }
+                            // Actualizar hidden backup (disabled no envía valor en POST)
+                            if (hidTipo && d.id_tipo_documento) {
+                                hidTipo.value = d.id_tipo_documento;
+                            }
+
+                            // Confirmación visual
+                            if (selInfo) {
+                                selInfo.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>'
+                                    + '<strong>' + (d.codigo || d.codigo_documento) + ' — ' + d.nombre_documento + '</strong>'
+                                    + (sigla ? '<span class="ms-2 text-muted">' + sigla + '</span>' : '');
+                                selInfo.style.display = 'block';
+                            }
+                            if (btnClr) btnClr.style.display = 'inline-block';
                         });
                         listEl.appendChild(li);
                     });
-                });
-        }, 300);
+                    listEl.style.display = 'block';
+                })
+                .catch(function () { listEl.style.display = 'none'; });
+        }, 280);
+    });
+
+    if (btnClr) btnClr.addEventListener('click', function () {
+        inputDoc.value = '';
+        limpiarSeleccion();
+        inputDoc.focus();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!inputDoc.contains(e.target) && !listEl.contains(e.target)) {
+            listEl.style.display = 'none';
+        }
     });
 });
 
@@ -302,4 +423,250 @@ document.addEventListener('DOMContentLoaded', function () {
 var APP_URL = (function () {
     var meta = document.querySelector('meta[name="app-url"]');
     return meta ? meta.getAttribute('content') : '';
+})();
+
+// -----------------------------------------------------------------------
+// Upload Base64 — convierte archivos a Base64 antes del submit
+// Solución para servidores sin upload_tmp_dir configurado.
+// Agrega automáticamente campos ocultos: {name}_b64, {name}_mime, {name}_nombre
+// -----------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', function () {
+    // Procesar todos los formularios con enctype=multipart
+    document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            var inputs = form.querySelectorAll('input[type="file"]');
+            var pendientes = 0;
+
+            // Capturar el botón que disparó el submit ANTES de e.preventDefault()
+            // form.submit() programático no incluye el valor del botón → se pierde accion=enviar
+            var submitter = e.submitter || null;
+
+            inputs.forEach(function (input) {
+                var file = input.files && input.files[0];
+                if (!file) return;
+
+                // Verificar si ya existe el campo b64 (por si se re-envía)
+                var existente = form.querySelector('input[name="' + input.name + '_b64"]');
+                if (existente && existente.value) return;
+
+                pendientes++;
+                e.preventDefault();
+
+                var reader = new FileReader();
+                reader.onload = function (evt) {
+                    // Crear campos ocultos con los datos del archivo
+                    var b64Val  = evt.target.result;
+                    var mimeVal = file.type || 'application/octet-stream';
+                    var nomVal  = file.name;
+
+                    _addHidden(form, input.name + '_b64',    b64Val);
+                    _addHidden(form, input.name + '_mime',   mimeVal);
+                    _addHidden(form, input.name + '_nombre', nomVal);
+
+                    // Preservar el valor del botón (ej: accion=enviar)
+                    // que se pierde al usar form.submit() en lugar del click nativo
+                    if (submitter && submitter.name && submitter.value) {
+                        _addHidden(form, submitter.name, submitter.value);
+                    }
+
+                    // Limpiar el input de archivo (evitar doble envío por $_FILES)
+                    input.value = '';
+
+                    pendientes--;
+                    if (pendientes === 0) {
+                        form.submit();
+                    }
+                };
+                reader.onerror = function () {
+                    pendientes--;
+                    alert('No se pudo leer el archivo. Intente de nuevo.');
+                    if (pendientes === 0) form.submit();
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    });
+
+    function _addHidden(form, name, value) {
+        var existing = form.querySelector('input[name="' + name + '"]');
+        if (existing) {
+            existing.value = value;
+        } else {
+            var inp = document.createElement('input');
+            inp.type  = 'hidden';
+            inp.name  = name;
+            inp.value = value;
+            form.appendChild(inp);
+        }
+    }
+});
+
+// -----------------------------------------------------------------------
+// Validación global de formularios — campos requeridos
+// Usa Bootstrap 5 was-validated + SweetAlert2 toast
+// -----------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Excluir forms que no necesitan validación visual
+    const SKIP_FORMS = ['#formFoto', '#swal-confirm-form', '[data-novalidate]'];
+
+    document.querySelectorAll('form').forEach(function (form) {
+        // Saltar forms excluidos
+        if (SKIP_FORMS.some(sel => form.matches(sel))) return;
+        // Saltar forms sin campos required
+        if (!form.querySelector('[required]')) return;
+
+        form.addEventListener('submit', function (e) {
+            // Si el form ya fue interceptado por SweetAlert2, no re-validar
+            if (form.dataset.swalConfirmed === '1') return;
+
+            var invalidos = [];
+            var primerInvalido = null;
+
+            form.querySelectorAll('[required]').forEach(function (campo) {
+                // Ignorar campos deshabilitados o en fieldset disabled
+                if (campo.disabled || campo.closest('fieldset[disabled]')) return;
+
+                var vacio = false;
+                if (campo.type === 'checkbox' || campo.type === 'radio') {
+                    vacio = !campo.checked;
+                } else {
+                    vacio = !campo.value.trim();
+                }
+
+                if (vacio) {
+                    // Marcar en rojo
+                    campo.classList.add('is-invalid');
+                    campo.classList.remove('is-valid');
+
+                    // Crear mensaje si no existe
+                    if (!campo.nextElementSibling || !campo.nextElementSibling.classList.contains('invalid-feedback')) {
+                        var msg = document.createElement('div');
+                        msg.className = 'invalid-feedback';
+                        var label = form.querySelector('label[for="' + campo.id + '"]')
+                                 || campo.closest('.mb-3, .col-md-3, .col-md-4, .col-md-6, .col-12')
+                                    ?.querySelector('label');
+                        msg.textContent = 'El campo "' + (label ? label.textContent.replace('*','').trim() : 'requerido') + '" es obligatorio.';
+                        campo.parentNode.insertBefore(msg, campo.nextSibling);
+                    }
+
+                    invalidos.push(campo);
+                    if (!primerInvalido) primerInvalido = campo;
+                } else {
+                    campo.classList.remove('is-invalid');
+                    campo.classList.add('is-valid');
+                    // Limpiar mensaje si ya fue corregido
+                    var fb = campo.nextElementSibling;
+                    if (fb && fb.classList.contains('invalid-feedback')) fb.remove();
+                }
+            });
+
+            if (invalidos.length > 0) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Scroll al primer campo inválido
+                primerInvalido.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                primerInvalido.focus();
+
+                // Toast SweetAlert2
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: invalidos.length === 1
+                            ? 'Falta completar 1 campo obligatorio.'
+                            : 'Faltan ' + invalidos.length + ' campos obligatorios.',
+                        showConfirmButton: false,
+                        timer: 4000,
+                        timerProgressBar: true,
+                        iconColor: '#F43F5E',
+                    });
+                }
+                return false;
+            }
+
+            // Limpiar todos los is-valid al enviar OK
+            form.querySelectorAll('.is-valid').forEach(function(c) {
+                c.classList.remove('is-valid');
+            });
+        });
+
+        // Limpiar el error al escribir en el campo
+        form.querySelectorAll('[required]').forEach(function (campo) {
+            campo.addEventListener('input', function () {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                    var fb = this.nextElementSibling;
+                    if (fb && fb.classList.contains('invalid-feedback')) fb.remove();
+                }
+            });
+            campo.addEventListener('change', function () {
+                if (this.value.trim() || this.checked) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                }
+            });
+        });
+    });
+
+    // Marcar forms confirmados por SweetAlert2 para que no re-validen
+    var origSetModal = window.setModalConfirm;
+    if (origSetModal) {
+        window.setModalConfirm = function(url, msg, titulo) {
+            return origSetModal(url, msg, titulo);
+        };
+    }
+});
+
+/* =====================================================================
+   RESPONSIVE — table-responsive + ARIA + lazy loading
+   ===================================================================== */
+(function () {
+    'use strict';
+
+    /* Skip link accesibilidad */
+    var skip = document.createElement('a');
+    skip.href = '#main-content';
+    skip.className = 'skip-link';
+    skip.textContent = 'Saltar al contenido';
+    document.addEventListener('DOMContentLoaded', function () {
+        document.body.insertBefore(skip, document.body.firstChild);
+    });
+
+    /* table-responsive automático (excluye DataTables) */
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('table').forEach(function (table) {
+            var parent = table.parentElement;
+            if (!parent) return;
+            if (parent.classList.contains('table-responsive') ||
+                parent.classList.contains('table-responsive-auto') ||
+                parent.classList.contains('dataTables_scrollBody') ||
+                table.classList.contains('dataTable')) return;
+            var wrap = document.createElement('div');
+            wrap.className = 'table-responsive-auto';
+            parent.insertBefore(wrap, table);
+            wrap.appendChild(table);
+        });
+    });
+
+    /* ARIA */
+    document.addEventListener('DOMContentLoaded', function () {
+        var nav = document.getElementById('sidebar');
+        if (nav && !nav.getAttribute('aria-label')) nav.setAttribute('aria-label', 'Menú principal');
+        var mc = document.getElementById('main-content');
+        if (mc) { mc.setAttribute('role', 'main'); mc.setAttribute('tabindex', '-1'); }
+    });
+
+    /* Lazy loading */
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('img:not([loading])').forEach(function (img) {
+            if (!img.closest('#sidebar') && !img.closest('#topbar')) {
+                img.setAttribute('loading', 'lazy');
+            }
+        });
+    });
+
 })();

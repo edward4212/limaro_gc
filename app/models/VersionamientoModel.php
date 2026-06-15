@@ -37,7 +37,7 @@ class VersionamientoModel extends Model
                 ORDER BY numero_version DESC LIMIT 1
             )
             WHERE COALESCE(d.estado,'ACTIVO') = 'ACTIVO'
-            ORDER BY d.codigo
+            ORDER BY m.macroproceso, p.proceso, td.sigla_tipo_documento, d.codigo
         ")->fetchAll();
     }
 
@@ -45,14 +45,21 @@ class VersionamientoModel extends Model
     {
         return $this->query("
             SELECT v.*,
-                   v.usuario_creacion   AS elaborador,
-                   v.usuario_revision   AS revisor,
-                   v.usuario_aprobacion AS aprobador,
+                   -- HU-021: COALESCE FK (nombre_completo) → varchar legacy
+                   COALESCE(e_cr.nombre_completo, v.usuario_creacion)   AS elaborador,
+                   COALESCE(e_rv.nombre_completo, v.usuario_revision)   AS revisor,
+                   COALESCE(e_ap.nombre_completo, v.usuario_aprobacion) AS aprobador,
                    v.documento          AS archivo,
                    ar.id_archivo, ar.nombre_original AS archivo_nombre
             FROM versionamiento v
-            LEFT  JOIN archivo  ar ON ar.modulo = 'VERSIONAMIENTO'
-                                   AND ar.id_referencia = v.id_versionamiento
+            LEFT JOIN usuario  u_cr ON u_cr.id_usuario  = v.id_usuario_creacion
+            LEFT JOIN empleado e_cr ON e_cr.id_empleado = u_cr.id_empleado
+            LEFT JOIN usuario  u_rv ON u_rv.id_usuario  = v.id_usuario_revision
+            LEFT JOIN empleado e_rv ON e_rv.id_empleado = u_rv.id_empleado
+            LEFT JOIN usuario  u_ap ON u_ap.id_usuario  = v.id_usuario_aprobacion
+            LEFT JOIN empleado e_ap ON e_ap.id_empleado = u_ap.id_empleado
+            LEFT JOIN archivo  ar   ON ar.modulo = 'VERSIONAMIENTO'
+                                    AND ar.id_referencia = v.id_versionamiento
             WHERE v.id_documento = ?
             ORDER BY v.numero_version DESC
         ", [$idDocumento])->fetchAll();
@@ -110,11 +117,16 @@ class VersionamientoModel extends Model
         ]);
         $idVersion = (int) $this->db->lastInsertId();
 
+        // Poblar FKs normalizadas id_usuario_* si se pasan como propiedades extra
+        // Se actualizan en aprobarGuardar() después de llamar crearVersion()
+
         // Crear carpeta Vn en disco para esta versión
         try {
             $info = $this->query("
-                SELECT m.macroproceso, p.proceso, td.tipo_documento,
-                       d.nombre_documento, s.subproceso AS nombre_subproceso
+                SELECT m.macroproceso, p.proceso, p.sigla_proceso,
+                       td.tipo_documento, td.sigla_tipo_documento,
+                       d.nombre_documento, d.codigo,
+                       s.subproceso AS nombre_subproceso
                 FROM documento d
                 INNER JOIN proceso        p  ON p.id_proceso        = d.id_proceso
                 INNER JOIN macroproceso   m  ON m.id_macroproceso    = p.id_macroproceso
@@ -125,13 +137,21 @@ class VersionamientoModel extends Model
             ", [$idDocumento])->fetch();
 
             if ($info) {
-                crearCarpetaVersion(
+                $rutaRel = crearCarpetaVersion(
                     $info['macroproceso'],
                     $info['proceso'],
                     $info['nombre_subproceso'] ?? null,
                     $info['tipo_documento'],
                     $info['nombre_documento'],
-                    $numeroVersion
+                    $numeroVersion,
+                    $info['sigla_proceso'] ?? '',
+                    $info['sigla_tipo_documento'] ?? '',
+                    $info['codigo'] ?? ''
+                );
+                // HU-010: actualizar ruta_carpeta en el documento
+                $this->query(
+                    "UPDATE documento SET ruta_carpeta = ? WHERE id_documento = ?",
+                    [str_replace(DIRECTORY_SEPARATOR, '/', $rutaRel), $idDocumento]
                 );
             }
         } catch (\Throwable $e) {
@@ -257,4 +277,47 @@ class VersionamientoModel extends Model
             [$idDocumento]
         )->fetchColumn();
     }
+
+    /**
+     * Obtener nombre_completo de un usuario por id.
+     */
+    public function nombreCompleto(int $idUsuario): string
+    {
+        if (!$idUsuario) return '';
+        $row = $this->query(
+            "SELECT e.nombre_completo FROM usuario u
+             INNER JOIN empleado e ON e.id_empleado = u.id_empleado
+             WHERE u.id_usuario = ? LIMIT 1",
+            [$idUsuario]
+        )->fetch();
+        return $row ? $row['nombre_completo'] : '';
+    }
+
+
+    /** HU-020: Documentos inactivos u obsoletos con su última versión */
+    public function inactivos(): array
+    {
+        return $this->query("
+            SELECT d.id_documento, d.codigo, d.nombre_documento, d.estado AS estado_documento,
+                   p.proceso, m.macroproceso, td.tipo_documento,
+                   v.numero_version, v.estado_version, v.fecha_aprobacion,
+                   COALESCE(e_ap.nombre_completo, v.usuario_aprobacion) AS aprobador
+            FROM documento d
+            INNER JOIN proceso        p   ON p.id_proceso        = d.id_proceso
+            INNER JOIN macroproceso   m   ON m.id_macroproceso   = p.id_macroproceso
+            INNER JOIN tipo_documento td  ON td.id_tipo_documento= d.id_tipo_documento
+            LEFT  JOIN versionamiento v   ON v.id_versionamiento = (
+                SELECT id_versionamiento FROM versionamiento
+                WHERE id_documento = d.id_documento
+                ORDER BY numero_version DESC LIMIT 1
+            )
+            LEFT JOIN usuario  u_ap ON u_ap.id_usuario  = v.id_usuario_aprobacion
+            LEFT JOIN empleado e_ap ON e_ap.id_empleado = u_ap.id_empleado
+            WHERE d.estado IN ('INACTIVO','OBSOLETO')
+               OR v.estado_version = 'OBSOLETO'
+            GROUP BY d.id_documento
+            ORDER BY d.estado DESC, m.macroproceso, p.proceso, d.codigo
+        ")->fetchAll();
+    }
+
 }

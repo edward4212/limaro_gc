@@ -219,22 +219,56 @@ class ReporteModel extends Model
         $where  = ['1=1'];
         $params = [];
         if (!empty($filtros['estado'])) { $where[] = 'te.tarea_estado = ?'; $params[] = $filtros['estado']; }
-        if (!empty($filtros['desde']))  { $where[] = 'te.fecha_tarea_estado >= ?'; $params[] = $filtros['desde']; }
-        if (!empty($filtros['hasta']))  { $where[] = 'te.fecha_tarea_estado <= ?'; $params[] = $filtros['hasta'] . ' 23:59:59'; }
+        if (!empty($filtros['desde']))  { $where[] = 'te_ini.fecha_tarea_estado >= ?'; $params[] = $filtros['desde']; }
+        if (!empty($filtros['hasta']))  { $where[] = 'te_ini.fecha_tarea_estado <= ?'; $params[] = $filtros['hasta'] . ' 23:59:59'; }
 
         return $this->query("
             SELECT t.id_tarea, s.id_solicitud, s.tipo_solicitud,
                    s.codigo_documento, s.funcionario_asignado,
+                   COALESCE(d.nombre_documento, s.codigo_documento) AS nombre_documento,
+                   td.tipo_documento,
                    te.tarea_estado, te.usuario_tarea_estado,
                    te.fecha_tarea_estado,
-                   e.nombre_completo AS solicitante
+                   te_ini.fecha_tarea_estado              AS fecha_creacion,
+                   e.nombre_completo                      AS solicitante,
+                   TIMESTAMPDIFF(MINUTE,
+                       te_ini.fecha_tarea_estado,
+                       COALESCE(te_fin.fecha_tarea_estado, NOW())
+                   )                                      AS minutos_transcurridos,
+                   ROUND(
+                       TIMESTAMPDIFF(MINUTE,
+                           te_ini.fecha_tarea_estado,
+                           COALESCE(te_fin.fecha_tarea_estado, NOW())
+                       ) / 60.0, 1)                       AS horas_transcurridas,
+                   ROUND(
+                       TIMESTAMPDIFF(MINUTE,
+                           te_ini.fecha_tarea_estado,
+                           COALESCE(te_fin.fecha_tarea_estado, NOW())
+                       ) / 1440.0, 2)                     AS dias_calendario
             FROM tarea t
-            INNER JOIN solicitud   s  ON s.id_solicitud = t.id_solicitud
-            INNER JOIN empleado    e  ON e.id_empleado  = s.id_empleado
-            INNER JOIN tarea_estado te ON te.id_tarea   = t.id_tarea
+            INNER JOIN solicitud      s    ON s.id_solicitud      = t.id_solicitud
+            INNER JOIN empleado       e    ON e.id_empleado        = s.id_empleado
+            INNER JOIN tipo_documento td   ON td.id_tipo_documento = s.id_tipo_documento
+            LEFT  JOIN documento      d    ON d.codigo             = s.codigo_documento
+            -- Estado actual (último)
+            INNER JOIN tarea_estado   te   ON te.id_tarea = t.id_tarea
                 AND te.id_tarea_estado = (
                     SELECT MAX(te2.id_tarea_estado)
                     FROM tarea_estado te2 WHERE te2.id_tarea = t.id_tarea
+                )
+            -- Estado inicial (creación)
+            LEFT  JOIN tarea_estado   te_ini ON te_ini.id_tarea = t.id_tarea
+                AND te_ini.id_tarea_estado = (
+                    SELECT MIN(te3.id_tarea_estado)
+                    FROM tarea_estado te3 WHERE te3.id_tarea = t.id_tarea
+                )
+            -- Estado final (si finalizado)
+            LEFT  JOIN tarea_estado   te_fin ON te_fin.id_tarea = t.id_tarea
+                AND te_fin.tarea_estado = 'FINALIZADO'
+                AND te_fin.id_tarea_estado = (
+                    SELECT MAX(te4.id_tarea_estado)
+                    FROM tarea_estado te4
+                    WHERE te4.id_tarea = t.id_tarea AND te4.tarea_estado = 'FINALIZADO'
                 )
             WHERE " . implode(' AND ', $where) . "
             ORDER BY te.fecha_tarea_estado DESC
@@ -247,21 +281,28 @@ class ReporteModel extends Model
 
     public function cumplimientoObjetivos(string $anio = ''): array
     {
-        $where  = ['1=1'];
-        $params = [];
-        if ($anio) { $where[] = 'om.periodo LIKE ?'; $params[] = "$anio%"; }
+        // Filtro de año en el ON para NO convertir el LEFT JOIN en INNER JOIN
+        // Se usa parámetro preparado para evitar inyección SQL
+        $joinCond = $anio
+            ? "ON om.id_objetivo = oc.id AND om.periodo LIKE ?"
+            : "ON om.id_objetivo = oc.id";
+        $params = $anio ? ["{$anio}%"] : [];
 
         return $this->query("
-            SELECT oc.codigo, oc.objetivo, oc.meta, oc.frecuencia, oc.responsable,
-                   COUNT(om.id) AS total_mediciones,
-                   SUM(om.cumple) AS mediciones_cumplidas,
-                   ROUND(AVG(om.valor_obtenido), 2) AS promedio_obtenido,
-                   ROUND(AVG(om.valor_meta), 2) AS promedio_meta,
+            SELECT oc.id, oc.codigo, oc.objetivo, oc.meta, oc.frecuencia,
+                   COALESCE(e.nombre_completo, '') AS responsable,
+                   oc.id_proceso,
+                   COALESCE(p.proceso, '—') AS proceso,
+                   COUNT(om.id)                                        AS total_mediciones,
+                   COALESCE(SUM(om.cumple), 0)                        AS mediciones_cumplidas,
+                   ROUND(AVG(om.valor_obtenido), 2)                   AS promedio_obtenido,
+                   ROUND(AVG(om.valor_meta), 2)                       AS promedio_meta,
                    ROUND(SUM(om.cumple) / NULLIF(COUNT(om.id),0) * 100, 1) AS pct_cumplimiento
             FROM objetivo_calidad oc
-            LEFT JOIN objetivo_medicion om ON om.id_objetivo = oc.id
-            WHERE " . implode(' AND ', $where) . "
-              AND oc.estado = 'ACTIVO'
+            LEFT JOIN objetivo_medicion om $joinCond
+            LEFT JOIN proceso p ON p.id_proceso = oc.id_proceso
+            LEFT JOIN empleado e ON e.id_empleado = oc.id_responsable
+            WHERE oc.estado = 'ACTIVO'
             GROUP BY oc.id
             ORDER BY oc.codigo
         ", $params)->fetchAll();
@@ -278,11 +319,13 @@ class ReporteModel extends Model
         return $this->query("
             SELECT ap.anio, ap.descripcion AS programa,
                    h.tipo, h.clausula_iso, h.proceso_auditado,
-                   h.descripcion, h.responsable,
+                   h.descripcion,
+                   COALESCE(er.nombre_completo, h.responsable) AS responsable,
                    h.fecha_cierre, h.estado,
                    h.accion_correctiva
             FROM auditoria_hallazgo h
             INNER JOIN auditoria_programa ap ON ap.id = h.id_programa
+            LEFT  JOIN empleado er ON er.id_empleado = h.id_responsable
             WHERE " . implode(' AND ', $where) . "
             ORDER BY ap.anio DESC, h.tipo, h.estado
         ", $params)->fetchAll();
@@ -298,11 +341,12 @@ class ReporteModel extends Model
 
         return $this->query("
             SELECT ac.codigo, ac.origen, ac.descripcion_nc,
-                   ac.responsable, ac.fecha_planificada, ac.fecha_cierre,
+                   COALESCE(e.nombre_completo, ac.responsable) AS responsable, ac.fecha_planificada, ac.fecha_cierre,
                    ac.estado, ac.eficaz,
                    DATEDIFF(COALESCE(ac.fecha_cierre, CURDATE()), ac.fecha_planificada) AS dias_diferencia,
                    ac.causa_raiz, ac.accion_correctiva
             FROM accion_correctiva ac
+            LEFT JOIN empleado e ON e.id_empleado = ac.id_responsable
             WHERE " . implode(' AND ', $where) . "
             ORDER BY ac.estado, ac.fecha_planificada
         ", $params)->fetchAll();
@@ -353,7 +397,7 @@ class ReporteModel extends Model
                 SELECT
                     COUNT(*) AS total,
                     SUM(estado_solicitud='CREADA') AS creadas,
-                    SUM(estado_solicitud='EN DESARROLLO') AS en_desarrollo,
+                    SUM(estado_solicitud='EN_DESARROLLO') AS en_desarrollo,
                     SUM(estado_solicitud='FINALIZADA') AS finalizadas,
                     ROUND(AVG(TIMESTAMPDIFF(HOUR,fecha_solicitud,COALESCE(fecha_solucion,NOW()))),1) AS promedio_horas
                 FROM solicitud
@@ -371,4 +415,41 @@ class ReporteModel extends Model
             ", [date('Y') . '%'])->fetch(),
         ];
     }
+
+    /** HU-042: Reporte estado de usuarios */
+    public function reporteUsuarios(): array
+    {
+        return $this->query("
+            SELECT u.id_usuario, u.usuario,
+                   COALESCE(e.nombre_completo, u.usuario) AS nombre_completo,
+                   u.estado, u.fecha_creacion, u.fecha_activacion,
+                   u.fecha_vencimiento, u.ultimo_login,
+                   u.intentos_fallidos, u.bloqueado_hasta,
+                   u.fecha_cambio_clave,
+                   GROUP_CONCAT(r.rol ORDER BY r.rol SEPARATOR ', ') AS roles
+            FROM usuario u
+            LEFT JOIN empleado   e  ON e.id_empleado = u.id_empleado
+            LEFT JOIN usuario_rol ur ON ur.id_usuario = u.id_usuario
+            LEFT JOIN rol         r  ON r.id_rol      = ur.id_rol
+            GROUP BY u.id_usuario
+            ORDER BY u.estado, e.nombre_completo
+        ")->fetchAll();
+    }
+
+    /** HU-042: Reporte historial de cambios de contraseña */
+    public function reporteContrasenas(): array
+    {
+        return $this->query("
+            SELECT u.usuario,
+                   COALESCE(e.nombre_completo, u.usuario) AS nombre_completo,
+                   u.fecha_creacion      AS fecha_registro,
+                   u.fecha_cambio_clave  AS ultimo_cambio,
+                   u.clave_requiere_reset AS requiere_reset,
+                   u.estado
+            FROM usuario u
+            LEFT JOIN empleado e ON e.id_empleado = u.id_empleado
+            ORDER BY u.fecha_cambio_clave DESC
+        ")->fetchAll();
+    }
+
 }

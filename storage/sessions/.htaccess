@@ -1,0 +1,2 @@
+# Denegar acceso HTTP directo — solo PHP puede leer estas sesiones
+Deny from all

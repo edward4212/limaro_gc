@@ -19,7 +19,7 @@ class RolModel extends Model
     {
         return $this->query("
             SELECT r.*,
-                   (SELECT COUNT(*) FROM usuario u WHERE u.id_rol = r.id_rol) AS total_usuarios
+                   (SELECT COUNT(*) FROM usuario_rol ur WHERE ur.id_rol = r.id_rol) AS total_usuarios
             FROM rol r
             ORDER BY r.rol
         ")->fetchAll();
@@ -65,19 +65,25 @@ class RolModel extends Model
             SELECT * FROM modulo WHERE estado = 'ACTIVO' ORDER BY id_padre, orden
         ")->fetchAll();
 
-        $tree = [];
+        // Indexar todos por id
+        $indexed = [];
         foreach ($all as $m) {
-            if ($m['id_padre'] === null) {
-                $m['hijos'] = [];
-                $tree[$m['id_modulo']] = $m;
+            $m['hijos'] = [];
+            $indexed[$m['id_modulo']] = $m;
+        }
+
+        // Construir árbol recursivo (N niveles)
+        $roots = [];
+        foreach ($all as $m) {
+            $id  = $m['id_modulo'];
+            $pid = $m['id_padre'];
+            if ($pid === null) {
+                $roots[$id] = &$indexed[$id];
+            } elseif (isset($indexed[$pid])) {
+                $indexed[$pid]['hijos'][] = &$indexed[$id];
             }
         }
-        foreach ($all as $m) {
-            if ($m['id_padre'] !== null && isset($tree[$m['id_padre']])) {
-                $tree[$m['id_padre']]['hijos'][] = $m;
-            }
-        }
-        return array_values($tree);
+        return array_values($roots);
     }
 
     /**
@@ -111,4 +117,53 @@ class RolModel extends Model
             ]);
         }
     }
+
+    /**
+     * Auto-asignar ver=1 a todos los módulos activos al crear un rol nuevo.
+     * Elimina el Database::getInstance() en RolController::guardar().
+     */
+    public function autoAsignarModulos(int $idRol): void
+    {
+        $this->query(
+            "INSERT IGNORE INTO rol_modulo (id_rol, id_modulo, ver, crear, editar, eliminar)
+             SELECT ?, id_modulo, 1, 0, 0, 0 FROM modulo WHERE estado = 'ACTIVO'",
+            [$idRol]
+        );
+    }
+
+    /**
+     * Verificar si un rol tiene usuarios activos asignados.
+     * Elimina el Database::getInstance() en RolController::eliminar().
+     */
+    public function tieneUsuariosActivos(int $idRol): int
+    {
+        return (int) $this->query(
+            "SELECT COUNT(*) FROM usuario_rol ur
+             INNER JOIN usuario u ON u.id_usuario = ur.id_usuario
+             WHERE ur.id_rol = ? AND u.estado = 'ACTIVO'",
+            [$idRol]
+        )->fetchColumn();
+    }
+
+    /**
+     * Sincronizar módulos faltantes para un rol (agrega los que no tiene).
+     * Elimina el Database::getInstance() en RolController::sincronizar().
+     *
+     * @return int  Cantidad de módulos agregados
+     */
+    public function sincronizarModulos(int $idRol): int
+    {
+        $stmt = $this->query(
+            "INSERT IGNORE INTO rol_modulo (id_rol, id_modulo, ver, crear, editar, eliminar)
+             SELECT ?, id_modulo, 1, 0, 0, 0
+             FROM modulo
+             WHERE estado = 'ACTIVO'
+               AND id_modulo NOT IN (
+                   SELECT id_modulo FROM rol_modulo WHERE id_rol = ?
+               )",
+            [$idRol, $idRol]
+        );
+        return (int) $stmt->rowCount();
+    }
+
 }

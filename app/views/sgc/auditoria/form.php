@@ -29,11 +29,25 @@ $action = $isEdit
                 <div class="col-md-5">
                     <label class="form-label">Estado</label>
                     <select class="form-select" name="estado">
-                        <?php foreach (['PROGRAMADA','EN_CURSO','FINALIZADA','CANCELADA'] as $est): ?>
-                        <option value="<?= $est ?>" <?= ($isEdit && $item['estado']===$est)?'selected':'' ?>>
-                            <?= ucfirst(strtolower(str_replace('_',' ',$est))) ?>
+                        <?php
+                        $hallazgosAb = $isEdit
+                            ? (new App\Models\AuditoriaInternaModel())->contarHallazgosAbiertos($item['id'])
+                            : 0;
+                        foreach (['PROGRAMADA','EN_CURSO','FINALIZADA','CANCELADA'] as $est):
+                            $disabled = ($est === 'FINALIZADA' && $hallazgosAb > 0) ? 'disabled' : '';
+                            $label    = ucfirst(strtolower(str_replace('_',' ',$est)));
+                            if ($est === 'FINALIZADA' && $hallazgosAb > 0) {
+                                $label .= " ⚠️ ($hallazgosAb abiertos)";
+                            }
+                        ?>
+                        <option value="<?= $est ?>" <?= ($isEdit && $item['estado']===$est)?'selected':'' ?>
+                                <?= $disabled ?>>
+                            <?= $label ?>
                         </option>
                         <?php endforeach; ?>
+                        <?php if ($hallazgosAb > 0): ?>
+                        <option disabled>── Cierre hallazgos para finalizar ──</option>
+                        <?php endif; ?>
                     </select>
                 </div>
             </div>
@@ -50,17 +64,67 @@ $action = $isEdit
                 <label class="form-label">Alcance</label>
                 <textarea class="form-control" name="alcance" rows="2"><?= $isEdit ? e($item['alcance']) : '' ?></textarea>
             </div>
+            <!-- CA-1: Auditor Líder filtrado por rol AUDITOR -->
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <label class="form-label">Auditor Líder <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="auditor_lider" required
-                           value="<?= $isEdit ? e($item['auditor_lider']) : '' ?>">
+                    <label class="form-label fw-semibold">
+                        Auditor Líder <span class="text-danger">*</span>
+                    </label>
+                    <select class="form-select" name="id_auditor_lider" id="selAuditorLider"
+                            required onchange="actualizarNombreAuditor()">
+                        <option value="">-- Seleccione auditor --</option>
+                        <?php foreach ($auditores as $a): ?>
+                        <option value="<?= (int)$a['id_usuario'] ?>"
+                                data-nombre="<?= e($a['nombre_completo']) ?>"
+                                data-correo="<?= e($a['correo_empleado'] ?? '') ?>"
+                                <?= ($isEdit && (int)($item['id_auditor_lider'] ?? 0) === (int)$a['id_usuario']) ? 'selected' : '' ?>>
+                            <?= e($a['nombre_completo']) ?>
+                        </option>
+                        <?php endforeach; ?>
+                        <?php if (empty($auditores)): ?>
+                        <option disabled>— No hay usuarios con rol AUDITOR —</option>
+                        <?php endif; ?>
+                    </select>
+                    <input type="hidden" name="auditor_lider" id="hidAuditorLider"
+                           value="<?= $isEdit ? e($item['auditor_lider'] ?? '') : '' ?>">
+                    <div class="form-text" id="infoAuditor"></div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Equipo Auditor</label>
-                    <input type="text" class="form-control" name="auditores" placeholder="Nombres separados por coma"
-                           value="<?= $isEdit ? e($item['auditores']) : '' ?>">
+                    <input type="text" class="form-control" name="auditores"
+                           placeholder="Otros auditores (separados por coma)"
+                           value="<?= $isEdit ? e($item['auditores'] ?? '') : '' ?>">
                 </div>
+            </div>
+
+            <!-- CA-2: Tipo de auditoría -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Tipo de Auditoría</label>
+                    <select class="form-select" name="tipo_auditoria">
+                        <?php
+                        $tipos = [
+                            'CALIDAD'       => '🏆 Calidad (SGC ISO)',
+                            'ASEGURAMIENTO' => '🔒 Aseguramiento de Procesos',
+                            'SEGUIMIENTO'   => '📋 Seguimiento',
+                            'ESPECIAL'      => '⚡ Especial',
+                        ];
+                        $tipoAct = $isEdit ? ($item['tipo_auditoria'] ?? 'CALIDAD') : 'CALIDAD';
+                        foreach ($tipos as $val => $label):
+                        ?>
+                        <option value="<?= $val ?>" <?= $tipoAct === $val ? 'selected' : '' ?>>
+                            <?= $label ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <!-- CA-3: Objetivos específicos -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Objetivos Específicos de la Auditoría</label>
+                <textarea class="form-control" name="objetivos_especificos" rows="3"
+                          placeholder="Defina los objetivos específicos que se evaluarán en esta auditoría..."><?= $isEdit ? e($item['objetivos_especificos'] ?? '') : '' ?></textarea>
             </div>
             <div class="row mb-4">
                 <div class="col-md-4">
@@ -75,7 +139,9 @@ $action = $isEdit
                 </div>
             </div>
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-lim-primary"><i class="bi bi-save me-1"></i>Guardar</button>
+                <button type="submit" class="btn btn-lim-primary">
+                    <i class="bi bi-save me-1"></i>Guardar Programa
+                </button>
                 <a href="<?= e(APP_URL) ?>/auditoria-interna" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
@@ -83,19 +149,45 @@ $action = $isEdit
 </div>
 </div>
 
+<script>
+function actualizarNombreAuditor() {
+    const sel   = document.getElementById('selAuditorLider');
+    const opt   = sel.options[sel.selectedIndex];
+    const hid   = document.getElementById('hidAuditorLider');
+    const info  = document.getElementById('infoAuditor');
+    if (opt && opt.value) {
+        hid.value = opt.dataset.nombre || '';
+        if (opt.dataset.correo) {
+            info.innerHTML = '<i class="bi bi-envelope me-1"></i>' + opt.dataset.correo;
+        }
+    } else {
+        hid.value = '';
+        info.textContent = '';
+    }
+}
+document.addEventListener('DOMContentLoaded', actualizarNombreAuditor);
+</script>
+
 <?php if ($isEdit): ?>
 <div class="col-lg-5">
 <!-- Registrar hallazgo -->
 <div class="card mb-3">
     <div class="card-header"><i class="bi bi-exclamation-triangle me-1 text-warning"></i>Registrar Hallazgo</div>
     <div class="card-body">
+        <?php if (in_array($item['estado'] ?? '', ['FINALIZADA','CANCELADA'])): ?>
+        <div class="alert alert-warning py-2 mb-0" style="font-size:13px;">
+            <i class="bi bi-lock me-1"></i>
+            El programa está <strong><?= e($item['estado']) ?></strong> — no se pueden agregar hallazgos.
+        </div>
+        <?php else: ?>
         <form action="<?= e(APP_URL) ?>/auditoria-interna/hallazgo/<?= (int)$item['id'] ?>" method="POST">
             <?= csrfField() ?>
             <div class="mb-2">
                 <label class="form-label" style="font-size:12px;">Tipo</label>
                 <select class="form-select form-select-sm" name="tipo">
                     <option value="NO_CONFORMIDAD">No Conformidad</option>
-                    <option value="OBSERVACION" selected>Observación</option>
+                    <option value="HALLAZGO" selected>Hallazgo</option>
+                    <option value="OBSERVACION">Observación</option>
                     <option value="OPORTUNIDAD">Oportunidad de Mejora</option>
                     <option value="FORTALEZA">Fortaleza</option>
                 </select>
@@ -107,7 +199,14 @@ $action = $isEdit
                 </div>
                 <div class="col-md-7">
                     <label class="form-label" style="font-size:12px;">Proceso Auditado</label>
-                    <input type="text" class="form-control form-control-sm" name="proceso_auditado">
+                    <select class="form-select form-select-sm" name="proceso_auditado">
+                        <option value="">— Seleccione proceso —</option>
+                        <?php foreach ($procesos ?? [] as $pr): ?>
+                        <option value="<?= e($pr['proceso']) ?>">
+                            <?= e($pr['proceso']) ?> (<?= e($pr['macroproceso']) ?>)
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
             <div class="mb-2">
@@ -132,6 +231,7 @@ $action = $isEdit
                 <i class="bi bi-plus-circle me-1"></i>Agregar Hallazgo
             </button>
         </form>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -148,7 +248,7 @@ $action = $isEdit
                         <?= str_replace('_',' ',$h['tipo']) ?>
                     </span>
                     <?php if ($h['clausula_iso']): ?>
-                    <code style="font-size:10px;"><?= e($h['clausula_iso']) ?></code>
+                    <span style="font-size:10px;"><?= e($h['clausula_iso']) ?></span>
                     <?php endif; ?>
                 </div>
                 <?= badgeEstado($h['estado']) ?>

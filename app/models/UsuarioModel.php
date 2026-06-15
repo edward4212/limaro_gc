@@ -74,7 +74,7 @@ class UsuarioModel extends Model
         $row['roles_ids'] = array_column($roles, 'id_rol');                 // array de IDs
 
         // id_rol = rol primario (el primero asignado, para compatibilidad)
-        $row['id_rol']    = !empty($roles) ? (int)$roles[0]['id_rol'] : (int)$row['id_rol'];
+        $row['id_rol']    = !empty($roles) ? (int)$roles[0]['id_rol'] : 0; // id_rol primary
 
         return $row;
     }
@@ -119,14 +119,7 @@ class UsuarioModel extends Model
                 );
             }
 
-            // Mantener id_rol del usuario = primer rol asignado (compatibilidad)
-            $primero = $idRoles[0] ?? null;
-            if ($primero) {
-                $this->query(
-                    "UPDATE usuario SET id_rol = ? WHERE id_usuario = ?",
-                    [$primero, $idUsuario]
-                );
-            }
+            // id_rol eliminado de la tabla usuario (usa tabla usuario_rol)
 
             $this->commit();
         } catch (\Throwable $e) {
@@ -137,14 +130,16 @@ class UsuarioModel extends Model
 
     /**
      * Permisos unificados (UNIÓN) de todos los roles del usuario.
-     * Si CUALQUIER rol tiene permiso sobre un módulo, el usuario lo tiene.
+     * Los módulos PADRE se incluyen automáticamente cuando algún hijo
+     * es accesible — sin necesidad de asignarlos explícitamente en rol_modulo.
      */
     public function permisosPorUsuario(int $idUsuario): array
     {
-        return $this->query("
+        // 1. Módulos con permiso directo en rol_modulo
+        $directos = $this->query("
             SELECT
                 mo.id_modulo, mo.codigo, mo.nombre, mo.url, mo.icono,
-                mo.id_padre,
+                mo.id_padre, mo.orden,
                 MAX(rm.ver)      AS ver,
                 MAX(rm.crear)    AS crear,
                 MAX(rm.editar)   AS editar,
@@ -154,9 +149,66 @@ class UsuarioModel extends Model
             INNER JOIN modulo     mo ON mo.id_modulo = rm.id_modulo
             WHERE ur.id_usuario = ?
               AND mo.estado = 'ACTIVO'
+              AND rm.ver    = 1
             GROUP BY mo.id_modulo
             ORDER BY mo.id_padre, mo.orden
         ", [$idUsuario])->fetchAll();
+
+        // 2. Recoger IDs ya presentes
+        $idsPresentes = array_column($directos, 'id_modulo');
+
+        // 3 + 4. Identificar y cargar módulos padre faltantes en UNA SOLA QUERY.
+        // Antes se hacía un SELECT por cada padre (N+1). Ahora: traer todos
+        // los módulos activos de una vez y resolver la jerarquía en PHP.
+        $idsPadreVer = [];
+        foreach ($directos as $m) {
+            $pid = $m['id_padre'] ?? null;
+            if ($pid !== null && !in_array($pid, $idsPresentes, false)) {
+                $idsPadreVer[$pid] = true;
+            }
+        }
+
+        $padres = [];
+        if (!empty($idsPadreVer)) {
+            // Traer todos los módulos activos para resolver abuelos en PHP
+            $todosMod = $this->query(
+                "SELECT id_modulo, codigo, nombre, url, icono, id_padre, orden
+                   FROM modulo WHERE estado = 'ACTIVO'"
+            )->fetchAll(\PDO::FETCH_UNIQUE | \PDO::FETCH_ASSOC);
+
+            // Expandir hasta llegar a la raíz (sin más queries)
+            $idsNecesarios = [];
+            $pendientes    = array_keys($idsPadreVer);
+            while (!empty($pendientes)) {
+                $siguiente = [];
+                foreach ($pendientes as $pid) {
+                    if (in_array($pid, $idsPresentes, false) || isset($idsNecesarios[$pid])) continue;
+                    $idsNecesarios[$pid] = true;
+                    $abuelo = $todosMod[$pid]['id_padre'] ?? null;
+                    if ($abuelo !== null && !in_array($abuelo, $idsPresentes, false)
+                                        && !isset($idsNecesarios[$abuelo])) {
+                        $siguiente[] = $abuelo;
+                    }
+                }
+                $pendientes = $siguiente;
+            }
+
+            foreach (array_keys($idsNecesarios) as $pid) {
+                if (isset($todosMod[$pid])) {
+                    // FETCH_UNIQUE quita id_modulo del array — lo reponemos
+                    $padres[] = ['id_modulo' => $pid] + $todosMod[$pid] + [
+                        'ver' => 1, 'crear' => 0, 'editar' => 0, 'eliminar' => 0,
+                    ];
+                }
+            }
+        }
+
+        // 5. Unir y ordenar
+        $todos = array_merge($padres, $directos);
+        usort($todos, fn($a, $b) => ($a['id_padre'] ?? -1) <=> ($b['id_padre'] ?? -1)
+                                 ?: ($a['orden'] ?? 99)    <=> ($b['orden'] ?? 99));
+
+        return $todos;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -191,11 +243,19 @@ class UsuarioModel extends Model
     public function verConDatos(int $id): ?array
     {
         $row = $this->query("
-            SELECT u.*, e.nombre_completo, e.correo_empleado, e.img_empleado,
-                   e.id_cargo, c.cargo
+            SELECT u.*,
+                   e.id_empleado,
+                   e.nombre_completo,
+                   e.correo_empleado,
+                   e.img_empleado,
+                   e.id_cargo,
+                   e.telefono,
+                   e.documento_identidad,
+                   e.estado_empleado,
+                   c.cargo
             FROM usuario u
             INNER JOIN empleado e ON e.id_empleado = u.id_empleado
-            INNER JOIN cargo    c ON c.id_cargo    = e.id_cargo
+            LEFT  JOIN cargo    c ON c.id_cargo    = e.id_cargo
             WHERE u.id_usuario = ?
             LIMIT 1
         ", [$id])->fetch();
@@ -239,9 +299,11 @@ class UsuarioModel extends Model
             $algo  = defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
             $hash  = password_hash($clave, $algo);
             $this->query("
-                INSERT INTO usuario (usuario, clave, id_rol, id_empleado, estado, clave_requiere_reset)
-                VALUES (?, ?, ?, ?, ?, 0)
-            ", [$usuario, $hash, $rolPrimario, $idEmpleado, $estado]);
+                INSERT INTO usuario
+                    (usuario, clave, id_empleado, estado, clave_requiere_reset,
+                     fecha_creacion, fecha_vencimiento)
+                VALUES (?, ?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 1 YEAR))
+            ", [$usuario, $hash, $idEmpleado, $estado, $estado === 'CREADO' ? 1 : 0]);
             $idUsuario = (int)$this->db->lastInsertId();
 
             // 3. Insertar en usuario_rol
@@ -343,4 +405,168 @@ class UsuarioModel extends Model
         )->fetch();
         return $row ?: null;
     }
+
+    /**
+     * Obtener todos los usuarios ACTIVOS con correo electrónico válido.
+     * Usado para enviar notificaciones masivas (HU-009).
+     */
+    public function usuariosActivosConCorreo(): array
+    {
+        return $this->query("
+            SELECT u.id_usuario,
+                   e.nombre_completo,
+                   e.correo_empleado
+            FROM usuario u
+            INNER JOIN empleado e ON e.id_empleado = u.id_empleado
+            WHERE u.estado = 'ACTIVO'
+              AND e.correo_empleado IS NOT NULL
+              AND e.correo_empleado != ''
+              AND e.correo_empleado LIKE '%@%'
+            ORDER BY e.nombre_completo
+        ")->fetchAll();
+    }
+
+
+    /**
+     * Obtener nombre completo de un usuario por id.
+     */
+    public function nombreCompleto(int $idUsuario): string
+    {
+        if (!$idUsuario) return '';
+        $row = $this->query(
+            "SELECT e.nombre_completo FROM usuario u
+             INNER JOIN empleado e ON e.id_empleado = u.id_empleado
+             WHERE u.id_usuario = ? LIMIT 1",
+            [$idUsuario]
+        )->fetch();
+        return $row ? $row['nombre_completo'] : '';
+    }
+
+
+    /**
+     * Todos los usuarios ACTIVOS con nombre completo.
+     * Usado para SELECTs de Elaboró/Revisó/Aprobó (sin filtro de email).
+     */
+    public function usuariosActivosTodos(): array
+    {
+        return $this->query("
+            SELECT u.id_usuario,
+                   e.nombre_completo,
+                   u.usuario
+            FROM usuario u
+            INNER JOIN empleado e ON e.id_empleado = u.id_empleado
+            WHERE u.estado = 'ACTIVO'
+            ORDER BY e.nombre_completo
+        ")->fetchAll();
+    }
+
+
+    /**
+     * Usuarios activos con un rol específico (por nombre del rol).
+     * Usado para notificar a COORDINADOR CALIDAD, LIDER PROCESO, etc.
+     */
+    public function usuariosPorRol(string $nombreRol): array
+    {
+        return $this->query("
+            SELECT DISTINCT u.id_usuario,
+                   e.nombre_completo,
+                   e.correo_empleado
+            FROM usuario u
+            INNER JOIN empleado    e  ON e.id_empleado  = u.id_empleado
+            INNER JOIN usuario_rol ur ON ur.id_usuario  = u.id_usuario
+            INNER JOIN rol         r  ON r.id_rol        = ur.id_rol
+            WHERE u.estado = 'ACTIVO'
+              AND r.rol    = ?
+              AND r.estado = 'ACTIVO'
+        ", [$nombreRol])->fetchAll();
+    }
+
+    /**
+     * Obtener el correo del empleado por id_empleado.
+     * Usado para notificar al solicitante.
+     */
+    public function correoEmpleado(int $idEmpleado): ?array
+    {
+        $row = $this->query("
+            SELECT e.nombre_completo, e.correo_empleado
+            FROM empleado e
+            WHERE e.id_empleado = ?
+              AND e.correo_empleado IS NOT NULL
+              AND e.correo_empleado != ''
+        ", [$idEmpleado])->fetch();
+        return $row ?: null;
+    }
+
+
+    /** Obtener id_empleado de un usuario */
+    public function empleadoIdDeUsuario(int $idUsuario): int
+    {
+        $row = $this->query(
+            "SELECT id_empleado FROM usuario WHERE id_usuario = ?",
+            [$idUsuario]
+        )->fetch();
+        return (int)($row['id_empleado'] ?? 0);
+    }
+
+
+    /**
+     * Actualizar usuario + empleado en una sola operación.
+     * HU-028: permite editar todos los campos excepto id_empresa.
+     */
+    public function actualizarCompleto(
+        int    $idUsuario,
+        string $estado,
+        array  $idRoles,
+        string $nombreCompleto,
+        string $correo,
+        int    $idCargo,
+        ?string $telefono,
+        ?string $documentoIdentidad,
+        int    $claveRequiereReset = -1  // -1 = no cambiar
+    ): void {
+        $this->beginTransaction();
+        try {
+            // 1. Actualizar usuario.estado
+            $this->update($idUsuario, array_filter([
+                'estado' => $estado,
+            ] + ($claveRequiereReset >= 0 ? ['clave_requiere_reset' => $claveRequiereReset] : [])));
+
+            // 2. Actualizar empleado (todos los campos editables)
+            $idEmpleado = (int)($this->query(
+                "SELECT id_empleado FROM usuario WHERE id_usuario = ?",
+                [$idUsuario]
+            )->fetchColumn());
+
+            if ($idEmpleado) {
+                $this->query("
+                    UPDATE empleado
+                    SET nombre_completo     = ?,
+                        correo_empleado     = ?,
+                        id_cargo            = ?,
+                        telefono            = ?,
+                        documento_identidad = ?
+                    WHERE id_empleado = ?
+                ", [
+                    $nombreCompleto, $correo, $idCargo,
+                    $telefono ?: null, $documentoIdentidad ?: null,
+                    $idEmpleado,
+                ]);
+            }
+
+            // 3. Actualizar roles
+            $this->query("DELETE FROM usuario_rol WHERE id_usuario = ?", [$idUsuario]);
+            foreach (array_unique(array_filter(array_map('intval', $idRoles))) as $idRol) {
+                $this->query(
+                    "INSERT INTO usuario_rol (id_usuario, id_rol) VALUES (?, ?)",
+                    [$idUsuario, $idRol]
+                );
+            }
+
+            $this->commit();
+        } catch (\Throwable $e) {
+            $this->rollBack();
+            throw $e;
+        }
+    }
+
 }

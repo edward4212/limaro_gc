@@ -71,6 +71,7 @@ class DocumentoController extends Controller
     /** GET /documentos/crear */
     public function crear(): void
     {
+        Session::clearOldInput();
         $this->view('empresa/documentos/form', [
             'pageTitle'     => 'Crear Documento',
             'item'          => null,
@@ -126,14 +127,79 @@ class DocumentoController extends Controller
         $item = $this->model->find($id);
         if (!$item) $this->abort(404);
 
+        // CA-1 HU-005: subprocesos filtrados al proceso actual del documento
+        // CA-3 HU-008: si falla, retornar array vacío y logear
+        try {
+            $subprocesosFiltrados = $this->subprocesoModel->porProceso((int)$item['id_proceso']);
+        } catch (\Throwable $eS) {
+            error_log('[DocumentoController::editar] subprocesos id_proceso=' . $item['id_proceso'] . ' | ' . $eS->getMessage());
+            $subprocesosFiltrados = [];
+        }
+
         $this->view('empresa/documentos/form', [
             'pageTitle'     => 'Editar Documento',
             'item'          => $item,
             'tipos'         => $this->tipoModel->activos(),
             'macroprocesos' => $this->macroModel->activos(),
             'procesos'      => $this->procesoModel->activos(),
-            'subprocesos'   => $this->subprocesoModel->activos(),
+            'subprocesos'   => $subprocesosFiltrados,
         ]);
+    }
+
+    /** GET /documentos/reasignar/{id} — CA-2 HU-005 */
+    public function reasignarForm(int $id): void
+    {
+        $item = $this->model->find($id);
+        if (!$item) $this->abort(404);
+
+        // Verificar que no hay solicitudes activas antes de mostrar el form
+        $solicitudesActivas = $this->model->solicitudesActivasDocumento($id);
+
+        // CA-3 HU-009: enriquecer $item con nombre real del proceso
+        $itemConProceso = $this->model->conDetalle($item['id_documento']) ?? $item;
+
+        $this->view('empresa/documentos/form_reasignar', [
+            'pageTitle'       => 'Reasignar Documento — ' . $item['nombre_documento'],
+            'item'            => $itemConProceso,
+            'macroprocesos'   => $this->macroModel->activos(),
+            'procesos'        => $this->procesoModel->activos(),
+            'subprocesos'     => $this->subprocesoModel->activos(),
+            'tieneActivas'    => $solicitudesActivas > 0,
+        ]);
+    }
+
+    /** POST /documentos/reasignar/{id} — CA-2 HU-005 */
+    public function reasignar(int $id): void
+    {
+        Csrf::verify();
+        $antes = $this->model->find($id);
+        if (!$antes) $this->abort(404);
+
+        $data = Request::only(['id_proceso_nuevo', 'id_subproceso_nuevo', 'observacion_reasignacion']);
+        $idProcesoNuevo = (int)($data['id_proceso_nuevo'] ?? 0);
+
+        if (!$idProcesoNuevo) {
+            Session::flash('error', 'Debe seleccionar el proceso destino.');
+            $this->redirect("/documentos/reasignar/$id");
+            return;
+        }
+
+        if ($idProcesoNuevo === (int)$antes['id_proceso']) {
+            Session::flash('error', 'El proceso destino es el mismo que el actual. Seleccione uno diferente.');
+            $this->redirect("/documentos/reasignar/$id");
+            return;
+        }
+
+        try {
+            $idSubprocesoNuevo = !empty($data['id_subproceso_nuevo']) ? (int)$data['id_subproceso_nuevo'] : null;
+            $this->model->reubicar($id, $idProcesoNuevo, $idSubprocesoNuevo, $data['observacion_reasignacion'] ?? '');
+            registrarAuditoria('documentos', 'REASIGNAR', 'documento', $id, $antes, $data);
+            $this->redirectSuccess('/documentos', 'Documento reasignado correctamente. El código fue actualizado.');
+        } catch (\Throwable $e) {
+            error_log('[Limaro] reasignar documento: ' . $e->getMessage());
+            Session::flash('error', 'Error al reasignar. ' . $e->getMessage());
+            $this->redirect("/documentos/reasignar/$id");
+        }
     }
 
     /** POST /documentos/editar/{id} */
@@ -262,4 +328,94 @@ public function ajaxTipo(): void
         'total'      => count($documentos),
     ]);
 }
+
+    /**
+     * GET /documentos/vigentes/descargar-zip
+     * HU-016: genera ZIP con todos los documentos vigentes organizados por proceso/tipo
+     */
+    public function descargarZipVigentes(): void
+    {
+        if (!class_exists('ZipArchive')) {
+            Session::flash('error', 'La extensión ZIP no está disponible en el servidor.');
+            $this->redirect('/documentos/vigentes');
+            return;
+        }
+
+        $docs = $this->model->vigentes();
+
+        if (empty($docs)) {
+            Session::flash('error', 'No hay documentos vigentes para descargar.');
+            $this->redirect('/documentos/vigentes');
+            return;
+        }
+
+        $tmpZip  = tempnam(sys_get_temp_dir(), 'docs_vigentes_') . '.zip';
+        $zip     = new \ZipArchive();
+        $baseDir = APP_ROOT . '/public/storage/documentos/';
+
+        if ($zip->open($tmpZip, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            Session::flash('error', 'No se pudo crear el archivo ZIP temporal.');
+            $this->redirect('/documentos/vigentes');
+            return;
+        }
+
+        $archivados = 0;
+        $sinArchivo = 0;
+
+        foreach ($docs as $d) {
+            // Ruta del archivo físico
+            $rutaRel = $d['archivo_ruta'] ?? $d['archivo_ruta_legacy'] ?? null;
+            if (empty($rutaRel)) { $sinArchivo++; continue; }
+
+            // Ruta absoluta — soportar rutas relativas del storage
+            $rutaAbs = str_starts_with($rutaRel, '/')
+                ? APP_ROOT . '/public' . $rutaRel
+                : $baseDir . $rutaRel;
+
+            if (!file_exists($rutaAbs)) { $sinArchivo++; continue; }
+
+            // CA-2: estructura carpetas: proceso / tipo_documento / codigo-nombre.ext
+            $proc    = sanitizarSegmentoCarpeta($d['proceso'] ?? 'SIN_PROCESO');
+            $tipo    = sanitizarSegmentoCarpeta($d['tipo_documento'] ?? 'SIN_TIPO');
+            $ext     = pathinfo($rutaAbs, PATHINFO_EXTENSION);
+            $nombre  = sanitizarSegmentoCarpeta($d['codigo'] . ' ' . $d['nombre_documento']);
+            $enZip   = "$proc/$tipo/$nombre.$ext";
+
+            $zip->addFile($rutaAbs, $enZip);
+            $archivados++;
+        }
+
+        $zip->close();
+
+        if ($archivados === 0) {
+            @unlink($tmpZip);
+            Session::flash('error', "No se encontraron archivos físicos para descargar ($sinArchivo documentos sin archivo).");
+            $this->redirect('/documentos/vigentes');
+            return;
+        }
+
+        // CA-1 y CA-3: enviar ZIP al cliente
+        $nombreDescarga = 'documentos_vigentes_' . date('Ymd') . '.zip';
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename="' . $nombreDescarga . '"');
+        header('Content-Length: ' . filesize($tmpZip));
+        header('Pragma: no-cache');
+        header('Cache-Control: no-store, no-cache');
+        readfile($tmpZip);
+        @unlink($tmpZip);
+        exit;
+    }
+
+
+    /** GET /documentos/buscar?q=X  — Ajax para autocompletar en solicitudes */
+    public function buscar(): void
+    {
+        $q = trim(Request::get('q', ''));
+        if (mb_strlen($q) < 2) {
+            $this->json([]);
+            return;
+        }
+        $this->json($this->model->buscar($q));
+    }
+
 }

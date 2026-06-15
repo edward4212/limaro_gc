@@ -36,3 +36,9 @@ Options -MultiViews
     ExpiresByType image/jpeg                "access plus 1 year"
     ExpiresByType image/svg+xml             "access plus 1 year"
 </IfModule>
+
+
+# PHP — directorio temporal para uploads
+php_value upload_tmp_dir /tmp
+php_value upload_max_filesize 25M
+php_value post_max_size 30M

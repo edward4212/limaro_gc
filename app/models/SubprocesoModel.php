@@ -38,10 +38,12 @@ class SubprocesoModel extends Model
     public function porProceso(int $idProceso): array
     {
         return $this->query("
-            SELECT id_subproceso, subproceso, sigla_subproceso
-            FROM subproceso
-            WHERE id_proceso = ? AND estado = 'ACTIVO'
-            ORDER BY subproceso
+            SELECT s.id_subproceso, s.subproceso, s.sigla_subproceso,
+                   p.proceso AS nombre_proceso, p.id_proceso
+            FROM subproceso s
+            INNER JOIN proceso p ON p.id_proceso = s.id_proceso
+            WHERE s.id_proceso = ? AND s.estado = 'ACTIVO'
+            ORDER BY s.subproceso
         ", [$idProceso])->fetchAll();
     }
 
@@ -63,39 +65,53 @@ class SubprocesoModel extends Model
     /**
      * Crear subproceso.
      */
-    public function crear(
-        int    $idProceso,
-        string $nombre,
-        string $sigla,
-        string $objetivo,
-        string $estado = 'ACTIVO'
+        public function crear(
+        int     $idProceso,
+        string  $nombre,
+        string  $sigla    = '',
+        string  $objetivo = '',
+        string  $estado   = 'ACTIVO'
     ): int {
+        // Sigla: NULL si viene vacía para no violar el UNIQUE (id_proceso, sigla_subproceso)
+        $siglaVal = strtoupper(trim($sigla)) ?: null;
+
         return $this->insert([
-            'id_proceso'        => $idProceso,
-            'subproceso'        => strtoupper(trim($nombre)),
-            'sigla_subproceso'  => strtoupper(trim($sigla)),
-            'objetivo'          => trim($objetivo),
-            'estado'            => $estado,
+            'id_proceso'       => $idProceso,
+            'subproceso'       => strtoupper(trim($nombre)),
+            'sigla_subproceso' => $siglaVal,
+            'objetivo'         => trim($objetivo),
+            'estado'           => $estado,
         ]);
     }
 
     /**
      * Actualizar subproceso.
      */
-    public function actualizar(
+        public function actualizar(
         int    $id,
         int    $idProceso,
         string $nombre,
-        string $sigla,
-        string $objetivo,
-        string $estado
+        string $sigla    = '',
+        string $objetivo = '',
+        string $estado   = 'ACTIVO'
     ): bool {
+        $siglaVal = strtoupper(trim($sigla)) ?: null;
+
         return $this->update($id, [
-            'id_proceso'        => $idProceso,
-            'subproceso'        => strtoupper(trim($nombre)),
-            'sigla_subproceso'  => strtoupper(trim($sigla)),
-            'objetivo'          => trim($objetivo),
-            'estado'            => $estado,
+            'id_proceso'       => $idProceso,
+            'subproceso'       => strtoupper(trim($nombre)),
+            'sigla_subproceso' => $siglaVal,
+            'objetivo'         => trim($objetivo),
+            'estado'           => $estado,
         ]);
     }
+
+    public function contarDocumentos(int $id): int
+    {
+        return (int) $this->query(
+            "SELECT COUNT(*) FROM documento WHERE id_subproceso = ? AND estado = 'ACTIVO'",
+            [$id]
+        )->fetchColumn();
+    }
+
 }

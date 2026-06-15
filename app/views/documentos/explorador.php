@@ -38,7 +38,8 @@ foreach ($procesos as $p) {
 
 <!-- ── Modal nivel 1: Subprocesos o Tipos ───────────────────────────── -->
 <div class="modal fade" id="modalNivel1" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"
+     style="max-width:min(98vw,1400px);width:98vw;">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="tituloNivel1"></h5>
@@ -53,7 +54,7 @@ foreach ($procesos as $p) {
 
 <!-- ── Modal nivel 2: Tipos (cuando viene de subproceso) ────────────── -->
 <div class="modal fade" id="modalNivel2" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:min(95vw,1100px);width:95vw;">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="tituloNivel2"></h5>
@@ -68,13 +69,13 @@ foreach ($procesos as $p) {
 
 <!-- ── Modal nivel 3: Listado de documentos ─────────────────────────── -->
 <div class="modal fade" id="modalDocs" tabindex="-1">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+ <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="tituloDocs"></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body p-0" id="cuerpoDocs">
+      <div class="modal-body p-0" id="cuerpoDocs" style="max-height:72vh;overflow-y:auto;">
         <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
       </div>
     </div>
@@ -88,6 +89,46 @@ foreach ($procesos as $p) {
 .badge-vigente   { background:#198754; color:#fff; font-size:11px; padding:3px 7px; border-radius:20px; }
 .badge-sin-arch  { background:#dc3545; color:#fff; font-size:11px; padding:3px 7px; border-radius:20px; }
 </style>
+
+
+<!-- HU-015: Modal visor de documentos (PDF, Word, Excel) -->
+<div class="modal fade" id="modalVisor" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered"
+       style="max-width:min(96vw,1200px);width:96vw;">
+    <div class="modal-content" style="height:90vh;">
+      <div class="modal-header py-2"
+           style="background:linear-gradient(135deg,var(--lim-blue-dark),var(--lim-blue));color:#fff;">
+        <span class="modal-title" id="visorTitulo" style="font-size:14px;font-weight:600;"></span>
+        <div class="d-flex gap-2 ms-auto">
+          <a id="visorDescargar" href="#" class="btn btn-sm btn-outline-light py-0" title="Descargar">
+            <i class="bi bi-download me-1"></i>Descargar
+          </a>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+      <!-- Barra de progreso HU-015 CA-2 -->
+      <div id="visorProgreso" class="progress" style="height:3px;border-radius:0;display:none;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+             style="width:100%;"></div>
+      </div>
+      <!-- Mensaje de error con fallback HU-015 CA-3 -->
+      <div id="visorError" class="d-none flex-column align-items-center justify-content-center p-5 text-center"
+           style="height:calc(90vh - 60px);">
+        <i class="bi bi-exclamation-circle text-danger" style="font-size:48px;"></i>
+        <p class="mt-3 text-muted">No se pudo cargar el visor en línea.</p>
+        <a id="visorErrorDescarga" href="#" class="btn btn-lim-primary mt-2">
+          <i class="bi bi-download me-1"></i>Descargar documento
+        </a>
+      </div>
+      <!-- Iframe del visor -->
+      <iframe id="visorIframe"
+              style="width:100%;height:calc(90vh - 63px);border:none;"
+              allow="fullscreen"
+              title="Visor de documento"></iframe>
+    </div>
+  </div>
+</div>
+
 
 <script>
 const APP_URL = '<?= e(APP_URL) ?>';
@@ -135,7 +176,7 @@ function renderSubprocesos(subprocesos, tiposDirectos, idProceso) {
                      onclick="abrirSubproceso(${s.id_subproceso},'${esc(s.subproceso)}',${idProceso})">
                     <i class="bi bi-folder2 text-info mb-1" style="font-size:1.5rem;"></i>
                     <div style="font-size:13px;font-weight:600;">${esc(s.subproceso)}</div>
-                    <code style="font-size:11px;">${esc(s.sigla_subproceso)}</code>
+                    <span style="font-size:11px;">${esc(s.sigla_subproceso)}</span>
                 </div>
             </div>`;
         });
@@ -227,63 +268,176 @@ function abrirDocumentos(idProceso, idTipo, nombreTipo, idSubproceso) {
         });
 }
 
-// ── Renderizar tabla de documentos ────────────────────────────────────
-function renderDocumentos(docs) {
-    if (!docs || docs.length === 0) {
+// ── Renderizar tabla de documentos ────────────────────────────────
+const POR_PAGINA = 10;
+let _docsActuales = [];
+let _paginaActual = 1;
+
+function renderDocumentos(docs, pagina) {
+    _docsActuales = docs || [];
+    _paginaActual = pagina || 1;
+
+    if (_docsActuales.length === 0) {
         document.getElementById('cuerpoDocs').innerHTML =
             '<p class="text-muted text-center py-4"><i class="bi bi-inbox me-2"></i>No hay documentos vigentes.</p>';
         return;
     }
 
-    let html = `
-    <table class="table table-hover table-sm mb-0">
-        <thead>
-            <tr>
-                <th>Macroproceso</th>
-                <th>Código</th>
-                <th>Nombre del Documento</th>
-                <th class="text-center">Versión</th>
-                <th>Fecha Vigencia</th>
-                <th class="text-center">Descarga</th>
-            </tr>
-        </thead>
-        <tbody>`;
+    // Calcular paginación
+    const total   = _docsActuales.length;
+    const totalPag = Math.ceil(total / POR_PAGINA);
+    const desde   = (_paginaActual - 1) * POR_PAGINA;
+    const hasta   = Math.min(desde + POR_PAGINA, total);
+    const docsPag = _docsActuales.slice(desde, hasta);
 
-    docs.forEach(d => {
-        const tieneArchivo = d.archivo_ruta && d.archivo_ruta.trim() !== '';
-        const indicador    = tieneArchivo
-            ? '<span class="badge-vigente">●</span>'
-            : '<span class="badge-sin-arch">●</span>';
-        const btnDescarga  = tieneArchivo
-            ? `<a href="${APP_URL}/public${d.archivo_ruta}" target="_blank"
-                  class="btn btn-sm btn-outline-primary py-0" title="Descargar">
-                  <i class="bi bi-download"></i>
-               </a>`
-            : '<span class="text-muted">—</span>';
+    let html = `<table class="table table-hover table-sm mb-0">
+        <thead class="table-light"><tr>
+            <th style="width:115px">Código</th>
+            <th>Nombre</th>
+            <th style="width:75px" class="text-center">Ver.</th>
+            <th style="width:105px">Vigencia</th>
+            <th style="width:120px" class="text-center">Acciones</th>
+        </tr></thead><tbody>`;
+    docsPag.forEach(d => {
+        // Puede tener archivo en tabla archivo (nuevo) o ruta legada en versionamiento.documento
+        const tieneArch = (d.id_archivo && d.id_archivo > 0) || (d.archivo_ruta && d.archivo_ruta.trim() !== '');
+        const dot = tieneArch
+            ? '<i class="bi bi-circle-fill text-success me-1" style="font-size:8px;"></i>'
+            : '<i class="bi bi-circle text-danger me-1" style="font-size:8px;"></i>';
+        const urlVer      = d.id_archivo > 0
+            ? `${APP_URL}/archivo/${d.id_archivo}?inline=1`
+            : `${APP_URL}/archivo/v/${d.id_versionamiento}?inline=1`;
+        const urlDescarga = d.id_archivo > 0
+            ? `${APP_URL}/archivo/${d.id_archivo}`
+            : `${APP_URL}/archivo/v/${d.id_versionamiento}`;
 
-        const fechaVig = d.fecha_aprobacion
-            ? new Date(d.fecha_aprobacion).toLocaleDateString('es-CO',
-                {year:'numeric',month:'2-digit',day:'2-digit'})
+        // HU-015: detectar extensión para pasar al visor
+        const ext = (urlVer.split('?')[0]).split('.').pop().toLowerCase();
+        const esOffice = ['docx','doc','xlsx','xls','pptx','ppt'].includes(ext);
+        const labelVer = esOffice ? 'Word/Excel' : 'Ver PDF';
+        const iconVer  = esOffice ? 'bi-file-earmark-spreadsheet' : 'bi-eye';
+
+        const btns = tieneArch
+            ? `<button onclick="abrirVisor('${urlVer}','${urlDescarga}','${esc(d.nombre_documento)}','')"
+                  class="btn btn-sm btn-outline-danger py-0 px-2 me-1"
+                  title="${labelVer} — Visor en línea">
+                  <i class="bi ${iconVer}"></i></button>
+               <a href="${urlDescarga}"
+                  class="btn btn-sm btn-outline-primary py-0 px-2" title="Descargar">
+                  <i class="bi bi-download"></i></a>`
+            : '<span class="text-muted" style="font-size:11px;">Sin archivo</span>';
+        // Tomar solo YYYY-MM-DD (los primeros 10 caracteres) para evitar
+        // que la hora afecte el parseo en diferentes zonas horarias
+        const fechaStr = d.fecha_aprobacion ? String(d.fecha_aprobacion).substring(0, 10) : null;
+        const partesFecha = fechaStr ? fechaStr.split('-') : null;
+        const fecha = partesFecha && partesFecha.length === 3
+            ? `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`
             : '—';
-
-        html += `
-        <tr>
-            <td><small>${esc(d.macroproceso)}</small></td>
-            <td><code style="font-size:11px;">${esc(d.codigo)}</code></td>
+        const desc = d.descripcion_version || d.objetivo_documento || '';
+        html += `<tr>
+            <td><span style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px;">${esc(d.codigo)}</span></td>
             <td>
-                <div style="font-size:13px;">${indicador} ${esc(d.nombre_documento)}</div>
-                ${d.objetivo_documento
-                    ? `<small class="text-muted" style="font-size:11px;">${esc(d.objetivo_documento).substring(0,80)}${d.objetivo_documento.length>80?'...':''}</small>`
-                    : ''}
+                <div style="font-size:13px;font-weight:500;">${dot}${esc(d.nombre_documento)}</div>
+                ${desc ? `<small class="text-muted d-block" style="font-size:11px;">${esc(desc).substring(0,100)}${desc.length>100?'...':''}</small>` : ''}
+                ${d.nombre_subproceso ? `<span class="badge bg-info text-dark mt-1" style="font-size:10px;">${esc(d.nombre_subproceso)}</span>` : ''}
             </td>
-            <td class="text-center"><span class="badge bg-primary">V${d.numero_version}</span></td>
-            <td><small>${fechaVig}</small></td>
-            <td class="text-center">${btnDescarga}</td>
+            <td class="text-center"><span class="badge bg-primary">v${d.numero_version}</span></td>
+            <td><small style="font-size:11px;">${fecha}</small></td>
+            <td class="text-center">${btns}</td>
         </tr>`;
     });
-
     html += '</tbody></table>';
+
+    // Controles de paginación
+    if (totalPag > 1) {
+        html += `<nav class="d-flex justify-content-between align-items-center px-3 py-2 border-top">
+            <small class="text-muted">Mostrando ${desde+1}–${hasta} de ${total} documentos</small>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item ${_paginaActual === 1 ? 'disabled' : ''}">
+                    <button class="page-link" onclick="renderDocumentos(_docsActuales, ${_paginaActual - 1})">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                </li>`;
+        for (let i = 1; i <= totalPag; i++) {
+            html += `<li class="page-item ${i === _paginaActual ? 'active' : ''}">
+                <button class="page-link" onclick="renderDocumentos(_docsActuales, ${i})">${i}</button>
+            </li>`;
+        }
+        html += `   <li class="page-item ${_paginaActual === totalPag ? 'disabled' : ''}">
+                    <button class="page-link" onclick="renderDocumentos(_docsActuales, ${_paginaActual + 1})">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </li>
+            </ul>
+        </nav>`;
+    } else {
+        html += `<div class="px-3 py-1 border-top">
+            <small class="text-muted">${total} documento(s)</small>
+        </div>`;
+    }
+
     document.getElementById('cuerpoDocs').innerHTML = html;
+}
+
+
+// ── HU-015: Visor de documentos inline ───────────────────────────────────
+function abrirVisor(urlArchivo, urlDescarga, nombreDoc, mimeType) {
+    const modal      = new bootstrap.Modal(document.getElementById('modalVisor'));
+    const iframe     = document.getElementById('visorIframe');
+    const progreso   = document.getElementById('visorProgreso');
+    const errorDiv   = document.getElementById('visorError');
+    const titulo     = document.getElementById('visorTitulo');
+    const btnDescarg = document.getElementById('visorDescargar');
+    const btnErrDesc = document.getElementById('visorErrorDescarga');
+
+    titulo.textContent  = nombreDoc || 'Documento';
+    btnDescarg.href     = urlDescarga;
+    btnErrDesc.href     = urlDescarga;
+    iframe.src          = '';
+    errorDiv.classList.add('d-none');
+    errorDiv.style.display = 'none';
+    iframe.style.display   = 'block';
+    progreso.style.display = 'block';  // CA-2: mostrar barra de progreso
+
+    // Detectar tipo de archivo
+    const ext = (urlArchivo.split('?')[0]).split('.').pop().toLowerCase();
+    const esOffice = ['docx','doc','xlsx','xls','pptx','ppt'].includes(ext);
+    const esPDF    = ext === 'pdf' || (mimeType || '').includes('pdf');
+
+    let urlVisor = urlArchivo;
+
+    if (esOffice) {
+        // CA-1 HU-015: Microsoft Office Online viewer para Word/Excel
+        const urlAbs = urlArchivo.startsWith('http') ? urlArchivo
+            : window.location.origin + urlArchivo;
+        urlVisor = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(urlAbs);
+    } else if (esPDF) {
+        // PDF: mostrar inline directamente
+        urlVisor = urlArchivo;
+    }
+
+    // Timeout de 10 segundos para detectar fallo (CA-2 HU-015)
+    const timeoutId = setTimeout(function() {
+        progreso.style.display = 'none';
+        iframe.style.display   = 'none';
+        errorDiv.classList.remove('d-none');
+        errorDiv.style.display = 'flex';
+    }, 10000);
+
+    iframe.onload = function() {
+        clearTimeout(timeoutId);
+        progreso.style.display = 'none';
+    };
+    iframe.onerror = function() {
+        clearTimeout(timeoutId);
+        progreso.style.display = 'none';
+        iframe.style.display   = 'none';
+        errorDiv.classList.remove('d-none');
+        errorDiv.style.display = 'flex';
+    };
+
+    iframe.src = urlVisor;
+    modal.show();
 }
 
 // Helper para escapar HTML

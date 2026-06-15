@@ -1,0 +1,2 @@
+# Denegar acceso HTTP directo al directorio temporal
+Deny from all

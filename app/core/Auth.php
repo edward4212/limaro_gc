@@ -30,7 +30,13 @@ class Auth
      */
     public static function get(string $field, mixed $default = null): mixed
     {
+        // Claves de sesión directa (no del objeto usuario)
+        static $sessionKeys = ['_url_map', '_modulos'];
+        if (in_array($field, $sessionKeys, true)) {
+            return Session::get($field, $default);
+        }
         $user = self::user();
+        if (!$user) return $default;
         return $user[$field] ?? $default;
     }
 
@@ -103,6 +109,15 @@ class Auth
     /**
      * Guardar módulos (con permisos) en sesión tras el login.
      */
+
+    /**
+     * Guardar un valor en la sesión (para cache de _url_map, etc.)
+     */
+    public static function set(string $key, mixed $value): void
+    {
+        Session::set($key, $value);
+    }
+
     public static function setModulos(array $modulos): void
     {
         Session::set('_modulos', $modulos);
@@ -140,4 +155,19 @@ class Auth
         }
         return false;
     }
+
+    /**
+     * Verificar si el usuario autenticado tiene un rol específico por nombre.
+     * Útil para filtrar acciones sensibles (ej: asignar rol ADMINISTRADOR).
+     */
+    public static function tieneRol(string $rolNombre): bool
+    {
+        $roles = self::get('roles_nombres', '');
+        if (is_array($roles)) {
+            return in_array(strtoupper($rolNombre), array_map('strtoupper', $roles), true);
+        }
+        // Puede venir como string CSV desde el SELECT GROUP_CONCAT
+        return stripos((string)$roles, $rolNombre) !== false;
+    }
+
 }

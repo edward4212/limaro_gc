@@ -11,67 +11,60 @@ use App\Models\TareaModel;
 use App\Models\SolicitudModel;
 use App\Models\VersionamientoModel;
 use App\Models\ArchivoModel;
+use App\Services\TareaService;
+use App\Services\NotificacionTareaService;
 
 /**
- * Controlador de Tareas.
- * Gestiona flujo: Asignadas → Elaborar → Revisar → Aprobar → Finalizado.
+ * TareaController
+ *
+ * Responsabilidad: validar HTTP input, llamar a TareaService, redirigir.
+ * Toda la lógica de negocio (flujo, asignaciones, versionamiento, correos)
+ * vive en TareaService y NotificacionTareaService.
  */
 class TareaController extends Controller
 {
-    private TareaModel         $model;
-    private SolicitudModel     $solModel;
-    private VersionamientoModel $verModel;
-    private ArchivoModel       $archivoModel;
+    private TareaModel    $model;
+    private SolicitudModel $solModel;
+    private ArchivoModel  $archivoModel;
+    private TareaService  $svc;
 
     public function __construct()
     {
         $this->model        = new TareaModel();
         $this->solModel     = new SolicitudModel();
-        $this->verModel     = new VersionamientoModel();
         $this->archivoModel = new ArchivoModel();
+        $this->svc          = new TareaService(
+            $this->model,
+            $this->solModel,
+            new VersionamientoModel(),
+            $this->archivoModel,
+            new NotificacionTareaService()
+        );
     }
 
     // -----------------------------------------------------------------------
-    // Solicitudes Asignadas al usuario
+    // Asignadas / Iniciar
     // -----------------------------------------------------------------------
 
     /** GET /tareas/asignadas */
     public function asignadas(): void
     {
+        $idEmpleado = Auth::empleadoId() ?? 0;
+        $asignadas  = $this->solModel->asignadasAEmpleado($idEmpleado);
         $this->view('tareas/asignadas', [
-            'pageTitle'  => 'Solicitudes Asignadas',
-            'asignadas'  => $this->model->asignadasAEmpleado(Auth::empleadoId() ?? 0),
+            'pageTitle' => 'Solicitudes Asignadas',
+            'asignadas' => $asignadas,
+            'resumen'   => $this->model->resumenEstados($idEmpleado),
         ]);
     }
 
-    /**
-     * POST /tareas/iniciar/{id}
-     * Inicia la tarea para una solicitud asignada:
-     * - Crea registro tarea
-     * - Agrega estado CREADO
-     * - Actualiza solicitud → EN DESARROLLO
-     */
+    /** POST /tareas/iniciar/{idSolicitud} */
     public function iniciar(int $idSolicitud): void
     {
         Csrf::verify();
 
-        $idEmpleado = Auth::empleadoId() ?? 0;
+        $idTarea = $this->svc->iniciar($idSolicitud);
 
-        // Crear la tarea
-        $idTarea = $this->model->crearViaSP($idSolicitud, $idEmpleado);
-
-        // Agregar estado inicial
-        $this->model->agregarEstadoViaSP(
-            $idTarea,
-            'CREADO',
-            'Tarea iniciada por ' . Auth::get('usuario'),
-            Auth::id() ?? 0
-        );
-
-        // Actualizar solicitud a EN DESARROLLO
-        $this->solModel->cambiarEstado($idSolicitud, 'EN DESARROLLO');
-
-        registrarAuditoria('tareas', 'INICIAR', 'tarea', $idTarea, null, ['id_solicitud' => $idSolicitud]);
         $this->redirectSuccess('/tareas/elaborar', 'Tarea iniciada. Proceda a elaborar el documento.');
     }
 
@@ -83,16 +76,16 @@ class TareaController extends Controller
     public function elaborar(): void
     {
         $idEmpleado = Auth::empleadoId() ?? 0;
-        // Tareas en CREADO o DEVUELTO donde soy ELABORADOR
-        $creadas   = $this->model->porEstadoYRol($idEmpleado, 'CREADO',   'elaborador');
-        $devueltas = $this->model->porEstadoYRol($idEmpleado, 'DEVUELTO', 'elaborador');
-        $tareas    = array_merge($creadas, $devueltas);
+        $creadas    = $this->model->porEstadoYRol($idEmpleado, 'CREADO',   'elaborador');
+        $devueltas  = $this->model->porEstadoYRol($idEmpleado, 'DEVUELTO', 'elaborador');
+        $tareas     = array_merge($creadas, $devueltas);
 
         $this->view('tareas/lista', [
             'pageTitle' => 'Mis Tareas — Elaborar',
             'tareas'    => $tareas,
             'tipo'      => 'elaborar',
             'urlAccion' => '/tareas/elaborar',
+            'resumen'   => $this->model->resumenEstados($idEmpleado),
         ]);
     }
 
@@ -102,9 +95,42 @@ class TareaController extends Controller
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
 
+        $idSolicitud    = (int)($tarea['id_solicitud'] ?? 0);
+        $archivosAnexos = $idSolicitud
+            ? $this->archivoModel->deEntidad('SOLICITUD', $idSolicitud)
+            : [];
+
+        $empModel  = new \App\Models\EmpleadoModel();
+        $revisores = $empModel->revisores();
+
+        $solicitud      = $this->solModel->find($idSolicitud);
+        $esTipoCreacion = ($solicitud['tipo_solicitud'] ?? '') === 'CREACION';
+
+        $macroprocesos = $procesos = $subprocesos = $docExistente = [];
+        if ($esTipoCreacion) {
+            $macroprocesos = (new \App\Models\MacroprocesoModel())->activos();
+            $procesos      = (new \App\Models\ProcesoModel())->activos();
+            $subprocesos   = (new \App\Models\SubprocesoModel())->activos();
+            if (!empty($solicitud['codigo_documento'])) {
+                $docExistente = (new \App\Models\DocumentoModel())
+                    ->buscarPorCodigo($solicitud['codigo_documento']) ?? [];
+            }
+        }
+
+        $comentarios = $this->solModel->comentariosDeSolicitud($idSolicitud);
+
         $this->view('tareas/elaborar', [
-            'pageTitle' => 'Elaborar Tarea #' . $id,
-            'tarea'     => $tarea,
+            'pageTitle'      => 'Elaborar Tarea #' . $id,
+            'tarea'          => $tarea,
+            'comentarios'    => $comentarios ?? [],
+            'archivosAnexos' => $archivosAnexos,
+            'revisores'      => $revisores,
+            'solicitud'      => $solicitud,
+            'esTipoCreacion' => $esTipoCreacion,
+            'macroprocesos'  => $macroprocesos,
+            'procesos'       => $procesos,
+            'subprocesos'    => $subprocesos,
+            'docExistente'   => $docExistente,
         ]);
     }
 
@@ -113,40 +139,54 @@ class TareaController extends Controller
     {
         Csrf::verify();
         $comentario = trim((string) Request::post('comentario', ''));
-        $accion     = Request::post('accion', 'guardar'); // 'guardar' | 'enviar'
+        $accion     = Request::post('accion', 'guardar');
+        $idRevisor  = (int) Request::post('id_empleado_revisor', 0);
 
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
 
-        // Subir documento si existe
-        if (Request::hasFile('archivo')) {
+        // Subir archivo (Base64 o $_FILES)
+        $this->subirArchivoTarea($id);
+
+        if ($accion !== 'enviar') {
+            $this->redirectSuccess("/tareas/elaborar/$id", 'Borrador guardado.');
+            return;
+        }
+
+        if (!$idRevisor) {
+            Session::flash('error', 'Debe seleccionar un revisor para enviar a revisión.');
+            $this->redirect("/tareas/elaborar/$id");
+            return;
+        }
+
+        // Documento v0 para solicitudes de CREACION
+        $solicitud = $this->solModel->find((int)($tarea['id_solicitud'] ?? 0));
+        if (($solicitud['tipo_solicitud'] ?? '') === 'CREACION') {
             try {
-                $upload = subirArchivo(
-                    $_FILES['archivo'],
-                    'documentos',
-                    ['application/pdf',
-                     'application/msword',
-                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-                    20971520
-                );
-                $this->archivoModel->registrar('TAREA', $id, $upload, Auth::get('usuario'));
+                $this->svc->crearOActualizarDocumentoV0($solicitud, [
+                    'nombre_documento' => Request::post('nombre_documento', ''),
+                    'id_proceso'       => Request::post('id_proceso', 0),
+                    'id_subproceso'    => Request::post('id_subproceso', 0),
+                ], $id);
             } catch (\RuntimeException $e) {
-                Session::flash('error', 'Error al subir archivo: Error interno. Contacte al administrador.');
+                Session::flash('error', $e->getMessage());
                 $this->redirect("/tareas/elaborar/$id");
+                return;
             }
         }
 
-        if ($accion === 'enviar') {
-            // Enviar a REVISION
-            $this->model->agregarEstadoViaSP(
-                $id, 'REVISION',
-                $comentario ?: 'Enviado a revisión.',
-                Auth::id() ?? 0
-            );
-            $this->redirectSuccess('/tareas/elaborar', 'Tarea enviada a revisión.');
-        } else {
-            $this->redirectSuccess("/tareas/elaborar/$id", 'Cambios guardados.');
+        try {
+            $this->svc->enviarARevision($id, $tarea, $idRevisor, $comentario);
+        } catch (\Throwable $e) {
+            error_log('[TareaController::elaborarGuardar] ' . $e->getMessage());
+            Session::flash('error', 'Error al enviar a revisión: ' . $e->getMessage());
+            $this->redirect("/tareas/elaborar/$id");
+            return;
         }
+
+        $revisor    = (new \App\Models\EmpleadoModel())->find($idRevisor);
+        $nombreRev  = $revisor['nombre_completo'] ?? "Empleado #{$idRevisor}";
+        $this->redirectSuccess('/tareas/elaborar', "Documento enviado a revisión de <strong>{$nombreRev}</strong>.");
     }
 
     // -----------------------------------------------------------------------
@@ -156,12 +196,14 @@ class TareaController extends Controller
     /** GET /tareas/revisar */
     public function revisar(): void
     {
-        $tareas = $this->model->porEstadoYRol(Auth::empleadoId() ?? 0, 'REVISION', 'revisor');
+        $idEmp  = Auth::empleadoId() ?? 0;
+        $tareas = $this->model->porEstadoYRol($idEmp, 'REVISION', 'revisor');
         $this->view('tareas/lista', [
-            'pageTitle' => 'Tareas para Revisar',
+            'pageTitle' => 'Mis Tareas — Revisar',
             'tareas'    => $tareas,
             'tipo'      => 'revisar',
             'urlAccion' => '/tareas/revisar',
+            'resumen'   => $this->model->resumenEstados($idEmp),
         ]);
     }
 
@@ -170,9 +212,22 @@ class TareaController extends Controller
     {
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
+
+        $idSolicitud    = (int)($tarea['id_solicitud'] ?? 0);
+        $archivosAnexos = $idSolicitud
+            ? $this->archivoModel->deEntidad('SOLICITUD', $idSolicitud)
+            : [];
+        $archivosDoc    = $this->archivoModel->deEntidad('TAREA', $id);
+        $aprobadores    = (new \App\Models\EmpleadoModel())->aprobadores();
+        $comentarios    = $this->solModel->comentariosDeSolicitud($idSolicitud);
+
         $this->view('tareas/revisar', [
-            'pageTitle' => 'Revisar Tarea #' . $id,
-            'tarea'     => $tarea,
+            'pageTitle'      => 'Revisar Tarea #' . $id,
+            'tarea'          => $tarea,
+            'comentarios'    => $comentarios,
+            'archivosAnexos' => $archivosAnexos,
+            'archivosDoc'    => $archivosDoc,
+            'aprobadores'    => $aprobadores,
         ]);
     }
 
@@ -180,23 +235,46 @@ class TareaController extends Controller
     public function revisarGuardar(int $id): void
     {
         Csrf::verify();
-        $accion     = Request::post('accion', 'aprobar'); // 'aprobar' | 'rechazar'
-        $comentario = trim((string) Request::post('comentario', ''));
+        $accion      = Request::post('accion', 'aprobar');
+        $comentario  = trim((string) Request::post('comentario', ''));
+        $idAprobador = (int) Request::post('id_empleado_aprobador', 0);
+
+        $tarea = $this->model->detalle($id);
+        if (!$tarea) $this->abort(404);
 
         if ($accion === 'aprobar') {
-            $this->model->agregarEstadoViaSP(
-                $id, 'APROBACION',
-                $comentario ?: 'Aprobado en revisión.',
-                Auth::id() ?? 0
-            );
-            $this->redirectSuccess('/tareas/revisar', 'Tarea enviada a aprobación.');
+            if (!$idAprobador) {
+                Session::flash('error', 'Debe seleccionar un aprobador.');
+                $this->redirect("/tareas/revisar/$id");
+                return;
+            }
+            try {
+                $this->svc->enviarAAprobacion($id, $tarea, $idAprobador, $comentario);
+            } catch (\Throwable $e) {
+                error_log('[TareaController::revisarGuardar] ' . $e->getMessage());
+                Session::flash('error', 'Error al enviar a aprobación: ' . $e->getMessage());
+                $this->redirect("/tareas/revisar/$id");
+                return;
+            }
+            $aprobador  = (new \App\Models\EmpleadoModel())->find($idAprobador);
+            $nombreApro = $aprobador['nombre_completo'] ?? "Empleado #{$idAprobador}";
+            $this->redirectSuccess('/tareas/revisar', "Tarea enviada a aprobación de <strong>{$nombreApro}</strong>.");
+
         } else {
-            $this->model->agregarEstadoViaSP(
-                $id, 'DEVUELTO',
-                $comentario ?: 'Devuelta al elaborador.',
-                Auth::id() ?? 0
-            );
-            $this->redirectSuccess('/tareas/revisar', 'Tarea devuelta al elaborador.');
+            try {
+                $this->svc->devolverAlElaborador($id, $tarea, $comentario);
+            } catch (\Throwable $e) {
+                error_log('[TareaController::revisarGuardar] ' . $e->getMessage());
+                Session::flash('error', 'Error al devolver la tarea: ' . $e->getMessage());
+                $this->redirect("/tareas/revisar/$id");
+                return;
+            }
+            $elaborador = null;
+            foreach ($tarea['asignaciones'] ?? [] as $a) {
+                if (strtolower($a['rol_asignacion'] ?? '') === 'elaborador') { $elaborador = $a; break; }
+            }
+            $nombreElab = $elaborador['nombre_completo'] ?? 'elaborador';
+            $this->redirectSuccess('/tareas/revisar', "Tarea devuelta a <strong>{$nombreElab}</strong> para corrección.");
         }
     }
 
@@ -207,12 +285,14 @@ class TareaController extends Controller
     /** GET /tareas/aprobar */
     public function aprobar(): void
     {
-        $tareas = $this->model->porEstadoYRol(Auth::empleadoId() ?? 0, 'APROBACION', 'aprobador');
+        $idEmp  = Auth::empleadoId() ?? 0;
+        $tareas = $this->model->porEstadoYRol($idEmp, 'APROBACION', 'aprobador');
         $this->view('tareas/lista', [
             'pageTitle' => 'Tareas para Aprobar',
             'tareas'    => $tareas,
             'tipo'      => 'aprobar',
             'urlAccion' => '/tareas/aprobar',
+            'resumen'   => $this->model->resumenEstados($idEmp),
         ]);
     }
 
@@ -221,166 +301,212 @@ class TareaController extends Controller
     {
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
+
+        $idSolicitud    = (int)($tarea['id_solicitud'] ?? 0);
+        $archivosAnexos = $idSolicitud
+            ? $this->archivoModel->deEntidad('SOLICITUD', $idSolicitud)
+            : [];
+
+        $solicitud      = $this->solModel->find($idSolicitud);
+        $esTipoCreacion = ($solicitud['tipo_solicitud'] ?? '') === 'CREACION';
+
+        $macroprocesos = $procesos = $subprocesos = $docExistente = [];
+        if ($esTipoCreacion) {
+            if (!empty($solicitud['codigo_documento'])) {
+                $docMdl = new \App\Models\DocumentoModel();
+                $idDocE = $docMdl->idPorCodigo($solicitud['codigo_documento']);
+                if ($idDocE) {
+                    $docExistente = $docMdl->conDetalle($idDocE) ?? [];
+                }
+            }
+            if (empty($docExistente)) {
+                $macroprocesos = (new \App\Models\MacroprocesoModel())->activos();
+                $procesos      = (new \App\Models\ProcesoModel())->activos();
+                $subprocesos   = (new \App\Models\SubprocesoModel())->activos();
+            }
+        }
+
+        $comentarios = $this->solModel->comentariosDeSolicitud($idSolicitud);
+
         $this->view('tareas/aprobar', [
-            'pageTitle' => 'Aprobar Tarea #' . $id,
-            'tarea'     => $tarea,
+            'pageTitle'      => 'Aprobar Tarea #' . $id,
+            'tarea'          => $tarea,
+            'comentarios'    => $comentarios ?? [],
+            'solicitud'      => $solicitud,
+            'archivosAnexos' => $archivosAnexos,
+            'esTipoCreacion' => $esTipoCreacion,
+            'macroprocesos'  => $macroprocesos,
+            'procesos'       => $procesos,
+            'subprocesos'    => $subprocesos,
+            'docExistente'   => $docExistente,
         ]);
     }
 
-    /**
-     * POST /tareas/aprobar/{id}
-     * Al aprobar:
-     * 1. INSERT versionamiento nueva versión VIGENTE
-     * 2. UPDATE versiones anteriores → OBSOLETO
-     * 3. UPDATE solicitud → FINALIZADA
-     * 4. INSERT tarea_estado FINALIZADO
-     * Todo en transacción.
-     */
+    /** POST /tareas/aprobar/{id} */
     public function aprobarGuardar(int $id): void
     {
         Csrf::verify();
         $accion     = Request::post('accion', 'aprobar');
         $comentario = trim((string) Request::post('comentario', ''));
-        $tarea      = $this->model->detalle($id);
 
+        $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
 
         if ($accion === 'rechazar') {
-            $this->model->agregarEstadoViaSP(
-                $id, 'DEVUELTO',
-                $comentario ?: 'Devuelta al elaborador desde aprobación.',
-                Auth::id() ?? 0
-            );
-            $this->redirectSuccess('/tareas/aprobar', 'Tarea devuelta al elaborador.');
+            try {
+                $this->svc->devolverAlRevisor($id, $tarea, $comentario);
+            } catch (\Throwable $e) {
+                error_log('[TareaController::aprobarGuardar] rechazar: ' . $e->getMessage());
+                Session::flash('error', 'Error al devolver la tarea: ' . $e->getMessage());
+                $this->redirect("/tareas/aprobar/$id");
+                return;
+            }
+            $this->redirectSuccess('/tareas/aprobar', 'Tarea devuelta al revisor con comentario.');
+            return;
         }
 
-        // ---- APROBACIÓN ----
+        // Aprobar
         try {
-            // Obtener el archivo de la tarea (para el versionamiento)
-            $archivos = $this->archivoModel->deEntidad('TAREA', $id);
-            $rutaArchivo = !empty($archivos) ? $archivos[0]['ruta_relativa'] : null;
-
-            // El código_documento de la solicitud es el único vínculo con el documento
-            $codigoDoc    = $tarea['codigo_documento'] ?? null;
-            $idEmpleado   = Auth::empleadoId() ?? 0;
-            $usuarioAct   = Auth::get('nombre_completo') ?? Auth::get('usuario') ?? '';
-
-            // Resolver id_documento a partir del código
-            $idDocumento = 0;
-            if ($codigoDoc) {
-                $idDocumento = (new \App\Models\DocumentoModel())->idPorCodigo($codigoDoc);
-            }
-            // Si no existe documento asociado, no podemos versionar
-            if ($idDocumento === 0) {
-                throw new \RuntimeException('No se pudo resolver el documento asociado a la tarea (código: ' . ($codigoDoc ?: 'N/A') . ').');
-            }
-
-            // Determinar número de versión
-            $maxVer  = $this->verModel->maxVersion($idDocumento);
-            $nuevaVer = $maxVer + 1;
-
-            // Usar la conexión PDO para la transacción
-            $db = \App\Core\Database::getInstance();
-            $db->beginTransaction();
-
-            // 1. Crear nueva versión VIGENTE con los usuarios (nombres) reales del flujo
-            $usrElab = $tarea['elaborador'] ?? $usuarioAct;
-            $usrRev  = $tarea['revisor']    ?? null;
-            $usrApr  = $usuarioAct;
-
-            $this->verModel->crearVersion(
-                $idDocumento,
-                $nuevaVer,
-                'Versión aprobada desde tarea #' . $id,
-                $rutaArchivo,
-                'VIGENTE',
-                $usrElab,
-                $usrRev,
-                $usrApr,
-                date('Y-m-d H:i:s')
-            );
-
-            // Obtener id de la versión recién creada
-            $nuevaVersionRow = $this->verModel->ultimaVersion($idDocumento);
-            $idNuevaVersion  = $nuevaVersionRow['id_versionamiento'] ?? 0;
-
-            // Si se subió archivo en la aprobación, asociar a la versión
-            if (Request::hasFile('archivo')) {
-                $upload = subirArchivo(
-                    $_FILES['archivo'],
-                    'documentos',
-                    ['application/pdf', 'application/msword',
-                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-                    20971520
-                );
-                $this->archivoModel->registrar('VERSIONAMIENTO', $idNuevaVersion, $upload, Auth::get('usuario'));
-            } elseif ($rutaArchivo && $idNuevaVersion) {
-                // Reasociar el archivo de la tarea a la versión
-                if (!empty($archivos)) {
-                    $db->prepare("
-                        INSERT INTO archivo (modulo, id_referencia, nombre_original, nombre_storage,
-                                             ruta_relativa, mime_type, tamano_bytes, hash_sha256, subido_por)
-                        SELECT 'VERSIONAMIENTO', ?, nombre_original, nombre_storage,
-                               ruta_relativa, mime_type, tamano_bytes, hash_sha256, subido_por
-                        FROM archivo WHERE id_archivo = ?
-                    ")->execute([$idNuevaVersion, $archivos[0]['id_archivo']]);
-                }
-            }
-
-            // 2. Obsoletizar versiones anteriores
-            $this->verModel->obsoletizarAnteriores($idDocumento, $idNuevaVersion);
-
-            // 3. Finalizar solicitud
-            $this->solModel->cambiarEstado(
-                (int) $tarea['id_solicitud'],
-                'FINALIZADA',
-                date('Y-m-d H:i:s')
-            );
-
-            // 4. Estado FINALIZADO en tarea
-            $this->model->agregarEstadoViaSP(
-                $id, 'FINALIZADO',
-                $comentario ?: 'Documento aprobado y versión ' . $nuevaVer . ' publicada.',
-                Auth::id() ?? 0
-            );
-
-            $db->commit();
-
-            registrarAuditoria('tareas', 'APROBAR', 'tarea', $id, null, [
-                'id_documento' => $idDocumento,
-                'nueva_version' => $nuevaVer,
+            $this->svc->aprobar($id, $tarea, $comentario, [
+                'nombre_documento' => Request::post('nombre_documento', ''),
+                'id_proceso'       => Request::post('id_proceso', 0),
+                'id_subproceso'    => Request::post('id_subproceso', 0),
             ]);
-            $this->redirectSuccess('/tareas/finalizadas', 'Documento aprobado y versión v' . $nuevaVer . ' publicada como VIGENTE.');
-
         } catch (\Throwable $e) {
-            $db->rollBack();
-            Session::flash('error', 'Error al aprobar: Error interno. Contacte al administrador.');
+            error_log('[TareaController::aprobarGuardar] ' . $e->getMessage());
+            Session::flash('error', 'Error al aprobar: ' . $e->getMessage());
             $this->redirect("/tareas/aprobar/$id");
+            return;
         }
+
+        $codigoDoc = $tarea['codigo_documento'] ?? 'documento';
+        $this->redirectSuccess('/tareas/finalizadas',
+            "Documento aprobado. Versión publicada como VIGENTE.");
     }
 
     // -----------------------------------------------------------------------
-    // Devueltas y Finalizadas
+    // Devueltas / Finalizadas / Mis Tareas / Panel / Ver
     // -----------------------------------------------------------------------
 
     /** GET /tareas/devueltas */
     public function devueltas(): void
     {
-        $tareas = $this->model->porEstadoYRol(Auth::empleadoId() ?? 0, 'DEVUELTO', 'elaborador');
-        $this->view('tareas/lista', [
+        $idEmp  = Auth::empleadoId() ?? 0;
+        $dElab  = $this->model->porEstadoYRol($idEmp, 'DEVUELTO', 'elaborador');
+        foreach ($dElab as &$t) { $t['url_accion'] = '/tareas/elaborar/' . $t['id_tarea']; }
+        $dRevis = $this->model->porEstadoYRol($idEmp, 'DEVUELTO', 'revisor');
+        foreach ($dRevis as &$t) { $t['url_accion'] = '/tareas/revisar/' . $t['id_tarea']; }
+        unset($t);
+        $this->view('tareas/devueltas', [
             'pageTitle' => 'Tareas Devueltas',
-            'tareas'    => $tareas,
-            'tipo'      => 'devueltas',
-            'urlAccion' => '/tareas/elaborar',
+            'tareas'    => array_values(array_merge($dElab, $dRevis)),
+            'resumen'   => $this->model->resumenEstados($idEmp),
         ]);
     }
 
     /** GET /tareas/finalizadas */
     public function finalizadas(): void
     {
+        $desde = Request::get('desde', '');
+        $hasta = Request::get('hasta', '');
         $this->view('tareas/finalizadas', [
             'pageTitle' => 'Tareas Finalizadas',
-            'tareas'    => $this->model->finalizadas(Auth::empleadoId() ?? 0),
+            'resumen'   => $this->model->resumenEstados(Auth::empleadoId() ?? 0),
+            'tareas'    => $this->model->finalizadas(Auth::empleadoId() ?? 0, $desde ?: null, $hasta ?: null),
+            'desde'     => $desde,
+            'hasta'     => $hasta,
         ]);
+    }
+
+    /** GET /tareas/mis-tareas */
+    public function misTareas(): void
+    {
+        $idEmp = Auth::empleadoId() ?? 0;
+        $this->view('tareas/mis_tareas', [
+            'pageTitle' => 'Mis Tareas',
+            'tareas'    => $this->model->misTareas($idEmp),
+            'resumen'   => $this->model->resumenEstados($idEmp),
+        ]);
+    }
+
+    /** GET /tareas/panel */
+    public function panel(): void
+    {
+        $tareas = $this->model->todasLasTareas();
+        $stats  = [];
+        foreach ($tareas as $t) {
+            $e = $t['estado_actual'];
+            $stats[$e] = ($stats[$e] ?? 0) + 1;
+        }
+        $this->view('tareas/panel', [
+            'pageTitle' => 'Panel de Tareas',
+            'tareas'    => $tareas,
+            'stats'     => $stats,
+        ]);
+    }
+
+    /** GET /tareas/ver/{id} */
+    public function ver(int $id): void
+    {
+        $tarea = $this->model->detalle($id);
+        if (!$tarea) $this->abort(404);
+
+        $idSolicitud    = (int)($tarea['id_solicitud'] ?? 0);
+        $archivosAnexos = $idSolicitud
+            ? $this->archivoModel->deEntidad('SOLICITUD', $idSolicitud)
+            : [];
+        $archivosDoc = $this->archivoModel->deEntidad('TAREA', $id);
+        $comentarios = $this->solModel->comentariosDeSolicitud($idSolicitud);
+        $solicitud   = $this->solModel->find($idSolicitud);
+
+        $this->view('tareas/ver', [
+            'pageTitle'      => 'Detalle Tarea #' . $id . ' — Solo Lectura',
+            'tarea'          => $tarea,
+            'solicitud'      => $solicitud,
+            'archivosAnexos' => $archivosAnexos,
+            'archivosDoc'    => $archivosDoc,
+            'comentarios'    => $comentarios,
+            'soloLectura'    => true,
+        ]);
+    }
+
+    // -----------------------------------------------------------------------
+    // Helpers privados
+    // -----------------------------------------------------------------------
+
+    /**
+     * Sube el archivo de la tarea si viene en el request (Base64 o $_FILES).
+     * Lanza RuntimeException ante error; el controlador lo captura y redirige.
+     */
+    private function subirArchivoTarea(int $idTarea): void
+    {
+        $tieneB64  = !empty($_POST['archivo_b64']);
+        $tieneFile = isset($_FILES['archivo']) && ($_FILES['archivo']['error'] ?? 4) === UPLOAD_ERR_OK;
+
+        if (!$tieneB64 && !$tieneFile) {
+            return;
+        }
+
+        $fileRef               = $_FILES['archivo'] ?? ['error' => UPLOAD_ERR_NO_FILE, 'name' => '', 'size' => 0, 'tmp_name' => ''];
+        $fileRef['field_name'] = 'archivo';
+
+        try {
+            $upload = subirArchivo(
+                $fileRef,
+                'tareas',
+                ['application/pdf', 'application/msword',
+                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                 'application/vnd.ms-excel',
+                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                 'image/jpeg', 'image/png', 'image/webp', 'text/plain'],
+                52428800
+            );
+            $this->archivoModel->registrar('TAREA', $idTarea, $upload, Auth::id());
+        } catch (\Throwable $e) {
+            error_log('[TareaController] upload: ' . $e->getMessage());
+            Session::flash('error', 'Error al subir archivo: ' . $e->getMessage());
+            $this->redirect("/tareas/elaborar/$idTarea");
+            // redirect() lanza exit/never — no llega aquí
+        }
     }
 }

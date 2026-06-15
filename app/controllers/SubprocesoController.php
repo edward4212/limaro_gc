@@ -40,15 +40,23 @@ class SubprocesoController extends Controller
             return;
         }
 
+        $subs = $this->model->listar() ?? [];
+        $conteosDoc = [];
+        foreach ($subs as $s) {
+            $conteosDoc[$s['id_subproceso']] = $this->model->contarDocumentos($s['id_subproceso']);
+        }
+
         $this->view('empresa/subprocesos/index', [
-            'pageTitle'   => 'Subprocesos',
-            'subprocesos' => $this->model->listar(),
+            'pageTitle'          => 'Subprocesos',
+            'subprocesos'        => $subs,
+            'conteosDocumentos'  => $conteosDoc,
         ]);
     }
 
     /** GET /subprocesos/crear */
     public function crear(): void
     {
+        Session::clearOldInput();
         $this->view('empresa/subprocesos/form', [
             'pageTitle'     => 'Crear Subproceso',
             'item'          => null,
@@ -63,13 +71,12 @@ class SubprocesoController extends Controller
         Csrf::verify();
         $data   = Request::only(['id_proceso', 'subproceso', 'sigla_subproceso', 'objetivo', 'estado']);
         $errors = $this->validate($data, [
-            'id_proceso'       => 'required|integer',
-            'subproceso'       => 'required|max:200',
-            'sigla_subproceso' => 'required|max:10',
+            'id_proceso' => 'required|integer',
+            'subproceso' => 'required|max:200',
         ]);
 
         if ($errors) {
-            Session::flash('error', 'Corrija los errores del formulario.');
+            Session::flash('error', 'Proceso y nombre del subproceso son obligatorios.');
             Session::setOldInput($data);
             $this->redirect('/subprocesos/crear');
             return;
@@ -113,13 +120,12 @@ class SubprocesoController extends Controller
         $antes  = $this->model->find($id);
         $data   = Request::only(['id_proceso', 'subproceso', 'sigla_subproceso', 'objetivo', 'estado']);
         $errors = $this->validate($data, [
-            'id_proceso'       => 'required|integer',
-            'subproceso'       => 'required|max:200',
-            'sigla_subproceso' => 'required|max:10',
+            'id_proceso' => 'required|integer',
+            'subproceso' => 'required|max:200',
         ]);
 
         if ($errors) {
-            Session::flash('error', 'Corrija los errores.');
+            Session::flash('error', 'Proceso y nombre son obligatorios.');
             $this->redirect("/subprocesos/editar/$id");
             return;
         }
@@ -146,8 +152,21 @@ class SubprocesoController extends Controller
     {
         Csrf::verify();
         $antes = $this->model->find($id);
+        if (!$antes) $this->abort(404);
+
+        $nDocs = $this->model->contarDocumentos($id);
+        if ($nDocs > 0) {
+            Session::flash('error',
+                "No se puede inactivar el subproceso <strong>{$antes['subproceso']}</strong>: "
+                . "tiene <strong>{$nDocs} documento(s) activo(s)</strong> vinculado(s). "
+                . "Reasigne o inactivar primero los documentos del subproceso."
+            );
+            $this->redirect('/subprocesos');
+            return;
+        }
+
         $this->model->update($id, ['estado' => 'INACTIVO']);
         registrarAuditoria('subprocesos', 'ELIMINAR', 'subproceso', $id, $antes, null);
-        $this->redirectSuccess('/subprocesos', 'Subproceso inactivado.');
+        $this->redirectSuccess('/subprocesos', 'Subproceso inactivado correctamente.');
     }
 }

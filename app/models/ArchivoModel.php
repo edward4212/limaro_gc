@@ -15,11 +15,18 @@ class ArchivoModel extends Model
     /**
      * Registrar archivo en la BD.
      */
+    /**
+     * Registrar archivo en BD.
+     * @param string $modulo       Módulo origen: ACUERDO, CARGO, TAREA, VERSIONAMIENTO, SOLICITUD...
+     * @param int    $idReferencia ID del registro en el módulo origen
+     * @param array  $uploadResult Resultado de subirArchivo()
+     * @param int    $idUsuario    ID del usuario que sube el archivo
+     */
     public function registrar(
         string $modulo,
         int    $idReferencia,
         array  $uploadResult,
-        string $subidoPor
+        int    $idUsuario
     ): int {
         return $this->insert([
             'modulo'          => $modulo,
@@ -30,7 +37,8 @@ class ArchivoModel extends Model
             'mime_type'       => $uploadResult['mime_type'],
             'tamano_bytes'    => $uploadResult['tamano_bytes'],
             'hash_sha256'     => $uploadResult['hash_sha256'],
-            'subido_por'      => $subidoPor,
+            'subido_por'      => null,   // deprecado — se conserva nullable para historial
+            'id_usuario'      => $idUsuario,
         ]);
     }
 
@@ -40,9 +48,11 @@ class ArchivoModel extends Model
     public function deEntidad(string $modulo, int $idReferencia): array
     {
         return $this->query("
-            SELECT * FROM archivo
-            WHERE modulo = ? AND id_referencia = ?
-            ORDER BY fecha_subida DESC
+            SELECT ar.*, u.usuario AS usuario_subida
+            FROM archivo ar
+            LEFT JOIN usuario u ON u.id_usuario = ar.id_usuario
+            WHERE ar.modulo = ? AND ar.id_referencia = ?
+            ORDER BY ar.fecha_subida DESC
         ", [$modulo, $idReferencia])->fetchAll();
     }
 
@@ -55,7 +65,36 @@ class ArchivoModel extends Model
         if (!$row) {
             return null;
         }
-        $row['ruta_absoluta'] = APP_ROOT . '/public' . $row['ruta_relativa'];
+        
+        // Construir ruta absoluta y validar que esté dentro del directorio permitido
+        $rutaAbsoluta = realpath(APP_ROOT . '/public' . $row['ruta_relativa']);
+        $rutaBase = realpath(APP_ROOT . '/public/storage');
+        
+        // Validar path traversal: la ruta resoluta debe estar dentro del directorio base
+        if ($rutaAbsoluta === false || $rutaBase === false || 
+            strpos($rutaAbsoluta, $rutaBase) !== 0) {
+            error_log("[ArchivoModel] Intento de path traversal detectado: " . $row['ruta_relativa']);
+            return null;
+        }
+        
+        $row['ruta_absoluta'] = $rutaAbsoluta;
         return $row;
     }
+
+    /**
+     * Obtener el archivo más reciente de una entidad.
+     */
+    public function porEntidad(string $modulo, int $idReferencia): ?array
+    {
+        $row = $this->query(
+            "SELECT ar.*, u.usuario AS usuario_subida
+             FROM archivo ar
+             LEFT JOIN usuario u ON u.id_usuario = ar.id_usuario
+             WHERE ar.modulo = ? AND ar.id_referencia = ?
+             ORDER BY ar.id_archivo DESC LIMIT 1",
+            [$modulo, $idReferencia]
+        )->fetch();
+        return $row ?: null;
+    }
+
 }

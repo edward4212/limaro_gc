@@ -11,10 +11,28 @@ class AccionCorrectivaModel extends Model
     {
         return $this->query("
             SELECT ac.*,
+                   COALESCE(e.nombre_completo, ac.responsable) AS responsable_nombre,
                    DATEDIFF(COALESCE(ac.fecha_cierre, CURDATE()), ac.fecha_planificada) AS dias_vencida
             FROM accion_correctiva ac
+            LEFT JOIN empleado e ON e.id_empleado = ac.id_responsable
             ORDER BY ac.estado ASC, ac.fecha_planificada ASC
         ")->fetchAll();
+    }
+
+
+    /**
+     * Listado paginado (PERF-001) — usar en lugar de listar() para producción.
+     */
+    public function listarPaginado(int $pagina = 1, int $porPagina = 50): array
+    {
+        return $this->paginar("
+            SELECT ac.*,
+                   COALESCE(e.nombre_completo, ac.responsable) AS responsable_nombre,
+                   DATEDIFF(COALESCE(ac.fecha_cierre, CURDATE()), ac.fecha_planificada) AS dias_vencida
+            FROM accion_correctiva ac
+            LEFT JOIN empleado e ON e.id_empleado = ac.id_responsable
+            ORDER BY ac.estado ASC, ac.fecha_planificada ASC
+        ", [], $pagina, $porPagina);
     }
 
     public function resumenEstados(): array

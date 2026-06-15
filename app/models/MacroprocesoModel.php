@@ -38,6 +38,23 @@ class MacroprocesoModel extends Model
         ")->fetchAll();
     }
 
+
+    /**
+     * Verificar si ya existe un macroproceso con el mismo nombre.
+     * @param int $excluirId  ID a excluir en edición (0 = ninguno)
+     */
+    public function existeNombre(string $nombre, int $excluirId = 0): bool
+    {
+        $row = $this->query(
+            "SELECT id_macroproceso FROM macroproceso
+             WHERE UPPER(TRIM(macroproceso)) = UPPER(TRIM(?))
+               AND id_macroproceso != ?
+             LIMIT 1",
+            [$nombre, $excluirId]
+        )->fetch();
+        return (bool) $row;
+    }
+
     /**
      * Crear macroproceso.
      */
@@ -69,4 +86,24 @@ class MacroprocesoModel extends Model
     {
         return $this->update($id, ['estado' => 'INACTIVO']);
     }
+
+    /** Verifica si el macroproceso tiene procesos activos vinculados */
+    public function tieneProcesos(int $id): bool
+    {
+        $total = (int) $this->query(
+            "SELECT COUNT(*) FROM proceso WHERE id_macroproceso = ? AND estado = 'ACTIVO'",
+            [$id]
+        )->fetchColumn();
+        return $total > 0;
+    }
+
+    /** Cuenta procesos activos del macroproceso */
+    public function contarProcesos(int $id): int
+    {
+        return (int) $this->query(
+            "SELECT COUNT(*) FROM proceso WHERE id_macroproceso = ? AND estado = 'ACTIVO'",
+            [$id]
+        )->fetchColumn();
+    }
+
 }

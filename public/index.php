@@ -18,6 +18,7 @@ declare(strict_types=1);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 $logPath = dirname(__DIR__) . '/storage/php_errors.log';
+
 if (is_writable(dirname($logPath)) || @touch($logPath)) {
     ini_set('error_log', $logPath);
 }
@@ -93,8 +94,10 @@ if (Auth::check()) {
             ");
             $stmt->execute([$rolId]);
             Auth::setModulos($stmt->fetchAll());
-        } catch (Throwable) {
-            // Sin módulos en caso de error de BD
+        } catch (Throwable $e) {
+            // Registrar error pero permitir continuar sin módulos
+            error_log('[Limaro SGC] Error cargando módulos del usuario: ' . $e->getMessage());
+            Auth::setModulos([]); // Establecer array vacío en lugar de null
         }
     }
 

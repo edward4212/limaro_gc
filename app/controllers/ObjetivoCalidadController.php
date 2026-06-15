@@ -24,10 +24,12 @@ class ObjetivoCalidadController extends Controller
 
     public function crear(): void
     {
+        Session::clearOldInput();
         $this->view('sgc/objetivos/form', [
             'pageTitle' => 'Nuevo Objetivo de Calidad',
             'item'      => null,
             'procesos'  => $this->procesoModel->activos(),
+            'empleados' => (new \App\Models\EmpleadoModel())->activos(),
             'codigo'    => $this->model->siguienteCodigo(),
         ]);
     }
@@ -35,7 +37,8 @@ class ObjetivoCalidadController extends Controller
     public function guardar(): void
     {
         Csrf::verify();
-        $data = Request::only(['codigo','objetivo','meta','indicador','formula','frecuencia','responsable','id_proceso']);
+        $data = Request::only(['codigo','objetivo','meta','indicador','formula','frecuencia','responsable','id_responsable','id_proceso']);
+        $data['id_responsable'] = ((int)($data['id_responsable'] ?? 0)) ?: null;
         if (empty($data['objetivo'])) {
             Session::flash('error', 'El objetivo es obligatorio.');
             $this->redirect('/objetivos-calidad/crear');
@@ -48,12 +51,14 @@ class ObjetivoCalidadController extends Controller
 
     public function editar(int $id): void
     {
+        if (!\App\Core\Auth::puede('objetivos_calidad', 'editar')) $this->abort(403);
         $item = $this->model->find($id);
         if (!$item) $this->abort(404);
         $this->view('sgc/objetivos/form', [
             'pageTitle'  => 'Editar Objetivo — ' . $item['codigo'],
             'item'       => $item,
             'procesos'   => $this->procesoModel->activos(),
+            'empleados'  => (new \App\Models\EmpleadoModel())->activos(),
             'mediciones' => $this->model->mediciones($id),
             'codigo'     => $item['codigo'],
         ]);
@@ -62,8 +67,10 @@ class ObjetivoCalidadController extends Controller
     public function actualizar(int $id): void
     {
         Csrf::verify();
+        if (!\App\Core\Auth::puede('objetivos_calidad', 'editar')) $this->abort(403);
         $antes = $this->model->find($id);
-        $data  = Request::only(['objetivo','meta','indicador','formula','frecuencia','responsable','id_proceso','estado']);
+        $data  = Request::only(['objetivo','meta','indicador','formula','frecuencia','responsable','id_responsable','id_proceso','estado']);
+        $data['id_responsable'] = ((int)($data['id_responsable'] ?? 0)) ?: null;
         $this->model->update($id, $data);
         registrarAuditoria('objetivos_calidad','EDITAR','objetivo_calidad',$id,$antes,$data);
         $this->redirectSuccess('/objetivos-calidad', 'Objetivo actualizado.');
@@ -74,6 +81,7 @@ class ObjetivoCalidadController extends Controller
         Csrf::verify();
         $data = Request::only(['periodo','valor_obtenido','valor_meta','observacion']);
         $data['registrado_por'] = Auth::get('nombre_completo') ?? Auth::get('usuario');
+        $data['id_usuario']     = Auth::id();
         if (empty($data['periodo'])) {
             Session::flash('error', 'El período es obligatorio.');
             $this->redirect("/objetivos-calidad/editar/$id");
@@ -82,4 +90,18 @@ class ObjetivoCalidadController extends Controller
         $this->model->registrarMedicion($id, $data);
         $this->redirectSuccess("/objetivos-calidad/editar/$id", 'Medición registrada.');
     }
+
+    public function eliminar(int $id): void
+    {
+        Csrf::verify();
+        if (!\App\Core\Auth::puede('objetivos_calidad', 'eliminar')) $this->abort(403);
+
+        $antes = $this->model->find($id);
+        if (!$antes) $this->abort(404);
+
+        $this->model->update($id, ['estado' => 'INACTIVO']);
+        registrarAuditoria('sgc', 'ELIMINAR', 'objetivo_calidad', $id, $antes, null);
+        $this->redirectSuccess('/objetivos-calidad', 'Objetivo eliminado.');
+    }
+
 }

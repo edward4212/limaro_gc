@@ -43,15 +43,9 @@ if (!function_exists('fechaEs')) {
     }
 }
 
-if (!function_exists('monedaCop')) {
-    /**
-     * Formatear número como moneda COP.
-     */
-    function monedaCop(mixed $valor): string
-    {
-        return '$ ' . number_format((float)$valor, 0, ',', '.');
-    }
-}
+
+// [monedaCop] eliminada — sin uso en codebase
+
 
 if (!function_exists('e')) {
     /**
@@ -81,9 +75,15 @@ if (!function_exists('badgeEstado')) {
     {
         $map = [
             'CREADA'       => 'secondary',
+            'EN_REVISION'  => 'warning',
             'ASIGNADA'     => 'info',
-            'EN DESARROLLO'=> 'primary',
-            'FINALIZADA'   => 'success',
+            'EN_DESARROLLO'=> 'primary',
+            'FINALIZADA'              => 'success',
+            'APROBADO'                => 'success',
+            'EN_CURSO'                => 'primary',
+            'BORRADOR'                => 'secondary',
+            'FINALIZADO'              => 'success',
+            'FINALIZADA_SIN_TRAMITE'   => 'dark',
             'CREADO'       => 'secondary',
             'REVISION'     => 'info',
             'APROBACION'   => 'warning',
@@ -201,12 +201,17 @@ if (!function_exists('empresaLogoUrl')) {
         if (preg_match('~^https?://~i', $logo)) {
             return $logo;
         }
+        // Logos almacenados en storage se sirven vía controlador
+        // (el acceso directo a /storage/ está denegado por seguridad)
+        if (str_starts_with($logo, '/storage/') || str_starts_with($logo, 'storage/')) {
+            return APP_URL . '/empresa-img/logo';
+        }
         // Si ya viene con barra inicial, respetar ruta relativa al dominio
         if (str_starts_with($logo, '/')) {
             return APP_URL . $logo;
         }
-        // Si ya incluye 'assets/' o 'storage/', no duplicar
-        if (str_starts_with($logo, 'assets/') || str_starts_with($logo, 'storage/')) {
+        // Si ya incluye 'assets/', no duplicar
+        if (str_starts_with($logo, 'assets/')) {
             return APP_URL . '/' . $logo;
         }
         return APP_URL . '/assets/img/' . $logo;
@@ -227,5 +232,58 @@ if (!function_exists('prioridadLabel')) {
         ];
         [$color, $label] = $map[strtoupper($prioridad)] ?? ['secondary', $prioridad];
         return '<span class="badge bg-' . $color . '">' . $label . '</span>';
+    }
+}
+
+
+// [sanitizarNombreArchivo] eliminada — sin uso en codebase
+
+
+if (!function_exists('iconoArchivo')) {
+    /**
+     * Devuelve el ícono Bootstrap Icons según el MIME o extensión del archivo.
+     * Usado en botones "Ver" para indicar visualmente el tipo de documento.
+     */
+    function iconoArchivo(?string $nombreOriginal, ?string $mime = null): string
+    {
+        $ext = strtolower(pathinfo($nombreOriginal ?? '', PATHINFO_EXTENSION));
+        $map = [
+            'pdf'  => 'bi-file-pdf text-danger',
+            'doc'  => 'bi-file-word text-primary',
+            'docx' => 'bi-file-word text-primary',
+            'xls'  => 'bi-file-excel text-success',
+            'xlsx' => 'bi-file-excel text-success',
+            'ppt'  => 'bi-file-ppt text-warning',
+            'pptx' => 'bi-file-ppt text-warning',
+            'jpg'  => 'bi-file-image text-info',
+            'jpeg' => 'bi-file-image text-info',
+            'png'  => 'bi-file-image text-info',
+        ];
+        return $map[$ext] ?? 'bi-file-earmark text-secondary';
+    }
+}
+
+if (!function_exists('esVisualizableInline')) {
+    /**
+     * ¿El archivo se puede ver inline en el navegador o con Office Online?
+     * Retorna: 'native' | 'office' | 'none'
+     */
+    function esVisualizableInline(?string $nombreOriginal): string
+    {
+        $ext = strtolower(pathinfo($nombreOriginal ?? '', PATHINFO_EXTENSION));
+        if (in_array($ext, ['pdf','jpg','jpeg','png','gif','webp','svg'], true)) return 'native';
+        if (in_array($ext, ['doc','docx','xls','xlsx','ppt','pptx'], true))     return 'office';
+        return 'none';
+    }
+}
+
+if (!function_exists('labelTipoSolicitud')) {
+    function labelTipoSolicitud(string $tipo): string {
+        return match(strtoupper($tipo)) {
+            'CREACION'      => 'CREACIÓN',
+            'ACTUALIZACION' => 'ACTUALIZACIÓN',
+            'ELIMINACION'   => 'INACTIVACIÓN',
+            default         => strtoupper($tipo),
+        };
     }
 }

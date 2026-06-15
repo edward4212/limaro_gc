@@ -72,18 +72,18 @@ if (!function_exists('registrarLoginAudit')) {
             $db = \App\Core\Database::getInstance();
             $stmt = $db->prepare("
                 INSERT INTO auditoria_login
-                    (id_usuario, usuario, exitoso, ip, user_agent, fecha)
-                VALUES (?, ?, ?, ?, ?, NOW())
+                    (id_usuario, usuario, resultado, tipo, ip, user_agent, fecha)
+                VALUES (?, ?, ?, 'LOGIN', ?, ?, NOW())
             ");
             $stmt->execute([
                 $idUsuario,
                 $usuario,
-                $exitoso ? 1 : 0,
+                $exitoso ? 'EXITOSO' : 'FALLIDO',
                 $ip,
                 substr($userAgent, 0, 500),
             ]);
-        } catch (Throwable) {
-            // No romper el login por fallo de auditoría
+        } catch (\Throwable $e) {
+            error_log('[registrarLoginAudit] ' . $e->getMessage());
         }
     }
 }

@@ -33,15 +33,22 @@ class ProcesoController extends Controller
             return;
         }
 
+        $procesos   = $this->model->listar();
+        $conteosDoc = [];
+        foreach ($procesos as $p) {
+            $conteosDoc[$p['id_proceso']] = $this->model->contarDocumentos($p['id_proceso']);
+        }
         $this->view('empresa/procesos/index', [
-            'pageTitle' => 'Procesos',
-            'procesos'  => $this->model->listar(),
+            'pageTitle'          => 'Procesos',
+            'procesos'           => $procesos,
+            'conteosDocumentos'  => $conteosDoc,
         ]);
     }
 
     /** GET /procesos/crear */
     public function crear(): void
     {
+        Session::clearOldInput();
         $this->view('empresa/procesos/form', [
             'pageTitle'   => 'Crear Proceso',
             'item'        => null,
@@ -57,7 +64,7 @@ class ProcesoController extends Controller
         $errors = $this->validate($data, [
             'id_macroproceso' => 'required|integer',
             'proceso'         => 'required|max:200',
-            'sigla_proceso'   => 'required|max:10',
+            'sigla_proceso'   => 'required|max:2',
         ]);
 
         if ($errors) {
@@ -67,10 +74,27 @@ class ProcesoController extends Controller
             return;
         }
 
+        // HU-002: validar sigla duplicada dentro del mismo macroproceso
+        $sigla   = strtoupper(trim($data['sigla_proceso']));
+
+        // CA-3: validar máximo 2 caracteres (server-side)
+        if (mb_strlen($sigla) > 2) {
+            Session::flash('error', "La sigla no puede tener más de <strong>2 caracteres</strong>. Valor ingresado: \"$sigla\"");;
+            $this->redirect('/procesos/crear');
+            return;
+        }
+        $idMacro = (int)$data['id_macroproceso'];
+        if ($this->model->existeSigla($sigla, $idMacro)) {
+            Session::flash('error', "La sigla <strong>\"$sigla\"</strong> ya existe en este macroproceso.");
+            Session::setOldInput($data);
+            $this->redirect('/procesos/crear');
+            return;
+        }
+
         $this->model->crear(
-            (int) $data['id_macroproceso'],
+            $idMacro,
             strtoupper(trim($data['proceso'])),
-            $data['sigla_proceso'],
+            $sigla,
             trim($data['objetivo'] ?? ''),
             $data['estado'] ?? 'ACTIVO'
         );
@@ -101,7 +125,7 @@ class ProcesoController extends Controller
         $errors = $this->validate($data, [
             'id_macroproceso' => 'required|integer',
             'proceso'         => 'required|max:200',
-            'sigla_proceso'   => 'required|max:10',
+            'sigla_proceso'   => 'required|max:2',
         ]);
 
         if ($errors) {
@@ -110,10 +134,26 @@ class ProcesoController extends Controller
             return;
         }
 
+        // HU-002: validar sigla duplicada excluyendo el registro actual
+        $sigla   = strtoupper(trim($data['sigla_proceso']));
+
+        // CA-3: validar máximo 2 caracteres (server-side)
+        if (mb_strlen($sigla) > 2) {
+            Session::flash('error', "La sigla no puede tener más de <strong>2 caracteres</strong>. Valor ingresado: \"$sigla\"");;
+            $this->redirect('/procesos/crear');
+            return;
+        }
+        $idMacro = (int)$data['id_macroproceso'];
+        if ($this->model->existeSigla($sigla, $idMacro, $id)) {
+            Session::flash('error', "La sigla <strong>\"$sigla\"</strong> ya existe en este macroproceso.");
+            $this->redirect("/procesos/editar/$id");
+            return;
+        }
+
         $this->model->actualizar($id,
-            (int) $data['id_macroproceso'],
+            $idMacro,
             strtoupper(trim($data['proceso'])),
-            $data['sigla_proceso'],
+            $sigla,
             trim($data['objetivo'] ?? ''),
             $data['estado'] ?? 'ACTIVO'
         );
@@ -127,8 +167,22 @@ class ProcesoController extends Controller
     {
         Csrf::verify();
         $antes = $this->model->find($id);
+        if (!$antes) $this->abort(404);
+
+        // CA-1, CA-2, CA-3: bloquear si tiene documentos activos
+        $nDocs = $this->model->contarDocumentos($id);
+        if ($nDocs > 0) {
+            Session::flash('error',
+                "No se puede inactivar el proceso <strong>{$antes['proceso']}</strong>: "
+                . "tiene <strong>{$nDocs} documento(s) activo(s)</strong> vinculado(s). "
+                . "Reasigne o inactivar primero los documentos del proceso."
+            );
+            $this->redirect('/procesos');
+            return;
+        }
+
         $this->model->update($id, ['estado' => 'INACTIVO']);
         registrarAuditoria('procesos', 'ELIMINAR', 'proceso', $id, $antes, null);
-        $this->redirectSuccess('/procesos', 'Proceso inactivado.');
+        $this->redirectSuccess('/procesos', 'Proceso inactivado correctamente.');
     }
 }

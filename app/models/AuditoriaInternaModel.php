@@ -34,4 +34,14 @@ class AuditoriaInternaModel extends Model
             $data['estado']??'ABIERTO'
         ]) ? (int)$this->db->lastInsertId() : 0;
     }
+
+    public function contarHallazgosAbiertos(int $idPrograma): int
+    {
+        return (int) $this->query(
+            "SELECT COUNT(*) FROM auditoria_hallazgo
+             WHERE id_programa = ? AND estado = 'ABIERTO'",
+            [$idPrograma]
+        )->fetchColumn();
+    }
+
 }

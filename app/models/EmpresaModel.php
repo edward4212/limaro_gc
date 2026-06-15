@@ -27,4 +27,21 @@ class EmpresaModel extends Model
     {
         return $this->update(1, $data);
     }
+
+    /**
+     * Obtener un campo específico del único registro de empresa.
+     * Solo permite campos predefinidos para evitar inyección de nombre de columna.
+     */
+    public function primerRegistro(string $campo): ?array
+    {
+        $permitidos = ['logo','organigrama','mapa_procesos','nombre_empresa',
+                       'mision','vision','politica_calidad','URL'];
+        if (!in_array($campo, $permitidos, true)) {
+            return null;
+        }
+        return $this->query(
+            "SELECT `{$campo}` AS ruta FROM empresa ORDER BY id_empresa LIMIT 1"
+        )->fetch() ?: null;
+    }
+
 }

@@ -1,8 +1,14 @@
+<?php
+$soloConsulta = \App\Core\Request::get('consulta') === '1';
+?>
 <?php include APP_ROOT . '/app/views/partials/modal_confirm.php'; ?>
 
 <div class="page-header">
     <div>
         <h2><i class="bi bi-layers me-2"></i><?= e($pageTitle) ?></h2>
+        <!--<?php if ($soloConsulta): ?>-->
+        <!--<span class="badge bg-secondary ms-2"><i class="bi bi-eye me-1"></i>Solo consulta</span>-->
+        <!--<?php endif; ?>-->
         <nav><ol class="breadcrumb">
             <li class="breadcrumb-item">
                 <a href="<?= e(APP_URL) ?>/versionamiento">Versionamiento</a>
@@ -13,17 +19,42 @@
         </ol></nav>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <?php if (Auth::puede('versionamiento', 'crear')): ?>
+        <?php if (!$soloConsulta && Auth::puede('versionamiento', 'crear')): ?>
         <a href="<?= e(APP_URL) ?>/versionamiento/nueva/<?= (int)$documento['id_documento'] ?>"
            class="btn btn-lim-primary btn-sm">
             <i class="bi bi-plus-circle me-1"></i>Nueva Versión
         </a>
         <?php endif; ?>
+        <?php
+        // CA-1: ocultar Descargar Carpeta cuando viene de Documentos Registrados
+        $fromParam = \App\Core\Request::get('from', 'versionamiento');
+        $esDesdeDocumentos = in_array($fromParam, ['documentos', 'empresa/documentos']);
+        ?>
+        <?php if (!$esDesdeDocumentos):
+            // HU-019 CA-3: contar archivos en la carpeta del documento
+            $nArchivos = 0;
+            try {
+                $infoC = $this->docModel->infoCarpeta ?? null;
+                $carpDir = APP_ROOT . '/public/storage/documentos/';
+                if (!empty($documento['ruta_carpeta'])) {
+                    $carpAbs = $carpDir . $documento['ruta_carpeta'];
+                    if (is_dir($carpAbs)) {
+                        $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($carpAbs, RecursiveDirectoryIterator::SKIP_DOTS));
+                        foreach ($it as $fi) { if ($fi->isFile()) $nArchivos++; }
+                    }
+                }
+            } catch (Throwable $eN) { $nArchivos = 0; }
+        ?>
         <a href="<?= e(APP_URL) ?>/versionamiento/descargar/<?= (int)$documento['id_documento'] ?>"
-           class="btn btn-success btn-sm">
+           class="btn btn-success btn-sm"
+           title="<?= $nArchivos > 0 ? "Contiene $nArchivos archivo(s)" : 'Carpeta' ?>">
             <i class="bi bi-file-zip me-1"></i>Descargar carpeta
+            <?php if ($nArchivos > 0): ?>
+            <span class="badge bg-light text-success ms-1" style="font-size:10px;"><?= $nArchivos ?></span>
+            <?php endif; ?>
         </a>
-        <a href="<?= e(APP_URL) ?>/<?= e(\App\Core\Request::get('from','versionamiento')) ?>" class="btn btn-secondary btn-sm">
+        <?php endif; ?>
+        <a href="<?= e(APP_URL) ?>/<?= e($fromParam) ?>" class="btn btn-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i>Volver
         </a>
     </div>
@@ -35,10 +66,10 @@
         <div class="row g-2">
             <div class="col-md-2">
                 <div class="text-muted" style="font-size:11px;">CÓDIGO</div>
-                <code class="fs-6"><?= e($documento['codigo'] ?? $documento['codigo_documento'] ?? '') ?></code>
-                <?php if (!empty($documento['codigo_anterior'])): ?>
-                <div class="form-text">Antes: <del><?= e($documento['codigo_anterior']) ?></del></div>
-                <?php endif; ?>
+                <span class="fs-6"><?= e($documento['codigo'] ?? $documento['codigo_documento'] ?? '') ?></span>
+                <!--<?php if (!empty($documento['codigo_anterior'])): ?>-->
+                <!--<div class="form-text">Antes: <del><?= e($documento['codigo_anterior']) ?></del></div>-->
+                <!--<?php endif; ?>-->
             </div>
             <div class="col-md-5">
                 <div class="text-muted" style="font-size:11px;">DOCUMENTO</div>
@@ -84,7 +115,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($versiones as $v): ?>
+                <?php
+                // Solo filtrar vigentes si se viene desde el listado de obsoletos
+                $soloObsoletas = ($_GET['from'] ?? '') === 'obsoletos';
+                $tieneVigente  = !empty(array_filter($versiones, fn($x) => ($x['estado_version'] ?? '') === 'VIGENTE'));
+                $versionesHistorial = ($soloObsoletas && $tieneVigente)
+                    ? array_filter($versiones, fn($x) => ($x['estado_version'] ?? '') !== 'VIGENTE')
+                    : $versiones;
+                ?>
+                <?php foreach ($versionesHistorial as $v): ?>
                 <tr class="<?= ($v['estado_version'] ?? '') === 'VIGENTE' ? 'table-success' : (($v['estado_version'] ?? '') === 'OBSOLETO' ? 'table-secondary' : '') ?>">
                     <td class="text-center">
                         <span class="badge bg-primary fs-6">V<?= e($v['numero_version']) ?></span>
@@ -102,13 +141,18 @@
                         <?php
                         $rutaArch = $v['documento'] ?? $v['archivo'] ?? null;
                         $idArch   = $v['id_archivo'] ?? null;
-                        if ($idArch): ?>
+                        if ($esDesdeDocumentos): ?>
+                            <!-- CA-1/CA-2 HU-011: sin descarga desde Documentos Registrados -->
+                            <span class="badge bg-secondary" style="font-size:10px;"
+                                  title="Descarga no disponible desde Documentos Registrados">
+                                <i class="bi bi-lock me-1"></i>Restringido
+                            </span>
+                        <?php elseif ($idArch): ?>
                             <a href="<?= e(APP_URL) ?>/archivo/<?= (int)$idArch ?>"
                                class="btn btn-outline-primary btn-sm py-0" title="Descargar">
                                 <i class="bi bi-download"></i></a>
                         <?php elseif ($rutaArch): ?>
-                            <a href="<?= e(APP_URL) ?>/public<?= e($rutaArch) ?>"
-                               target="_blank"
+                            <a href="<?= e(APP_URL) ?>/archivo/v/<?= (int)$v['id_versionamiento'] ?>"
                                class="btn btn-outline-primary btn-sm py-0" title="Descargar">
                                 <i class="bi bi-download"></i></a>
                         <?php else: ?>
@@ -117,7 +161,7 @@
                     </td>
                     <td>
                         <!-- Cambiar estado -->
-                        <?php if (Auth::puede('versionamiento', 'editar')): ?>
+                        <?php if (!$soloConsulta && Auth::puede('versionamiento', 'editar')): ?>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary py-0 dropdown-toggle"
                                     type="button" data-bs-toggle="dropdown">
@@ -135,7 +179,7 @@
                                         <input type="hidden" name="id_documento"   value="<?= (int)$documento['id_documento'] ?>">
                                         <button type="submit" class="dropdown-item
                                             <?= $est === 'VIGENTE' ? 'text-success' : ($est === 'OBSOLETO' ? 'text-danger' : '') ?>"
-                                            onclick="return confirm('¿Cambiar estado a <?= $est ?>?<?= $est === 'VIGENTE' ? ' Las demás versiones quedarán OBSOLETO.' : '' ?>')">
+                                            onclick="swalConfirm(event, '¿Cambiar estado a <?= $est ?>?' + (<?= json_encode($est === 'VIGENTE') ?> ? ' Las demás versiones quedarán OBSOLETO.' : ''))">
                                             <?= $est ?>
                                         </button>
                                     </form>

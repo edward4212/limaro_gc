@@ -48,4 +48,32 @@ class CargoModel extends Model
     {
         return $this->update($id, $data);
     }
+
+    /**
+     * Empleados activos de un cargo con correo (para notificaciones).
+     * Elimina el Database::getInstance() en CargoController.
+     */
+    public function empleadosActivosConCorreo(int $idCargo): array
+    {
+        return $this->query(
+            "SELECT e.nombre_completo, e.correo_empleado
+             FROM empleado e
+             WHERE e.id_cargo = ? AND e.estado_empleado = 'ACTIVO'
+               AND e.correo_empleado IS NOT NULL AND e.correo_empleado <> ''",
+            [$idCargo]
+        )->fetchAll();
+    }
+
+    /**
+     * Verificar si un cargo tiene empleados activos (antes de eliminar).
+     * Elimina el Database::getInstance() en CargoController::eliminar().
+     */
+    public function tieneEmpleadosActivos(int $idCargo): int
+    {
+        return (int) $this->query(
+            "SELECT COUNT(*) FROM empleado WHERE id_cargo = ? AND estado_empleado = 'ACTIVO'",
+            [$idCargo]
+        )->fetchColumn();
+    }
+
 }

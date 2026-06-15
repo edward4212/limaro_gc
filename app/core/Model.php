@@ -127,6 +127,77 @@ abstract class Model
     /**
      * Iniciar transacción.
      */
+
+    // -------------------------------------------------------------------
+    // Paginación (PERF-001)
+    // -------------------------------------------------------------------
+
+    /**
+     * Ejecuta una query paginada y devuelve los datos + metadatos de paginación.
+     *
+     * Uso en un modelo hijo:
+     *   return $this->paginar(
+     *       "SELECT * FROM solicitud WHERE estado_solicitud = ?",
+     *       ['CREADA'], $pagina, 50
+     *   );
+     *
+     * @param string $sql       SQL completo SIN LIMIT ni OFFSET
+     * @param array  $params    Parámetros de la query principal
+     * @param int    $pagina    Página solicitada (base 1)
+     * @param int    $porPagina Filas por página (default 50, máx 200)
+     * @return array{
+     *     data: array,
+     *     total: int,
+     *     pagina: int,
+     *     por_pagina: int,
+     *     total_paginas: int,
+     *     tiene_anterior: bool,
+     *     tiene_siguiente: bool
+     * }
+     */
+    protected function paginar(
+        string $sql,
+        array  $params    = [],
+        int    $pagina    = 1,
+        int    $porPagina = 50
+    ): array {
+        $pagina    = max(1, $pagina);
+        $porPagina = min(200, max(1, $porPagina));
+        $offset    = ($pagina - 1) * $porPagina;
+
+        // COUNT sin ORDER BY (optimización: evitar filesort en el conteo)
+        $sqlCount = preg_replace('/ORDER\s+BY.*/is', '', $sql);
+        $total    = (int) $this->query(
+            "SELECT COUNT(*) FROM ({$sqlCount}) AS _pag_count",
+            $params
+        )->fetchColumn();
+
+        $data = $this->query(
+            "{$sql} LIMIT {$porPagina} OFFSET {$offset}",
+            $params
+        )->fetchAll();
+
+        $totalPaginas = $total > 0 ? (int) ceil($total / $porPagina) : 1;
+
+        return [
+            'data'            => $data,
+            'total'           => $total,
+            'pagina'          => $pagina,
+            'por_pagina'      => $porPagina,
+            'total_paginas'   => $totalPaginas,
+            'tiene_anterior'  => $pagina > 1,
+            'tiene_siguiente' => $pagina < $totalPaginas,
+        ];
+    }
+
+    /**
+     * Helper: extrae el número de página del request GET (?pagina=N).
+     */
+    public static function paginaActual(int $default = 1): int
+    {
+        return max(1, (int)($_GET['pagina'] ?? $default));
+    }
+
     protected function beginTransaction(): void
     {
         $this->db->beginTransaction();

@@ -50,6 +50,7 @@ define('APP_DEBUG',    env('APP_DEBUG', false));
 define('APP_TIMEZONE', env('APP_TIMEZONE', 'America/Bogota'));
 define('AES_KEY',      env('AES_KEY', ''));  // Legacy: solo para migración de contraseñas antiguas
 define('SESSION_NAME', env('SESSION_NAME', 'LIMARO_SGC'));
+define('APP_VERSION',  'V3.0');   // ← Actualizar con cada release
 
 // Configuración PHP
 date_default_timezone_set(APP_TIMEZONE);
@@ -70,6 +71,7 @@ spl_autoload_register(function (string $class): void {
         'App\\Models\\'      => APP_ROOT . '/app/models/',
         'App\\Core\\'        => APP_ROOT . '/app/core/',
         'App\\Middlewares\\' => APP_ROOT . '/app/middlewares/',
+        'App\\Services\\'    => APP_ROOT . '/app/services/',
     ];
 
     foreach ($namespaces as $prefix => $dir) {

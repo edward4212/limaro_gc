@@ -18,20 +18,38 @@
                 <tr>
                     <td><?= e($t['id_tipo_documento']) ?></td>
                     <td><strong><?= e($t['tipo_documento']) ?></strong></td>
-                    <td><code class="bg-light px-2 py-1 rounded"><?= e($t['sigla_tipo_documento']) ?></code></td>
-                    <td><span class="badge bg-info text-dark"><?= e($t['total_docs']) ?></span></td>
+                    <td><span class="bg-light px-2 py-1 rounded"><?= e($t['sigla_tipo_documento']) ?></span></td>
+                    <td>
+                        <?php $totalTipo = ($t['total_docs'] ?? 0) + ($t['total_acuerdos'] ?? 0); ?>
+                        <span class="badge <?= $totalTipo > 0 ? 'bg-primary' : 'bg-secondary' ?>">
+                            <?= $totalTipo ?>
+                        </span>
+                    </td>
                     <td><?= badgeEstado($t['estado']) ?></td>
                     <td>
                         <?php if (Auth::puede('tipo_documentos', 'editar')): ?>
                         <a href="<?= e(APP_URL) ?>/tipos-documento/editar/<?= $t['id_tipo_documento'] ?>"
                            class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-pencil"></i></a>
                         <?php endif; ?>
-                        <?php if (Auth::puede('tipo_documentos', 'eliminar') && $t['estado'] === 'ACTIVO'): ?>
-                        <button class="btn btn-sm btn-outline-danger py-0"
-                                data-bs-toggle="modal" data-bs-target="#modalConfirm"
-                                onclick="setModalConfirm('<?= e(APP_URL) ?>/tipos-documento/eliminar/<?= $t['id_tipo_documento'] ?>','¿Inactivar este tipo de documento?')">
+                        <?php if (Auth::puede('tipo_documentos', 'eliminar') && $t['estado'] === 'ACTIVO'):
+                            $nDocT = $conteosDocumentos[$t['id_tipo_documento']] ?? 0;
+                        ?>
+                        <?php if ($nDocT > 0): ?>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                disabled
+                                title="No se puede inactivar: tiene <?= $nDocT ?> documento(s) activo(s)">
                             <i class="bi bi-slash-circle"></i>
                         </button>
+
+                        <?php else: ?>
+                        <button class="btn btn-sm btn-outline-danger py-0 px-2"
+                                onclick="setModalConfirm(
+                                    '<?= e(APP_URL) ?>/tipos-documento/eliminar/<?= $t['id_tipo_documento'] ?>',
+                                    '¿Inactivar el tipo de documento: <?= e(addslashes($t['tipo_documento'])) ?>?'
+                                )">
+                            <i class="bi bi-slash-circle"></i>
+                        </button>
+                        <?php endif; ?>
                         <?php endif; ?>
                     </td>
                 </tr>

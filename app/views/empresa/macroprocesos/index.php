@@ -28,7 +28,7 @@
                 <tr>
                     <td><?= e($m['id_macroproceso']) ?></td>
                     <td><strong><?= e($m['macroproceso']) ?></strong></td>
-                    <td><?= e(truncar($m['objetivo'] ?? '', 80)) ?></td>
+                    <td class="col-objetivo"><?= e(truncar($m['objetivo'] ?? '', 500)) ?></td>
                     <td><span class="badge bg-info text-dark"><?= e($m['total_procesos']) ?></span></td>
                     <td><?= badgeEstado($m['estado']) ?></td>
                     <td>
@@ -38,13 +38,24 @@
                             <i class="bi bi-pencil"></i>
                         </a>
                         <?php endif; ?>
-                        <?php if (Auth::puede('macroprocesos', 'eliminar') && $m['estado'] === 'ACTIVO'): ?>
-                        <button type="button" class="btn btn-sm btn-outline-danger py-0"
-                                data-bs-toggle="modal" data-bs-target="#modalConfirm"
+                        <?php if (Auth::puede('macroprocesos', 'eliminar') && $m['estado'] === 'ACTIVO'):
+                            $nProc = $conteosProcesos[$m['id_macroproceso']] ?? 0;
+                        ?>
+                        <?php if ($nProc > 0): ?>
+                        <!-- CA-2: botón bloqueado si tiene procesos activos -->
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                disabled
+                                title="No se puede inactivar: tiene <?= $nProc ?> proceso(s) activo(s)">
+                            <i class="bi bi-slash-circle"></i>
+                        </button>
+
+                        <?php else: ?>
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2"
                                 onclick="setModalConfirm('<?= e(APP_URL) ?>/macroprocesos/eliminar/<?= $m['id_macroproceso'] ?>',
                                 '¿Inactivar el macroproceso: <?= e(addslashes($m['macroproceso'])) ?>?')">
                             <i class="bi bi-slash-circle"></i>
                         </button>
+                        <?php endif; ?>
                         <?php endif; ?>
                     </td>
                 </tr>

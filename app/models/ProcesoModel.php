@@ -55,6 +55,23 @@ class ProcesoModel extends Model
     /**
      * Crear proceso.
      */
+
+    /**
+     * Verificar si ya existe un proceso con la misma sigla dentro del macroproceso.
+     */
+    public function existeSigla(string $sigla, int $idMacro, int $excluirId = 0): bool
+    {
+        $row = $this->query(
+            "SELECT id_proceso FROM proceso
+             WHERE UPPER(TRIM(sigla_proceso)) = UPPER(TRIM(?))
+               AND id_macroproceso = ?
+               AND id_proceso != ?
+             LIMIT 1",
+            [$sigla, $idMacro, $excluirId]
+        )->fetch();
+        return (bool) $row;
+    }
+
     public function crear(
         int    $idMacroproceso,
         string $proceso,
@@ -90,4 +107,14 @@ class ProcesoModel extends Model
             'estado'          => $estado,
         ]);
     }
+
+    /** Cuenta documentos activos vinculados al proceso */
+    public function contarDocumentos(int $id): int
+    {
+        return (int) $this->query(
+            "SELECT COUNT(*) FROM documento WHERE id_proceso = ? AND estado = 'ACTIVO'",
+            [$id]
+        )->fetchColumn();
+    }
+
 }

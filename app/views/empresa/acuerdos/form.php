@@ -26,12 +26,14 @@ $action = $isEdit
                     <input type="number" class="form-control" name="año_acuerdo"
                            value="<?= $isEdit ? e($item['año_acuerdo']) : old('año_acuerdo', date('Y')) ?>"
                            min="2000" max="2100" required>
+                    <div class="form-text">Año vigente: <?= date('Y') ?>. Modifíquelo si es necesario.</div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Número <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="numero_acuerdo"
+                    <input type="number" class="form-control" name="numero_acuerdo"
                            value="<?= $isEdit ? e($item['numero_acuerdo']) : old('numero_acuerdo') ?>"
-                           maxlength="20" required placeholder="Ej: 001">
+                           min="1" max="9999" required placeholder="Ej: 001">
+                    <div class="form-text">Solo números (1-9999)</div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Tipo de Documento</label>
@@ -61,18 +63,30 @@ $action = $isEdit
                 <div class="col-md-4">
                     <label class="form-label">Fecha de Aprobación</label>
                     <input type="date" class="form-control" name="fecha_aprobacion"
-                           value="<?= $isEdit ? e($item['fecha_aprobacion'] ?? '') : '' ?>">
+                           value="<?= $isEdit ? e(substr($item['fecha_aprobacion'] ?? '', 0, 10)) : '' ?>">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Nº Acta de Aprobación <span class="text-danger">*</span></label>
                     <input type="number" class="form-control" name="acta_aprobacion"
                            value="<?= $isEdit ? e($item['acta_aprobacion'] ?? '') : old('acta_aprobacion') ?>"
                            min="0" required>
+                    <div class="form-text">Solo números enteros positivos</div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Archivo PDF <?= $isEdit ? '(reemplazar)' : '' ?></label>
-                    <input type="file" class="form-control" name="archivo_pdf" accept=".pdf">
-                    <div class="form-text">Máx. 20 MB.</div>
+                    <input type="file" class="form-control" name="archivo_pdf" accept=".pdf,application/pdf">
+                    <div class="form-text">Máx. 20 MB — PDF únicamente.</div>
+                    <?php if ($isEdit && !empty($archivo)): ?>
+                    <div class="mt-1 d-flex gap-1 align-items-center">
+                        <i class="bi bi-file-pdf text-danger"></i>
+                        <small class="text-muted"><?= e(truncar($archivo['nombre_original'] ?? '', 30)) ?></small>
+                        <a href="<?= e(APP_URL) ?>/acuerdos/ver/<?= (int)$item['id_acuerdo'] ?>"
+                           target="_blank" class="btn btn-xs btn-outline-danger py-0 px-1"
+                           style="font-size:10px;">Ver</a>
+                    </div>
+                    <?php elseif ($isEdit): ?>
+                    <div class="mt-1"><small class="text-muted">Sin archivo adjunto</small></div>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="d-flex gap-2">

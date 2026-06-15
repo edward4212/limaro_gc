@@ -41,80 +41,84 @@ class PerfilController extends Controller
     {
         Csrf::verify();
 
-        if (!Request::hasFile('img_empleado') || $_FILES['img_empleado']['error'] !== UPLOAD_ERR_OK) {
+        // El form envía img_b64 (Base64 del FileReader) e img_mime
+        $b64Raw = $_POST['img_b64'] ?? '';
+        if (empty($b64Raw)) {
             $this->redirectSuccess('/perfil', 'Sin cambios guardados.');
             return;
         }
 
         $idUsuario  = (int)(Auth::id() ?? 0);
         $idEmpleado = (int)(Auth::empleadoId() ?? 0);
-
         if (!$idUsuario) {
             $this->redirectError('/perfil', 'Usuario no identificado.');
             return;
         }
 
-        $archivo = $_FILES['img_empleado'];
-        $mime    = mime_content_type($archivo['tmp_name']);
-        $mimes   = ['image/jpeg', 'image/png', 'image/webp'];
-
+        $mime  = $_POST['img_mime'] ?? 'image/jpeg';
+        $mimes = ['image/jpeg','image/png','image/webp'];
         if (!in_array($mime, $mimes, true)) {
             $this->redirectError('/perfil', 'Solo se permiten imágenes JPG, PNG o WEBP.');
             return;
         }
 
-        if ($archivo['size'] > 5242880) {
+        // Decodificar Base64 (quitar prefijo data:image/...;base64,)
+        $b64Data = $b64Raw;
+        if (str_contains($b64Data, ',')) {
+            $b64Data = substr($b64Data, strpos($b64Data, ',') + 1);
+        }
+        $imgBytes = base64_decode(str_replace(['\n','\r',' '], '', $b64Data), true);
+        if ($imgBytes === false || strlen($imgBytes) < 100) {
+            $this->redirectError('/perfil', 'Imagen inválida. Intente con otro archivo.');
+            return;
+        }
+        if (strlen($imgBytes) > 5242880) {
             $this->redirectError('/perfil', 'La imagen no puede superar 5 MB.');
             return;
         }
 
         try {
-            // Crear carpeta personal del usuario si no existe
             $carpeta = carpetaUsuario($idUsuario, 'foto');
-
-            // Determinar extensión según MIME real
-            $ext = match($mime) {
+            $ext     = match($mime) {
                 'image/jpeg' => 'jpg',
                 'image/png'  => 'png',
                 'image/webp' => 'webp',
                 default      => 'jpg',
             };
-
-            // Ruta destino: siempre foto.{ext} (reemplaza la anterior)
             $rutaAbsoluta = $carpeta . '/foto.' . $ext;
 
-            // Eliminar fotos anteriores de cualquier extensión
+            // Eliminar fotos anteriores
             foreach (['jpg','jpeg','png','webp'] as $e) {
                 $vieja = $carpeta . '/foto.' . $e;
-                if (file_exists($vieja) && $vieja !== $rutaAbsoluta) {
-                    @unlink($vieja);
-                }
+                if (file_exists($vieja)) @unlink($vieja);
             }
 
-            // Mover archivo al destino
-            if (!move_uploaded_file($archivo['tmp_name'], $rutaAbsoluta)) {
-                throw new \RuntimeException('No se pudo guardar el archivo en el servidor.');
+            if (file_put_contents($rutaAbsoluta, $imgBytes) === false) {
+                throw new \RuntimeException('No se pudo guardar la imagen.');
             }
 
-            // Ruta relativa desde /public/ para guardar en BD y sesión
             $rutaRelativa = '/storage/usuarios/' . $idUsuario . '/foto/foto.' . $ext;
 
-            // Guardar en BD
-            $this->empModel->actualizarImagen($idEmpleado, $rutaRelativa);
+            // Actualizar BD — delegar al modelo (elimina SQL directo)
+            $idEmp = $idEmpleado
+                ?: (int)(new \App\Models\EmpleadoModel())->porIdUsuario($idUsuario)['id_empleado'];
+            if ($idEmp) {
+                (new \App\Models\EmpleadoModel())->actualizarImagen($idEmp, $rutaRelativa);
+            }
 
-            // Actualizar sesión activa
+            // Actualizar sesión
             $user = Auth::user();
             $user['img_empleado'] = $rutaRelativa;
             \App\Core\Session::set('_auth_user', $user);
 
-            registrarAuditoria('perfil', 'FOTO', 'empleado', $idEmpleado, null, ['ruta' => $rutaRelativa]);
             $this->redirectSuccess('/perfil', 'Foto de perfil actualizada correctamente.');
 
         } catch (\Throwable $e) {
-            error_log('[Limaro SGC] Foto perfil: ' . $e->getMessage());
-            $this->redirectError('/perfil', 'Error interno al guardar la imagen. Intente de nuevo.');
+            error_log('[Perfil] Error: ' . $e->getMessage() . ' — ' . $e->getFile() . ':' . $e->getLine());
+            $this->redirectError('/perfil', 'Error al guardar: ' . $e->getMessage());
         }
     }
+
 
     /** GET /perfil/cambiar-clave */
     public function cambiarClave(): void
@@ -169,6 +173,10 @@ class PerfilController extends Controller
         }
 
         registrarAuditoria('perfil', 'CAMBIAR_CLAVE', 'usuario', $idUsuario, null, null);
-        $this->redirectSuccess('/inicio', 'Contraseña actualizada exitosamente.');
+
+        // CA-3+4+5: cerrar sesión y redirigir al login con mensaje
+        Auth::logout();
+        Session::flash('success', 'Contraseña actualizada correctamente. Por seguridad, inicie sesión nuevamente.');
+        $this->redirect('/login');
     }
 }

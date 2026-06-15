@@ -23,11 +23,17 @@ class AcuerdoModel extends Model
     {
         return $this->query("
             SELECT a.*, td.tipo_documento, td.sigla_tipo_documento,
-                   ar.id_archivo, ar.nombre_original AS archivo_nombre
+                   (SELECT ar.id_archivo FROM archivo ar
+                    WHERE ar.modulo = 'ACUERDO' AND ar.id_referencia = a.id_acuerdo
+                    ORDER BY ar.id_archivo DESC LIMIT 1) AS id_archivo,
+                   (SELECT ar.nombre_original FROM archivo ar
+                    WHERE ar.modulo = 'ACUERDO' AND ar.id_referencia = a.id_acuerdo
+                    ORDER BY ar.id_archivo DESC LIMIT 1) AS archivo_nombre,
+                   (SELECT ar.ruta_relativa FROM archivo ar
+                    WHERE ar.modulo = 'ACUERDO' AND ar.id_referencia = a.id_acuerdo
+                    ORDER BY ar.id_archivo DESC LIMIT 1) AS archivo_ruta
             FROM acuerdos a
             INNER JOIN tipo_documento td ON td.id_tipo_documento = a.id_tipo_documento
-            LEFT  JOIN archivo ar ON ar.modulo = 'ACUERDO'
-                                  AND ar.id_referencia = a.id_acuerdo
             ORDER BY a.año_acuerdo DESC, a.numero_acuerdo DESC
         ")->fetchAll();
     }
@@ -43,8 +49,13 @@ class AcuerdoModel extends Model
                    ar.id_archivo, ar.nombre_original AS archivo_nombre
             FROM acuerdos a
             INNER JOIN tipo_documento td ON td.id_tipo_documento = a.id_tipo_documento
-            LEFT  JOIN archivo ar ON ar.modulo = 'ACUERDO'
-                                  AND ar.id_referencia = a.id_acuerdo
+            LEFT JOIN (
+                SELECT id_referencia,
+                       MAX(id_archivo) AS id_archivo,
+                       SUBSTRING_INDEX(GROUP_CONCAT(nombre_original ORDER BY id_archivo DESC), ',', 1) AS nombre_original
+                FROM archivo WHERE modulo = 'ACUERDO'
+                GROUP BY id_referencia
+            ) ar ON ar.id_referencia = a.id_acuerdo
             WHERE 1=1
         ";
         $params = [];

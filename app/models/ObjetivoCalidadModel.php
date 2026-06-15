@@ -13,7 +13,7 @@ class ObjetivoCalidadModel extends Model
             SELECT o.*,
                    p.proceso,
                    (SELECT COUNT(*) FROM objetivo_medicion m WHERE m.id_objetivo = o.id) AS total_mediciones,
-                   (SELECT AVG(m.cumple) FROM objetivo_medicion m WHERE m.id_objetivo = o.id AND m.cumple IS NOT NULL) AS pct_cumplimiento
+                   ROUND((SELECT SUM(m.cumple) / NULLIF(COUNT(m.id),0) * 100 FROM objetivo_medicion m WHERE m.id_objetivo = o.id) , 1) AS pct_cumplimiento
             FROM objetivo_calidad o
             LEFT JOIN proceso p ON p.id_proceso = o.id_proceso
             WHERE o.estado = 'ACTIVO'
@@ -37,8 +37,9 @@ class ObjetivoCalidadModel extends Model
             : null;
         return $this->query("
             INSERT INTO objetivo_medicion
-                (id_objetivo, periodo, valor_obtenido, valor_meta, cumple, observacion, registrado_por)
-            VALUES (?,?,?,?,?,?,?)
+                (id_objetivo, periodo, valor_obtenido, valor_meta, cumple,
+                 observacion, registrado_por, id_usuario)
+            VALUES (?,?,?,?,?,?,?,?)
         ", [
             $id,
             $data['periodo'],
@@ -47,6 +48,7 @@ class ObjetivoCalidadModel extends Model
             $data['cumple'],
             $data['observacion']    ?? null,
             $data['registrado_por'] ?? null,
+            $data['id_usuario']     ?? null,
         ]) ? (int)$this->db->lastInsertId() : 0;
     }
 

@@ -60,6 +60,22 @@ class EmpleadoModel extends Model
     }
 
     /**
+     * Obtener nombre y correo de un empleado a partir de su id_usuario.
+     * Centraliza el JOIN usuario->empleado que estaba inline en 4 controladores (SEC-001/002).
+     */
+    public function porIdUsuario(int $idUsuario): ?array
+    {
+        if (!$idUsuario) return null;
+        return $this->query(
+            "SELECT e.id_empleado, e.nombre_completo, e.correo_empleado
+               FROM usuario u
+               INNER JOIN empleado e ON e.id_empleado = u.id_empleado
+              WHERE u.id_usuario = ? LIMIT 1",
+            [$idUsuario]
+        )->fetch() ?: null;
+    }
+
+    /**
      * Obtener correo y nombre de un empleado por su ID.
      */
     public function correoYNombre(int $id): ?array
@@ -95,6 +111,74 @@ class EmpleadoModel extends Model
              WHERE estado_empleado = 'ACTIVO' AND correo_empleado != '' AND correo_empleado LIKE '%@%'
              ORDER BY nombre_completo"
         )->fetchAll();
+    }
+
+
+    /**
+     * Empleados activos con rol ELABORADOR.
+     * HU-018: usado para el select de asignación de solicitudes.
+     * Solo aparecen empleados cuyo usuario tiene rol 'ELABORADOR'.
+     */
+    public function elaboradores(): array
+    {
+        return $this->query("
+            SELECT DISTINCT
+                e.id_empleado,
+                e.nombre_completo,
+                c.cargo,
+                u.usuario,
+                u.id_usuario
+            FROM empleado e
+            INNER JOIN usuario     u  ON u.id_empleado = e.id_empleado
+            INNER JOIN usuario_rol ur ON ur.id_usuario  = u.id_usuario
+            INNER JOIN rol         r  ON r.id_rol        = ur.id_rol
+            LEFT  JOIN cargo       c  ON c.id_cargo      = e.id_cargo
+            WHERE e.estado_empleado = 'ACTIVO'
+              AND u.estado          = 'ACTIVO'
+              AND r.rol             = 'ELABORADOR'
+              AND r.estado          = 'ACTIVO'
+            ORDER BY e.nombre_completo
+        ")->fetchAll();
+    }
+
+
+    /** Empleados activos con rol REVISOR — HU-021 */
+    public function revisores(): array
+    {
+        return $this->query("
+            SELECT DISTINCT e.id_empleado, e.nombre_completo,
+                   c.cargo, u.usuario, u.id_usuario
+            FROM empleado e
+            INNER JOIN usuario     u  ON u.id_empleado = e.id_empleado
+            INNER JOIN usuario_rol ur ON ur.id_usuario  = u.id_usuario
+            INNER JOIN rol         r  ON r.id_rol        = ur.id_rol
+            LEFT  JOIN cargo       c  ON c.id_cargo      = e.id_cargo
+            WHERE e.estado_empleado = 'ACTIVO'
+              AND u.estado          = 'ACTIVO'
+              AND r.rol             = 'REVISOR'
+              AND r.estado          = 'ACTIVO'
+            ORDER BY e.nombre_completo
+        ")->fetchAll();
+    }
+
+
+    /** Empleados activos con rol APROBADOR — HU-023 */
+    public function aprobadores(): array
+    {
+        return $this->query("
+            SELECT DISTINCT e.id_empleado, e.nombre_completo,
+                   c.cargo, u.usuario, u.id_usuario
+            FROM empleado e
+            INNER JOIN usuario     u  ON u.id_empleado = e.id_empleado
+            INNER JOIN usuario_rol ur ON ur.id_usuario  = u.id_usuario
+            INNER JOIN rol         r  ON r.id_rol        = ur.id_rol
+            LEFT  JOIN cargo       c  ON c.id_cargo      = e.id_cargo
+            WHERE e.estado_empleado = 'ACTIVO'
+              AND u.estado          = 'ACTIVO'
+              AND r.rol             = 'APROBADOR'
+              AND r.estado          = 'ACTIVO'
+            ORDER BY e.nombre_completo
+        ")->fetchAll();
     }
 
 }

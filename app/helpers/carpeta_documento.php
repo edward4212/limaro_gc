@@ -33,40 +33,97 @@ if (!function_exists('carpetaDocumento')) {
         string  $proceso,
         ?string $subproceso,
         string  $tipoDocumento,
-        string  $nombreDocumento
+        string  $nombreDocumento,
+        string  $siglaProceso    = '',
+        string  $siglaTipoDoc    = '',
+        string  $codigoDocumento = ''
     ): string {
-        $segmentos = [
-            $macroproceso,
-            $proceso,
-        ];
+        // Formato HU-010: separador guion '-'
+        // CON subproceso:    macroproceso / sigla-proceso / subproceso / sigla-tipo / codigo-nombre
+        // SIN subproceso:    macroproceso / sigla-proceso / sigla-tipo / codigo-nombre
+
+        // Segmento proceso: "SIGLA-NOMBRE" si tiene sigla, solo nombre si no
+        $segProceso = $siglaProceso
+            ? sanitizarSegmentoCarpeta($siglaProceso) . '-' . sanitizarSegmentoCarpeta($proceso)
+            : sanitizarSegmentoCarpeta($proceso);
+
+        // Segmento tipo doc: "SIGLA-TIPODOC" si tiene sigla
+        $segTipo = $siglaTipoDoc
+            ? sanitizarSegmentoCarpeta($siglaTipoDoc) . '-' . sanitizarSegmentoCarpeta($tipoDocumento)
+            : sanitizarSegmentoCarpeta($tipoDocumento);
+
+        // Segmento documento: "CODIGO-NOMBRE" si tiene código
+        $segDoc = $codigoDocumento
+            ? sanitizarSegmentoCarpeta($codigoDocumento) . '-' . sanitizarSegmentoCarpeta($nombreDocumento)
+            : sanitizarSegmentoCarpeta($nombreDocumento);
+
+        $segmentos = [sanitizarSegmentoCarpeta($macroproceso), $segProceso];
 
         if (!empty($subproceso)) {
-            $segmentos[] = $subproceso;
+            $segmentos[] = sanitizarSegmentoCarpeta($subproceso);
         }
 
-        $segmentos[] = $tipoDocumento;
-        $segmentos[] = $nombreDocumento;
+        $segmentos[] = $segTipo;
+        $segmentos[] = $segDoc;
 
-        $partes = array_map(fn($s) => sanitizarSegmentoCarpeta($s), $segmentos);
-
-        return implode(DIRECTORY_SEPARATOR, $partes);
+        return implode(DIRECTORY_SEPARATOR, $segmentos);
     }
 }
 
+
 if (!function_exists('carpetaVersion')) {
     /**
-     * Ruta absoluta de la carpeta de una versión específica.
+     * Ruta ABSOLUTA de la carpeta de una versión específica.
+     * HU-V05: función única para carpeta — evita rutas hardcodeadas.
      *
      * @param string $rutaRelativaDocumento  Resultado de carpetaDocumento()
      * @param int    $numeroVersion
-     * @return string  Ruta absoluta en disco
+     * @return string  Ruta absoluta: APP_ROOT/public/storage/documentos/{relativa}/V{n}/
      */
     function carpetaVersion(string $rutaRelativaDocumento, int $numeroVersion): string
     {
         $base = APP_ROOT . '/public/storage/documentos/';
-        return $base . $rutaRelativaDocumento . DIRECTORY_SEPARATOR . 'V' . $numeroVersion;
+        return rtrim($base . $rutaRelativaDocumento, DIRECTORY_SEPARATOR)
+             . DIRECTORY_SEPARATOR . 'V' . $numeroVersion . DIRECTORY_SEPARATOR;
     }
 }
+
+if (!function_exists('getVersionPath')) {
+    /**
+     * HU-V05: punto único de verdad para la ruta de un archivo de versión.
+     * Devuelve la ruta RELATIVA (para guardar en BD) y ABSOLUTA (para disco).
+     *
+     * @return array{relativa: string, absoluta: string, carpeta_abs: string}
+     */
+    function getVersionPath(
+        string  $macroproceso,
+        string  $proceso,
+        ?string $subproceso,
+        string  $tipoDocumento,
+        string  $nombreDocumento,
+        int     $numeroVersion,
+        string  $nombreArchivo,
+        string  $siglaProceso    = '',
+        string  $siglaTipoDoc    = '',
+        string  $codigoDocumento = ''
+    ): array {
+        $relDoc    = carpetaDocumento(
+            $macroproceso, $proceso, $subproceso, $tipoDocumento, $nombreDocumento,
+            $siglaProceso, $siglaTipoDoc, $codigoDocumento
+        );
+        $carpetaAbs = carpetaVersion($relDoc, $numeroVersion);
+        $nombreSan  = sanitizarSegmentoCarpeta($nombreArchivo) ?: 'documento';
+        $relativa   = '/storage/documentos/'
+                     . str_replace(DIRECTORY_SEPARATOR, '/', $relDoc)
+                     . '/V' . $numeroVersion . '/' . $nombreSan;
+        return [
+            'relativa'    => $relativa,
+            'absoluta'    => $carpetaAbs . $nombreSan,
+            'carpeta_abs' => $carpetaAbs,
+        ];
+    }
+}
+
 
 if (!function_exists('crearCarpetaVersion')) {
     /**
@@ -88,9 +145,15 @@ if (!function_exists('crearCarpetaVersion')) {
         ?string $subproceso,
         string  $tipoDocumento,
         string  $nombreDocumento,
-        int     $numeroVersion
+        int     $numeroVersion,
+        string  $siglaProceso    = '',
+        string  $siglaTipoDoc    = '',
+        string  $codigoDocumento = ''
     ): string {
-        $relativa = carpetaDocumento($macroproceso, $proceso, $subproceso, $tipoDocumento, $nombreDocumento);
+        $relativa = carpetaDocumento(
+            $macroproceso, $proceso, $subproceso, $tipoDocumento, $nombreDocumento,
+            $siglaProceso, $siglaTipoDoc, $codigoDocumento
+        );
         $carpeta  = carpetaVersion($relativa, $numeroVersion);
 
         if (!is_dir($carpeta)) {
@@ -99,49 +162,17 @@ if (!function_exists('crearCarpetaVersion')) {
             }
         }
 
-        return $carpeta;
+        return $relativa; // HU-010: retornar ruta relativa para guardar en BD
     }
 }
 
-if (!function_exists('rutaArchivoEnVersion')) {
-    /**
-     * Devuelve la ruta absoluta donde debe guardarse un archivo dentro
-     * de la carpeta de una versión, preservando la extensión original.
-     *
-     * @param string $carpetaAbsoluta  Resultado de crearCarpetaVersion()
-     * @param string $nombreOriginal   Nombre original del archivo subido
-     * @return string
-     */
-    function rutaArchivoEnVersion(string $carpetaAbsoluta, string $nombreOriginal): string
-    {
-        $ext      = strtolower(pathinfo($nombreOriginal, PATHINFO_EXTENSION));
-        $ext      = in_array($ext, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg'])
-                    ? $ext : 'bin';
-        $nombreLimpio = sanitizarSegmentoCarpeta(pathinfo($nombreOriginal, PATHINFO_FILENAME));
-        $nombre   = ($nombreLimpio ?: 'documento') . '.' . $ext;
 
-        return $carpetaAbsoluta . DIRECTORY_SEPARATOR . $nombre;
-    }
-}
+// [rutaArchivoEnVersion] eliminada — sin uso en codebase
 
-if (!function_exists('rutaRelativaAlmacenamiento')) {
-    /**
-     * Convierte una ruta absoluta del storage en ruta relativa
-     * desde public/ (para guardar en BD y servir como URL).
-     */
-    function rutaRelativaAlmacenamiento(string $rutaAbsoluta): string
-    {
-        $base = realpath(APP_ROOT . '/public');
-        $real = realpath($rutaAbsoluta);
 
-        if ($base && $real && str_starts_with($real, $base)) {
-            return str_replace('\\', '/', substr($real, strlen($base)));
-        }
 
-        // Fallback: quitar APP_ROOT/public
-        return str_replace(['\\', APP_ROOT . '/public'], ['/', ''], $rutaAbsoluta);
-    }
-}
+// [rutaRelativaAlmacenamiento] eliminada — sin uso en codebase
+
 
 if (!function_exists('sanitizarSegmentoCarpeta')) {
     /**
@@ -256,22 +287,9 @@ if (!function_exists('carpetaUsuario')) {
     }
 }
 
-if (!function_exists('rutaFotoPerfil')) {
-    /**
-     * Ruta absoluta donde debe guardarse la foto de perfil de un usuario.
-     * Siempre es foto.{ext} dentro de su carpeta personal.
-     *
-     * @param int    $idUsuario
-     * @param string $extension  'jpg' | 'png' | 'webp'
-     * @return string
-     */
-    function rutaFotoPerfil(int $idUsuario, string $extension = 'jpg'): string
-    {
-        $ext = strtolower(trim($extension, '.'));
-        $ext = in_array($ext, ['jpg','jpeg','png','webp']) ? $ext : 'jpg';
-        return carpetaUsuario($idUsuario, 'foto') . '/foto.' . $ext;
-    }
-}
+
+// [rutaFotoPerfil] eliminada — sin uso en codebase
+
 
 if (!function_exists('urlFotoPerfil')) {
     /**
@@ -281,15 +299,28 @@ if (!function_exists('urlFotoPerfil')) {
      * @param string|null $imgEmpleado  Valor de empleado.img_empleado en BD
      * @return string  URL lista para usar en src=""
      */
-    function urlFotoPerfil(?string $imgEmpleado): string
+    function urlFotoPerfil(?string $imgEmpleado, ?int $idUsuario = null): string
     {
-        if (empty($imgEmpleado)) {
-            return APP_URL . '/assets/img/usuario.png';
+        // Si tenemos id_usuario usar el endpoint PHP (evita 403 en storage)
+        if ($idUsuario) {
+            return APP_URL . '/foto-usuario/' . $idUsuario;
         }
 
-        // Ruta de storage (nueva estructura)
+        if (empty($imgEmpleado)) {
+            return APP_URL . '/foto-usuario/0';
+        }
+
+        // Extraer id_usuario del path /storage/usuarios/{id}/foto/...
+        if (str_starts_with($imgEmpleado, '/storage/usuarios/')) {
+            preg_match('#/storage/usuarios/(\d+)/#', $imgEmpleado, $m);
+            if (!empty($m[1])) {
+                return APP_URL . '/foto-usuario/' . $m[1];
+            }
+        }
+
+        // Fallback legacy
         if (str_starts_with($imgEmpleado, '/storage/')) {
-            return APP_URL . '/public' . $imgEmpleado;
+            return APP_URL . $imgEmpleado;
         }
 
         // Ruta legacy: solo nombre de archivo en /assets/img/

@@ -12,12 +12,20 @@
 
 <!-- KPIs -->
 <?php
-$totales = array_column($resumen,'total','estado');
-$estados_ac = ['ABIERTA'=>['danger','exclamation-circle'],'EN_TRATAMIENTO'=>['warning','hourglass-split'],
-               'VERIFICACION'=>['info','search'],'CERRADA'=>['success','check-circle'],'CANCELADA'=>['secondary','x-circle']];
+$totales  = array_column($resumen,'total','estado');
+$totalAC  = array_sum(array_column($resumen,'total'));
+$kpis = [
+    ['label'=>'Abiertas',       'valor'=>$totales['ABIERTA']??0,        'icono'=>'bi-exclamation-circle','tipo'=>'kpi-rose',   'filtro'=>'ABIERTA'],
+    ['label'=>'En Tratamiento', 'valor'=>$totales['EN_TRATAMIENTO']??0, 'icono'=>'bi-hourglass-split',  'tipo'=>'kpi-amber',  'filtro'=>'EN_TRATAMIENTO'],
+    ['label'=>'Verificación',   'valor'=>$totales['VERIFICACION']??0,   'icono'=>'bi-search',           'tipo'=>'kpi-teal',   'filtro'=>'VERIFICACION'],
+    ['label'=>'Cerradas',       'valor'=>$totales['CERRADA']??0,        'icono'=>'bi-check-circle',     'tipo'=>'kpi-green',  'filtro'=>'CERRADA'],
+    ['label'=>'Canceladas',     'valor'=>$totales['CANCELADA']??0,      'icono'=>'bi-x-circle',         'tipo'=>'kpi-blue',   'filtro'=>'CANCELADA'],
+];
+$kpiTotal = ['label'=>'Total AC', 'valor'=>$totalAC];
+include APP_ROOT . '/app/views/partials/kpi_cards.php';
 ?>
-<div class="row g-3 mb-4">
-    <?php foreach ($estados_ac as $est => [$col, $ico]): ?>
+<div class="row g-3 mb-4 d-none">
+    <?php foreach ([] as $est => [$col, $ico]): ?>
     <div class="col-6 col-md-2">
         <div class="card border-0 shadow-sm text-center py-3">
             <i class="bi bi-<?= $ico ?> text-<?= $col ?> fs-2"></i>
@@ -40,10 +48,10 @@ $estados_ac = ['ABIERTA'=>['danger','exclamation-circle'],'EN_TRATAMIENTO'=>['wa
                 $vencida = ($a['dias_vencida'] ?? 0) > 0 && !in_array($a['estado'],['CERRADA','CANCELADA']);
                 ?>
                 <tr class="<?= $vencida ? 'table-danger' : '' ?>">
-                    <td><code><?= e($a['codigo']) ?></code></td>
+                    <td><span><?= e($a['codigo']) ?></span></td>
                     <td><span class="badge bg-secondary" style="font-size:10px;"><?= e($a['origen']) ?></span></td>
                     <td style="font-size:12px;"><?= e(truncar($a['descripcion_nc'],65)) ?></td>
-                    <td style="font-size:12px;"><?= e($a['responsable']??'—') ?></td>
+                    <td style="font-size:12px;"><?= e($a['responsable_nombre']??$a['responsable']??'—') ?></td>
                     <td style="font-size:12px;"><?= fechaEs($a['fecha_planificada']??null) ?></td>
                     <td class="text-center">
                         <?php if ($vencida): ?>
@@ -53,8 +61,17 @@ $estados_ac = ['ABIERTA'=>['danger','exclamation-circle'],'EN_TRATAMIENTO'=>['wa
                     <td><?= badgeEstado($a['estado']) ?></td>
                     <td>
                         <?php if (Auth::puede('acciones_correctivas','editar')): ?>
+                        <?php if (in_array($a['estado'] ?? '', ['CERRADA','CANCELADA'])): ?>
+                        <a href="<?= e(APP_URL) ?>/acciones-correctivas/ver/<?= (int)$a['id'] ?>"
+                           class="btn btn-sm btn-outline-secondary py-0" title="Ver detalle">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <?php else: ?>
                         <a href="<?= e(APP_URL) ?>/acciones-correctivas/editar/<?= (int)$a['id'] ?>"
-                           class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-pencil"></i></a>
+                           class="btn btn-sm btn-outline-primary py-0" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <?php endif; ?>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -63,3 +80,11 @@ $estados_ac = ['ABIERTA'=>['danger','exclamation-circle'],'EN_TRATAMIENTO'=>['wa
         </table>
     </div>
 </div>
+
+<script>
+function filtrarTabla(val) {
+    if ($.fn.DataTable.isDataTable('table.datatable')) {
+        $('table.datatable').DataTable().search(val).draw();
+    }
+}
+</script>

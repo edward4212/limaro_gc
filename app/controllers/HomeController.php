@@ -4,45 +4,37 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Auth;
-use App\Models\DocumentoModel;
-use App\Models\SolicitudModel;
-use App\Models\TareaModel;
 use App\Models\EmpresaModel;
+use App\Models\ObjetivoCalidadModel;
 
 /**
  * Controlador del dashboard / inicio.
+ * Muestra información institucional de la empresa y objetivos de calidad.
  */
 class HomeController extends Controller
 {
-    /**
-     * Dashboard principal (GET /inicio).
-     */
     public function index(): void
     {
-        $docModel = new DocumentoModel();
-        $solModel = new SolicitudModel();
-        $tarModel = new TareaModel();
         $empModel = new EmpresaModel();
+        $objModel = new ObjetivoCalidadModel();
 
-        // KPIs
-        $kpis = [
-            'documentos_vigentes' => count($docModel->vigentes()),
-            'solicitudes_desarrollo' => count($solModel->porEstado('EN DESARROLLO')),
-            'tareas_pendientes' => $tarModel->pendientesUsuario(Auth::empleadoId() ?? 0),
-            'solicitudes_total' => $solModel->count(),
-        ];
-
-        // Últimas solicitudes
-        $ultimas = $solModel->ultimas(5);
-
-        // Datos para gráfico de solicitudes por estado
-        $estadosSol = $solModel->conteoEstados();
+        $empresa   = $empModel->getDatos() ?? [];
+        $objetivos = $objModel->listar();
 
         $this->view('home/index', [
-            'pageTitle'  => 'Inicio',
-            'kpis'       => $kpis,
-            'ultimas'    => $ultimas,
-            'estadosSol' => $estadosSol,
+            'pageTitle' => 'Inicio',
+            'empresa'   => $empresa,
+            'objetivos' => $objetivos,
         ]);
     }
+
+    /** Módulos en desarrollo — evita 404 en submenús de módulos nuevos */
+    public function proximamente(): void
+    {
+        \App\Core\Session::flash('info',
+            '<i class="bi bi-clock me-2"></i>Este módulo está <strong>en desarrollo</strong>. Próximamente disponible.'
+        );
+        $this->redirect('/inicio');
+    }
+
 }

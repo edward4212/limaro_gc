@@ -23,17 +23,17 @@ $opciones = ['procesos' => $procesos, 'tipos' => $tipos];
             <tbody>
                 <?php foreach ($datos as $d): ?>
                 <tr>
-                    <td><code><?= e($d['codigo']) ?></code></td>
-                    <td><?= e($d['nombre_documento']) ?></td>
-                    <td><span class="badge bg-secondary" style="font-size:10px;"><?= e($d['sigla_tipo_documento']) ?></span></td>
+                    <td><span><?= e($d['codigo']) ?></span></td>
+                    <td class="col-objetivo"><?= e($d['nombre_documento']) ?></td>
+                    <td><span class="badge bg-secondary" style="font-size:12px;"><?= e($d['sigla_tipo_documento']) ?></span></td>
                     <td style="font-size:12px;"><?= e($d['macroproceso']) ?></td>
                     <td style="font-size:12px;"><?= e($d['proceso']) ?></td>
                     <td style="font-size:12px;"><?= e($d['nombre_subproceso'] ?? '—') ?></td>
                     <td class="text-center"><span class="badge bg-primary">V<?= e($d['numero_version']) ?></span></td>
-                    <td style="font-size:11px;"><?= e($d['elaboro'] ?? '—') ?></td>
-                    <td style="font-size:11px;"><?= e($d['reviso'] ?? '—') ?></td>
-                    <td style="font-size:11px;"><?= e($d['aprobo'] ?? '—') ?></td>
-                    <td style="font-size:11px;"><?= fechaEs($d['fecha_aprobacion']) ?></td>
+                    <td style="font-size:12px;"><?= e($d['elaboro'] ?? '—') ?></td>
+                    <td style="font-size:12px;"><?= e($d['reviso'] ?? '—') ?></td>
+                    <td style="font-size:12px;"><?= e($d['aprobo'] ?? '—') ?></td>
+                    <td style="font-size:12px;"><?= fechaEs($d['fecha_aprobacion']) ?></td>
                     <td class="text-center"><?= $d['tiene_archivo']==='Sí' ? '<i class="bi bi-check-circle text-success"></i>' : '<i class="bi bi-x-circle text-muted"></i>' ?></td>
                 </tr>
                 <?php endforeach; ?>

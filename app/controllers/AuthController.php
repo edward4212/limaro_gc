@@ -82,6 +82,14 @@ class AuthController extends Controller
         $permisos = $model->permisosPorUsuario((int)$user['id_usuario']);
         Auth::setModulos($permisos);
 
+                // Cargar mapa global URL→módulo para PermisoMiddleware
+        try {
+            $urlMap = (new \App\Models\ModuloModel())->mapaUrlCodigo();
+            \App\Core\Session::set('_url_map', $urlMap);
+        } catch (\Throwable $e) {
+            // No bloquear login si falla la carga del mapa
+        }
+
         registrarLoginAudit((int)$user['id_usuario'], $usuario, true, Request::ip(), Request::userAgent());
         Session::clearOldInput();
 

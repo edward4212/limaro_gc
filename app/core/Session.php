@@ -20,6 +20,23 @@ class Session
             return;
         }
 
+        // ── Garantizar directorio de sesiones válido ─────────────────────
+        // En algunos servidores cPanel el directorio configurado no existe.
+        // session.save_path SÍ se puede cambiar con ini_set() antes de session_start().
+        $savePath = session_save_path();
+        if (empty($savePath) || !is_dir($savePath) || !is_writable($savePath)) {
+            // Usar directorio de sesiones dentro del proyecto
+            $localPath = defined('APP_ROOT')
+                ? APP_ROOT . '/storage/sessions'
+                : dirname(__DIR__, 2) . '/storage/sessions';
+            if (!is_dir($localPath)) {
+                mkdir($localPath, 0700, true);
+            }
+            if (is_dir($localPath) && is_writable($localPath)) {
+                ini_set('session.save_path', $localPath);
+            }
+        }
+
         session_name(SESSION_NAME);
 
         $secure   = (APP_ENV === 'production');

@@ -16,14 +16,42 @@
  *   MAIL_SMTP_ENC   ssl | tls | '' (vacío = sin cifrado)
  */
 
+// ── Configuración de correo ─────────────────────────────────────────
+// variables_order puede ser GPCS (sin E), por eso usamos getenv() como
+// fuente principal — es la única que funciona sin 'E' en variables_order.
 if (!defined('MAIL_FROM')) {
-    define('MAIL_FROM',      $_ENV['MAIL_FROM']      ?? 'noreply@limaro.cloud');
-    define('MAIL_FROM_NAME', $_ENV['MAIL_FROM_NAME'] ?? 'Limaro SGC');
-    define('MAIL_SMTP_HOST', $_ENV['MAIL_SMTP_HOST'] ?? '');
-    define('MAIL_SMTP_PORT', $_ENV['MAIL_SMTP_PORT'] ?? 465);
-    define('MAIL_SMTP_USER', $_ENV['MAIL_SMTP_USER'] ?? '');
-    define('MAIL_SMTP_PASS', $_ENV['MAIL_SMTP_PASS'] ?? '');
-    define('MAIL_SMTP_ENC',  $_ENV['MAIL_SMTP_ENC']  ?? 'ssl');
+    function _mailEnv(string $key, $default = ''): string {
+        // getenv() lee del entorno del proceso — funciona con cualquier variables_order
+        $v = getenv($key);
+        if ($v !== false && $v !== '') return $v;
+        // $_ENV como fallback (funciona si variables_order incluye 'E')
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') return (string)$_ENV[$key];
+        return (string)$default;
+    }
+    define('MAIL_FROM',      _mailEnv('MAIL_FROM',      'noreply@limaro.cloud'));
+    define('MAIL_FROM_NAME', _mailEnv('MAIL_FROM_NAME', 'Limaro SGC'));
+    define('MAIL_SMTP_HOST', _mailEnv('MAIL_SMTP_HOST', ''));
+    define('MAIL_SMTP_PORT', _mailEnv('MAIL_SMTP_PORT', 465));
+    define('MAIL_SMTP_USER', _mailEnv('MAIL_SMTP_USER', ''));
+    define('MAIL_SMTP_PASS', _mailEnv('MAIL_SMTP_PASS', ''));
+    define('MAIL_SMTP_ENC',  _mailEnv('MAIL_SMTP_ENC',  'ssl'));
+}
+
+// ── Cargar PHPMailer (DESPUÉS de definir constantes) ─────────────────
+// Primero verificar vendor/ (Composer), luego app/libs/ (manual)
+if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+    $_pmVendor = APP_ROOT . '/vendor/phpmailer/phpmailer/src/PHPMailer.php';
+    $_pmLocal  = APP_ROOT . '/app/libs/phpmailer/PHPMailer.php';
+    if (file_exists($_pmVendor)) {
+        require_once dirname($_pmVendor) . '/../src/Exception.php';
+        require_once dirname($_pmVendor) . '/../src/SMTP.php';
+        require_once $_pmVendor;
+    } elseif (file_exists($_pmLocal)) {
+        require_once APP_ROOT . '/app/libs/phpmailer/Exception.php';
+        require_once APP_ROOT . '/app/libs/phpmailer/SMTP.php';
+        require_once $_pmLocal;
+    }
+    unset($_pmVendor, $_pmLocal);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -68,15 +96,20 @@ if (!function_exists('_enviarConPHPMailer')) {
         $mail->SMTPAuth   = !empty(MAIL_SMTP_USER);
         $mail->Username   = MAIL_SMTP_USER;
         $mail->Password   = MAIL_SMTP_PASS;
-        $mail->SMTPSecure = match(strtolower(MAIL_SMTP_ENC)) {
-            'ssl' => \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS,
-            'tls' => \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS,
+        $mail->SMTPSecure = match(strtolower((string)MAIL_SMTP_ENC)) {
+            'ssl'  => \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS,
+            'tls'  => \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS,
             default => ''
         };
         $mail->Port       = (int) MAIL_SMTP_PORT;
         $mail->CharSet    = 'UTF-8';
+        $mail->Timeout    = 10; // segundos máximo de espera SMTP
+        $mail->SMTPDebug  = defined('APP_DEBUG') && APP_DEBUG ? 2 : 0;
+        $mail->Debugoutput = function(string $msg, int $level): void {
+            error_log('[SMTP DEBUG] ' . trim($msg));
+        };
         $mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
-        $mail->Subject    = $asunto;
+        $mail->Subject    = '=?UTF-8?B?' . base64_encode($asunto) . '?=';
         $mail->isHTML(true);
         $mail->Body       = _plantillaCorreo($asunto, $html);
         $mail->AltBody    = strip_tags($html);
@@ -170,120 +203,340 @@ HTML;
 // NOTIFICACIONES ESPECÍFICAS DEL SGC
 // ─────────────────────────────────────────────────────────────
 
+
+
+// [notifSolicitudAsignada] eliminada — reemplazada por NotificacionTareaService
+
+
+
+// [notifDocumentoAprobado] eliminada — reemplazada por NotificacionTareaService
+
+
+
+// [notifTareaDevuelta] eliminada — reemplazada por NotificacionTareaService
+
+
+if (!function_exists('notifAcuerdoCreado')) {
+    /**
+     * HU-009: Notificar a TODOS los usuarios activos que se creó un nuevo acuerdo.
+     *
+     * @param array  $acuerdo  Datos del acuerdo (nombre, año, numero, fecha_aprobacion, etc.)
+     * @param array  $usuarios Lista de ['correo_empleado'=>'...', 'nombre_completo'=>'...']
+     * @param int    $idUsuarioOrigen  ID del usuario que creó el acuerdo
+     * @return array{enviados:int, fallidos:int}
+     */
+    function notifAcuerdoCreado(array $acuerdo, array $usuarios, int $idUsuarioOrigen = 0): array
+    {
+        $enviados = 0;
+        $fallidos = 0;
+
+        $nombre      = htmlspecialchars($acuerdo['nombre_acuerdo'] ?? 'Sin nombre');
+        $año         = $acuerdo['año_acuerdo']  ?? date('Y');
+        $numero      = $acuerdo['numero_acuerdo'] ?? '';
+        $fechaApro   = !empty($acuerdo['fecha_aprobacion'])
+                       ? date('d/m/Y', strtotime($acuerdo['fecha_aprobacion']))
+                       : 'Por definir';
+        $acta        = $acuerdo['acta_aprobacion'] ?? '';
+        $tipo        = $acuerdo['tipo_documento']  ?? 'Acuerdo';
+        $urlSistema  = APP_URL . '/acuerdos/vigentes';
+
+        $html = "
+            <h2 style='color:#1e5fbf;margin-top:0;'>📋 Nuevo Acuerdo Registrado</h2>
+            <p>Se ha registrado un nuevo acuerdo en el Sistema de Gestión Documental:</p>
+            <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
+              <tr style='background:#f8fafc;'>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;width:160px;border-bottom:1px solid #e5e7eb;'>Nombre:</td>
+                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>{$nombre}</strong></td>
+              </tr>
+              <tr>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Número:</td>
+                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$numero} / {$año}</td>
+              </tr>
+              <tr style='background:#f8fafc;'>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td>
+                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$tipo}</td>
+              </tr>
+              <tr>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha aprobación:</td>
+                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$fechaApro}</td>
+              </tr>
+              <tr style='background:#f8fafc;'>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Nº Acta:</td>
+                <td style='padding:10px 16px;'>{$acta}</td>
+              </tr>
+            </table>
+            <br>
+            <p style='color:#6b7280;font-size:13px;'>
+              Puede consultar el acuerdo y descargar el documento adjunto desde el sistema:
+            </p>
+            <a href='{$urlSistema}'
+               style='background:#1e5fbf;color:#fff;padding:12px 28px;border-radius:6px;
+                      text-decoration:none;font-size:14px;font-weight:600;display:inline-block;'>
+               Ver Acuerdos Vigentes →
+            </a>
+            <br><br>
+            <p style='color:#9ca3af;font-size:12px;'>
+              Este mensaje fue generado automáticamente. No responda a este correo.
+            </p>";
+
+        $asunto = "Nuevo acuerdo SGC: {$nombre} ({$año})";
+
+        foreach ($usuarios as $u) {
+            $correo = trim($u['correo_empleado'] ?? $u['correo'] ?? '');
+            $nomDest = $u['nombre_completo'] ?? $u['nombre'] ?? $correo;
+
+            if (empty($correo) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+                $fallidos++;
+                continue;
+            }
+
+            // Personalizar saludo
+            $htmlPersonalizado = str_replace(
+                '<h2 ',
+                "<p style='color:#374151;'>Hola <strong>" . htmlspecialchars($nomDest) . "</strong>,</p>
+<h2 ",
+                $html
+            );
+
+            $ok = enviarCorreo([$correo => $nomDest], $asunto, $htmlPersonalizado);
+
+            // Registrar en notificacion_log
+            _registrarNotificacionLog(
+                'ACUERDO_NUEVO',
+                $acuerdo['id_acuerdo'] ?? null,
+                'acuerdo',
+                $correo,
+                $nomDest,
+                $asunto,
+                $ok ? 'ENVIADO' : 'FALLIDO',
+                $ok ? null : 'enviarCorreo() retornó false',
+                $idUsuarioOrigen
+            );
+
+            $ok ? $enviados++ : $fallidos++;
+        }
+
+        return ['enviados' => $enviados, 'fallidos' => $fallidos];
+    }
+}
+
+if (!function_exists('_registrarNotificacionLog')) {
+    /**
+     * Insertar registro en notificacion_log.
+     * No lanza excepción si falla (auditoría no debe interrumpir el flujo).
+     */
+    function _registrarNotificacionLog(
+        string  $evento,
+        ?int    $idEntidad,
+        ?string $entidad,
+        string  $email,
+        ?string $nombre,
+        string  $asunto,
+        string  $estado,
+        ?string $errorMsg,
+        int     $idUsuarioOrigen = 0
+    ): void {
+        try {
+            $db = \App\Core\Database::getInstance();
+            $db->prepare(
+                "INSERT INTO notificacion_log
+                    (evento, id_entidad, entidad, destinatario_email, destinatario_nombre,
+                     asunto, estado, error_msg, id_usuario_origen)
+                 VALUES (?,?,?,?,?,?,?,?,?)"
+            )->execute([
+                $evento, $idEntidad, $entidad, $email,
+                $nombre, $asunto, $estado, $errorMsg,
+                $idUsuarioOrigen ?: null,
+            ]);
+        } catch (\Throwable $e) {
+            error_log('[notificacion_log] ' . $e->getMessage());
+        }
+    }
+}
+
+if (!function_exists('notifVersionCreada')) {
+    /**
+     * HU-014: Notificar nueva versión de documento a todos los usuarios activos.
+     */
+    function notifVersionCreada(array $version, array $usuarios, int $idUsuarioOrigen = 0): array
+    {
+        $enviados = 0; $fallidos = 0;
+        $codigo   = htmlspecialchars($version['codigo']           ?? '');
+        $nombre   = htmlspecialchars($version['nombre_documento'] ?? '');
+        $nVer     = $version['numero_version'] ?? 1;
+        $estado   = $version['estado_version'] ?? 'VIGENTE';
+        $desc     = htmlspecialchars($version['descripcion']      ?? '');
+        $elab     = htmlspecialchars($version['elaborador']       ?? '');
+        $url      = APP_URL . '/versionamiento';
+        $asunto   = "Nueva versión SGC: {$codigo} — V{$nVer} ({$estado})";
+
+        $html = "
+            <h2 style='color:#1e5fbf;margin-top:0;'>📄 Nueva Versión de Documento</h2>
+            <p>Se ha registrado una nueva versión en el Sistema de Gestión Documental:</p>
+            <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
+              <tr style='background:#f8fafc;'>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;width:140px;border-bottom:1px solid #e5e7eb;'>Documento:</td>
+                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>{$nombre}</strong></td>
+              </tr>
+              <tr>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Código:</td>
+                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>{$codigo}</span></td>
+              </tr>
+              <tr style='background:#f8fafc;'>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Versión:</td>
+                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>V{$nVer}</strong> — {$estado}</td>
+              </tr>
+              <tr>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Cambio:</td>
+                <td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$desc}</td>
+              </tr>
+              <tr style='background:#f8fafc;'>
+                <td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Elaboró:</td>
+                <td style='padding:10px 16px;'>{$elab}</td>
+              </tr>
+            </table>
+            <br>
+            <a href='{$url}' style='background:#1e5fbf;color:#fff;padding:12px 28px;border-radius:6px;
+                text-decoration:none;font-size:14px;font-weight:600;display:inline-block;'>
+               Ver Versionamiento →
+            </a>
+            <br><br>
+            <p style='color:#9ca3af;font-size:12px;'>Mensaje automático. No responda.</p>";
+
+        foreach ($usuarios as $u) {
+            $correo  = trim($u['correo_empleado'] ?? '');
+            $nomDest = $u['nombre_completo'] ?? $correo;
+            if (empty($correo) || !filter_var($correo, FILTER_VALIDATE_EMAIL)) { $fallidos++; continue; }
+            $htmlP = str_replace('<h2 ', "<p style='color:#374151;'>Hola <strong>" . htmlspecialchars($nomDest) . "</strong>,</p>
+<h2 ", $html);
+            $ok = enviarCorreo([$correo => $nomDest], $asunto, $htmlP);
+            _registrarNotificacionLog('VERSION_NUEVA', $version['id_versionamiento'] ?? null,
+                'versionamiento', $correo, $nomDest, $asunto,
+                $ok ? 'ENVIADO' : 'FALLIDO', $ok ? null : 'error', $idUsuarioOrigen);
+            $ok ? $enviados++ : $fallidos++;
+        }
+        return ['enviados' => $enviados, 'fallidos' => $fallidos];
+    }
+}
+
 if (!function_exists('notifSolicitudCreada')) {
     /**
-     * Notificar al responsable del proceso que hay una nueva solicitud.
+     * HU-017: Notificar solicitud nueva.
+     * Envía a CADA destinatario incluso si tiene múltiples roles.
+     * Cada envío es independiente — un fallo no cancela los demás.
      */
-    function notifSolicitudCreada(array $solicitud, string $correoResponsable): bool
-    {
-        $tipo    = $solicitud['tipo_solicitud']  ?? 'Nueva';
-        $prioridad = $solicitud['prioridad']     ?? '';
-        $desc    = $solicitud['solicitud']       ?? '';
-        $id      = $solicitud['id_solicitud']    ?? '';
-        $html = "
+    function notifSolicitudCreada(
+        array  $solicitud,
+        ?array $correoSolicitante,
+        array  $coordinadores,
+        array  $lideres,
+        int    $idUsuarioOrigen = 0
+    ): array {
+        $enviados = 0;
+        $fallidos = 0;
+
+        $idSol  = $solicitud['id_solicitud'] ?? '—';
+        $tipo   = match($solicitud['tipo_solicitud'] ?? '') {
+            'CREACION'      => 'Creación de Documento',
+            'ACTUALIZACION' => 'Actualización de Documento',
+            'ELIMINACION'   => 'Eliminación de Documento',
+            default         => $solicitud['tipo_solicitud'] ?? 'Solicitud',
+        };
+        $codDoc = htmlspecialchars($solicitud['codigo_documento'] ?? 'Sin código');
+        $tipDoc = htmlspecialchars($solicitud['tipo_documento']   ?? '');
+        $prio   = match($solicitud['prioridad'] ?? '') {
+            'URGENTE_IMPORTANTE'    => '🔴 Urgente e Importante',
+            'URGENTE_NO_IMPORTANTE' => '🟠 Urgente',
+            'NO_URGENTE_IMPORTANTE' => '🟡 Importante',
+            default                 => '⚪ Normal',
+        };
+        $justif = htmlspecialchars($solicitud['solicitud'] ?? '');
+        $fecha  = date('d/m/Y H:i', strtotime($solicitud['fecha_solicitud'] ?? 'now'));
+        $urlVer = APP_URL . '/solicitudes/ver/' . $idSol;
+        $asunto = "[SGC] Solicitud #{$idSol} — {$tipo}: {$codDoc}";
+
+        $htmlBase = "
             <h2 style='color:#1e5fbf;margin-top:0;'>📋 Nueva Solicitud Radicada</h2>
-            <table style='width:100%;border-collapse:collapse;font-size:14px;'>
-              <tr><td style='padding:6px 0;color:#6b7280;width:140px;'>Tipo:</td>
-                  <td><strong>{$tipo}</strong></td></tr>
-              <tr><td style='padding:6px 0;color:#6b7280;'>Prioridad:</td>
-                  <td><strong style='color:#ef4444;'>{$prioridad}</strong></td></tr>
-              <tr><td style='padding:6px 0;color:#6b7280;'>Descripción:</td>
-                  <td>" . htmlspecialchars($desc) . "</td></tr>
-            </table>
-            <br>
-            <a href='" . APP_URL . "/solicitudes/ver/{$id}'
-               style='background:#1e5fbf;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;'>
-               Ver Solicitud
-            </a>";
+            <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
+              <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;width:180px;border-bottom:1px solid #e5e7eb;'>ID Solicitud:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><strong>#{$idSol}</strong></td></tr>
+              <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Tipo:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$tipo}</td></tr>
+              <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Documento:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'><span>{$codDoc}</span> {$tipDoc}</td></tr>
+              <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Prioridad:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$prio}</td></tr>
+              <tr style='background:#f8fafc;'><td style='padding:10px 16px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;'>Fecha:</td><td style='padding:10px 16px;border-bottom:1px solid #e5e7eb;'>{$fecha}</td></tr>
+              <tr><td style='padding:10px 16px;color:#6b7280;font-weight:600;'>Justificación:</td><td style='padding:10px 16px;'>{$justif}</td></tr>
+            </table><br>
+            <a href='{$urlVer}' style='background:#1e5fbf;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;display:inline-block;'>Ver Solicitud #{$idSol} →</a>
+            <br><br><p style='color:#9ca3af;font-size:12px;'>Mensaje automático — no responda.</p>";
 
-        return enviarCorreo(
-            $correoResponsable,
-            "Nueva solicitud SGC - $tipo #$id",
-            $html
-        );
-    }
-}
+        /**
+         * Función interna de envío individual.
+         * Retorna true/false y nunca lanza excepción.
+         */
+        $enviar = function(string $correo, string $nombre, string $rolLabel)
+            use ($asunto, $htmlBase, $idSol, $idUsuarioOrigen, &$enviados, &$fallidos): void
+        {
+            if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+                error_log("[HU-017] Correo inválido: {$correo}");
+                $fallidos++;
+                return;
+            }
+            try {
+                $saludo = "<p style='color:#374151;'>Hola <strong>" . htmlspecialchars($nombre) .
+                          "</strong> <span style='color:#6b7280;font-size:12px;'>({$rolLabel})</span>,</p>";
+                $ok = enviarCorreo([$correo => $nombre], $asunto, $saludo . $htmlBase);
+                _registrarNotificacionLog('SOLICITUD_NUEVA', (int)$idSol, 'solicitud',
+                    $correo, $nombre, $asunto,
+                    $ok ? 'ENVIADO' : 'FALLIDO',
+                    $ok ? null : 'enviarCorreo() retornó false',
+                    $idUsuarioOrigen);
+                if ($ok) {
+                    $enviados++;
+                    error_log("[HU-017] ✓ Enviado a {$correo} ({$rolLabel})");
+                } else {
+                    $fallidos++;
+                    error_log("[HU-017] ✗ Falló envío a {$correo} ({$rolLabel})");
+                }
+            } catch (\Throwable $e) {
+                $fallidos++;
+                error_log("[HU-017] Excepción enviando a {$correo}: " . $e->getMessage());
+            }
+        };
 
-if (!function_exists('notifSolicitudAsignada')) {
-    /**
-     * Notificar al empleado asignado para elaborar.
-     */
-    function notifSolicitudAsignada(array $solicitud, string $correoAsignado, string $nombreAsignado): bool
-    {
-        $tipo = $solicitud['tipo_solicitud'] ?? '';
-        $id   = $solicitud['id_solicitud']  ?? '';
-        $html = "
-            <h2 style='color:#1e5fbf;margin-top:0;'>📝 Tarea Asignada</h2>
-            <p>Hola <strong>{$nombreAsignado}</strong>,</p>
-            <p>Se te ha asignado la elaboración de un documento en el SGC:</p>
-            <table style='width:100%;border-collapse:collapse;font-size:14px;'>
-              <tr><td style='padding:6px 0;color:#6b7280;width:140px;'>Solicitud #:</td>
-                  <td><strong>{$id}</strong></td></tr>
-              <tr><td style='padding:6px 0;color:#6b7280;'>Tipo:</td>
-                  <td>{$tipo}</td></tr>
-            </table>
-            <br>
-            <a href='" . APP_URL . "/tareas/elaborar/{$id}'
-               style='background:#1e5fbf;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;'>
-               Ver mi Tarea
-            </a>";
+        // ── 1. Solicitante ────────────────────────────────────────────
+        if ($correoSolicitante) {
+            $c = trim($correoSolicitante['correo_empleado'] ?? '');
+            if ($c) $enviar($c, $correoSolicitante['nombre_completo'] ?? $c, 'Solicitante');
+        }
 
-        return enviarCorreo($correoAsignado, "Tarea asignada SGC - Solicitud #$id", $html);
-    }
-}
+        // ── 2. Coordinadores de Calidad ───────────────────────────────
+        // Usamos un set de emails YA enviados para no duplicar
+        $yaEnviados = [];
+        if ($correoSolicitante) {
+            $c = trim($correoSolicitante['correo_empleado'] ?? '');
+            if ($c) $yaEnviados[strtolower($c)] = true;
+        }
 
-if (!function_exists('notifDocumentoAprobado')) {
-    /**
-     * Notificar que un documento fue aprobado y está vigente.
-     */
-    function notifDocumentoAprobado(array $documento, array $destinatarios): bool
-    {
-        $codigo  = $documento['codigo']          ?? '';
-        $nombre  = $documento['nombre_documento'] ?? '';
-        $version = $documento['numero_version']  ?? '?';
-        $html = "
-            <h2 style='color:#198754;margin-top:0;'>✅ Documento Aprobado y Vigente</h2>
-            <p>Un documento del SGC ha sido aprobado exitosamente:</p>
-            <table style='width:100%;border-collapse:collapse;font-size:14px;'>
-              <tr><td style='padding:6px 0;color:#6b7280;width:140px;'>Código:</td>
-                  <td><code style='background:#f3f4f6;padding:2px 6px;border-radius:4px;'>{$codigo}</code></td></tr>
-              <tr><td style='padding:6px 0;color:#6b7280;'>Documento:</td>
-                  <td><strong>" . htmlspecialchars($nombre) . "</strong></td></tr>
-              <tr><td style='padding:6px 0;color:#6b7280;'>Versión:</td>
-                  <td><span style='background:#1e5fbf;color:#fff;padding:2px 8px;border-radius:12px;font-size:12px;'>V{$version}</span></td></tr>
-            </table>
-            <br>
-            <a href='" . APP_URL . "/documentos/vigentes'
-               style='background:#198754;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;'>
-               Ver Listado Maestro
-            </a>";
+        foreach ($coordinadores as $u) {
+            $c = trim($u['correo_empleado'] ?? '');
+            if (!$c) continue;
+            // Si ya recibió como solicitante, enviar de todas formas con label de coordinador
+            // solo si es DIFERENTE al solicitante. Si es el mismo, ya recibió.
+            if (!isset($yaEnviados[strtolower($c)])) {
+                $enviar($c, $u['nombre_completo'] ?? $c, 'Coordinador de Calidad');
+                $yaEnviados[strtolower($c)] = true;
+            }
+        }
 
-        return enviarCorreo($destinatarios, "Documento aprobado: $codigo V$version", $html);
-    }
-}
+        // ── 3. Líderes de Proceso ─────────────────────────────────────
+        foreach ($lideres as $u) {
+            $c = trim($u['correo_empleado'] ?? '');
+            if (!$c) continue;
+            if (!isset($yaEnviados[strtolower($c)])) {
+                $enviar($c, $u['nombre_completo'] ?? $c, 'Líder de Proceso');
+                $yaEnviados[strtolower($c)] = true;
+            }
+        }
 
-if (!function_exists('notifTareaDevuelta')) {
-    /**
-     * Notificar al elaborador que su tarea fue devuelta.
-     */
-    function notifTareaDevuelta(array $tarea, string $correoElaborador, string $comentario = ''): bool
-    {
-        $id  = $tarea['id_solicitud'] ?? $tarea['id_tarea'] ?? '';
-        $html = "
-            <h2 style='color:#ef4444;margin-top:0;'>↩️ Tarea Devuelta para Corrección</h2>
-            <p>Una de tus tareas ha sido devuelta para corrección:</p>
-            <table style='width:100%;border-collapse:collapse;font-size:14px;'>
-              <tr><td style='padding:6px 0;color:#6b7280;width:140px;'>Tarea #:</td>
-                  <td><strong>{$id}</strong></td></tr>
-              " . ($comentario ? "<tr><td style='padding:6px 0;color:#6b7280;'>Observación:</td>
-                  <td>" . htmlspecialchars($comentario) . "</td></tr>" : "") . "
-            </table>
-            <br>
-            <a href='" . APP_URL . "/tareas/elaborar/{$id}'
-               style='background:#ef4444;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;'>
-               Revisar y Corregir
-            </a>";
-
-        return enviarCorreo($correoElaborador, "Tarea devuelta SGC - #$id", $html);
+        return ['enviados' => $enviados, 'fallidos' => $fallidos];
     }
 }

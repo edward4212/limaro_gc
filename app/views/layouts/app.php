@@ -9,7 +9,7 @@ use App\Core\Session;
 $authUser  = $authUser  ?? Auth::user() ?? [];
 $modulos   = $modulos   ?? Auth::modulos() ?? [];
 $emp       = empresa();
-$empNombre = $emp['nombre_empresa'] ?: 'Limaro SGC';
+$empNombre = $emp['nombre_empresa'] ?: 'SGC';
 $empLogo   = empresaLogoUrl();
 $pageTitle = $pageTitle ?? $empNombre;
 ?>
@@ -33,9 +33,55 @@ $pageTitle = $pageTitle ?? $empNombre;
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <!-- DataTables Buttons -->
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <!-- DataTables RowGroup -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/rowgroup/1.4.1/css/rowGroup.bootstrap5.min.css">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- Estilos personalizados -->
     <link rel="stylesheet" href="<?= e(APP_URL) ?>/assets/css/app.css">
     
+    <style>
+    /* ── Tipografía global responsive ── */
+    *, body, p, span, div, td, th, li, a, label, input, select, textarea, button {
+        font-family: Arial, 'Helvetica Neue', sans-serif !important;
+    }
+    /* Base: 14px para pantallas normales (< 1400px) */
+    body, p, span, div, td, th, li, a, label {
+        font-size: 14px;
+        color: #000;
+    }
+    /* Pantallas grandes (≥ 1400px): 15px */
+    @media (min-width: 1400px) {
+        body, p, span, div, td, th, li, a, label { font-size: 15px; }
+        table, table th, table td,
+        table.dataTable, table.dataTable th, table.dataTable td {
+            font-size: 15px !important;
+        }
+    }
+    /* Móvil (< 576px): 13px para no desbordar */
+    @media (max-width: 575px) {
+        body, p, span, div, td, th, li, a, label { font-size: 13px; }
+        table, table th, table td { font-size: 13px !important; }
+    }
+    /* Iconos Bootstrap no cambian font-family */
+    .bi, [class^="bi-"], [class*=" bi-"] {
+        font-family: 'Bootstrap Icons' !important;
+        color: inherit !important;
+    }
+    /* Títulos */
+    h1 { font-size: 22px !important; }
+    h2 { font-size: 18px !important; }
+    h3 { font-size: 16px !important; }
+    h4 { font-size: 14px !important; }
+    /* Sidebar */
+    .sidebar-link { font-size: 13px !important; color: #94A3B8 !important; }
+    .sidebar-link.active { color: #fff !important; }
+    .sidebar-brand-text strong { font-size: 14px !important; color: #fff !important; }
+    .sidebar-brand-text small { font-size: 11px !important; color: #00B5D8 !important; }
+    </style>
 </head>
 <body>
 <div class="wrapper">
@@ -86,40 +132,19 @@ $pageTitle = $pageTitle ?? $empNombre;
                 $byId[$m['id_modulo']] = $m;
             }
 
-            // Cargar módulos padre que falten (contenedores sin permisos propios)
-            $idsPadreNecesarios = [];
-            foreach ($byId as $m) {
-                if ($m['id_padre'] !== null && !isset($byId[$m['id_padre']])) {
-                    $idsPadreNecesarios[] = (int)$m['id_padre'];
-                }
-            }
-            if (!empty($idsPadreNecesarios)) {
-                try {
-                    $db  = \App\Core\Database::getInstance();
-                    $ph  = implode(',', array_fill(0, count($idsPadreNecesarios), '?'));
-                    $stm = $db->prepare("SELECT * FROM modulo WHERE id_modulo IN ($ph) AND estado='ACTIVO'");
-                    $stm->execute($idsPadreNecesarios);
-                    foreach ($stm->fetchAll() as $p) {
-                        $p['hijos'] = [];
-                        $byId[$p['id_modulo']] = $p;
-                    }
-                } catch (\Throwable $e) { /* silenciar en menú */ }
-            }
-
+            // Construir árbol padre → hijos
             foreach ($byId as &$m) {
                 if (($m['id_padre'] ?? null) === null) {
                     $tree[] = &$m;
                 }
             }
             unset($m);
-            // Hijar al árbol
             foreach ($byId as &$m) {
                 if (!empty($m['id_padre']) && isset($byId[$m['id_padre']])) {
                     $byId[$m['id_padre']]['hijos'][] = &$m;
                 }
             }
             unset($m);
-            // Ordenar hijos por campo orden
             foreach ($byId as &$m) {
                 if (!empty($m['hijos'])) {
                     usort($m['hijos'], fn($a,$b) => ($a['orden']??99) <=> ($b['orden']??99));
@@ -261,7 +286,15 @@ $pageTitle = $pageTitle ?? $empNombre;
                 </a>
             </li>
         </ul>
-    </nav>
+    
+    <!-- Logo Limaro Software al fondo del sidebar -->
+    <div class="sidebar-footer">
+        <img src="<?= e(APP_URL) ?>/assets/img/limaro-logo.png"
+             alt="Limaro Software" title="Limaro Software">
+        <div class="sidebar-footer-text">Desarrollado por LIMARO</div>
+    </div>
+
+</nav>
 
     <!-- ================================================================
          TOPBAR
@@ -283,7 +316,7 @@ $pageTitle = $pageTitle ?? $empNombre;
             <div class="dropdown">
                 <button class="btn p-0 border-0 bg-transparent" data-bs-toggle="dropdown">
              <img class="topbar-avatar"
-     src="<?= e(urlFotoPerfil($authUser['img_empleado'] ?? null)) ?>"
+     src="<?= e(urlFotoPerfil($authUser['img_empleado'] ?? null, Auth::id())) ?>"
      alt="Avatar"
      onerror="this.onerror=null; this.src='<?= e(APP_URL) ?>/assets/img/usuario.png'; this.classList.add('img-error');">
                 </button>
@@ -321,6 +354,9 @@ $pageTitle = $pageTitle ?? $empNombre;
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<!-- DataTables RowGroup -->
+<script src="https://cdn.datatables.net/rowgroup/1.4.1/js/dataTables.rowGroup.min.js"></script>
+<script src="https://cdn.datatables.net/rowgroup/1.4.1/js/rowGroup.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
@@ -329,11 +365,25 @@ $pageTitle = $pageTitle ?? $empNombre;
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <!-- App JS -->
 <script src="<?= e(APP_URL) ?>/assets/js/app.js"></script>
 
 <?php if (isset($scripts)): ?>
     <?= $scripts ?>
 <?php endif; ?>
+
+<!-- Footer de la aplicación -->
+<footer id="app-footer">
+    <span>© <?= date('Y') ?> — Todos los Derechos Reservados</span>
+    <span class="footer-sep">|</span>
+    <span>Diseñado y Desarrollado por
+        <a href="https://limaro.cloud" target="_blank" rel="noopener">LIMARO</a>
+    </span>
+    <span class="footer-sep">|</span>
+    <span><?= defined('APP_VERSION') ? APP_VERSION : 'V1.0' ?></span>
+</footer>
+
 </body>
 </html>

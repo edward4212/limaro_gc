@@ -25,8 +25,10 @@ class DocumentoModel extends Model
         return $this->query("
             SELECT d.*,
                    d.codigo AS codigo_documento,
-                   p.proceso, p.sigla_proceso, td.tipo_documento, td.sigla_tipo_documento,
-                   m.macroproceso,
+                   p.proceso, p.sigla_proceso,
+                   td.tipo_documento, td.sigla_tipo_documento,
+                   CONCAT(td.sigla_tipo_documento, ' — ', td.tipo_documento) AS tipo_completo,
+                   m.macroproceso, m.id_macroproceso,
                    s.subproceso AS nombre_subproceso, s.sigla_subproceso,
                    (SELECT v.numero_version FROM versionamiento v
                     WHERE v.id_documento = d.id_documento
@@ -36,11 +38,14 @@ class DocumentoModel extends Model
                     ORDER BY v.numero_version DESC LIMIT 1) AS estado_version
             FROM documento d
             INNER JOIN proceso        p  ON p.id_proceso        = d.id_proceso
-            INNER JOIN macroproceso   m  ON m.id_macroproceso    = p.id_macroproceso
+            INNER JOIN macroproceso   m  ON m.id_macroproceso   = p.id_macroproceso
             INNER JOIN tipo_documento td ON td.id_tipo_documento = d.id_tipo_documento
-            LEFT  JOIN subproceso     s  ON s.id_subproceso      = d.id_subproceso
-            WHERE COALESCE(d.estado, 'ACTIVO') = 'ACTIVO'
-            ORDER BY d.codigo
+            LEFT  JOIN subproceso     s  ON s.id_subproceso     = d.id_subproceso
+            ORDER BY
+                m.macroproceso,
+                p.proceso,
+                td.sigla_tipo_documento,
+                d.codigo
         ")->fetchAll();
     }
 
@@ -50,24 +55,66 @@ class DocumentoModel extends Model
     public function vigentes(): array
     {
         return $this->query("
-            SELECT d.id_documento, d.codigo, d.codigo AS codigo_documento,
-                   d.nombre_documento, d.objetivo_documento,
-                   d.objetivo_documento AS descripcion,
-                   p.proceso, p.sigla_proceso, td.tipo_documento, td.sigla_tipo_documento,
-                   m.macroproceso,
-                   v.numero_version, v.fecha_aprobacion, v.estado_version,
-                   v.id_versionamiento, v.documento AS archivo,
-                   v.usuario_creacion   AS elaborador,
-                   v.usuario_revision   AS revisor,
-                   v.usuario_aprobacion AS aprobador
+            SELECT
+                d.id_documento,
+                d.codigo,
+                d.codigo              AS codigo_documento,
+                d.codigo_anterior,
+                d.nombre_documento,
+                d.objetivo_documento  AS descripcion,
+                p.id_proceso,
+                p.proceso,
+                p.sigla_proceso,
+                td.tipo_documento,
+                td.sigla_tipo_documento,
+                m.macroproceso,
+                v.id_versionamiento,
+                v.numero_version,
+                v.fecha_aprobacion,
+                v.estado_version,
+                v.descripcion_version,
+                -- Elaborador: FK normalizada → nombre completo; fallback varchar legacy
+                COALESCE(e_cr.nombre_completo, v.usuario_creacion)   AS elaborador,
+                -- Revisor
+                COALESCE(e_rv.nombre_completo, v.usuario_revision)   AS revisor,
+                -- Aprobador
+                COALESCE(e_ap.nombre_completo, v.usuario_aprobacion) AS aprobador,
+                -- Archivo: tabla archivo (nuevo sistema) con fallback a campo legado
+                ar.id_archivo,
+                COALESCE(ar.ruta_relativa, v.documento) AS archivo_ruta,
+                ar.nombre_original                      AS archivo_nombre,
+                v.documento                             AS archivo_ruta_legacy
             FROM versionamiento v
-            INNER JOIN documento      d  ON d.id_documento      = v.id_documento
-            INNER JOIN proceso        p  ON p.id_proceso        = d.id_proceso
-            INNER JOIN macroproceso   m  ON m.id_macroproceso    = p.id_macroproceso
-            INNER JOIN tipo_documento td ON td.id_tipo_documento = d.id_tipo_documento
+            INNER JOIN documento      d   ON d.id_documento       = v.id_documento
+            INNER JOIN proceso        p   ON p.id_proceso         = d.id_proceso
+            INNER JOIN macroproceso   m   ON m.id_macroproceso    = p.id_macroproceso
+            INNER JOIN tipo_documento td  ON td.id_tipo_documento = d.id_tipo_documento
+            -- JOINs normalizados para obtener nombre completo (HU-012)
+            LEFT JOIN usuario  u_cr ON u_cr.id_usuario = v.id_usuario_creacion
+            LEFT JOIN empleado e_cr ON e_cr.id_empleado = u_cr.id_empleado
+            LEFT JOIN usuario  u_rv ON u_rv.id_usuario = v.id_usuario_revision
+            LEFT JOIN empleado e_rv ON e_rv.id_empleado = u_rv.id_empleado
+            LEFT JOIN usuario  u_ap ON u_ap.id_usuario = v.id_usuario_aprobacion
+            LEFT JOIN empleado e_ap ON e_ap.id_empleado = u_ap.id_empleado
+            -- Archivo más reciente desde tabla archivo
+            LEFT JOIN archivo ar ON ar.modulo = 'VERSIONAMIENTO'
+                AND ar.id_referencia = v.id_versionamiento
+                AND ar.id_archivo = (
+                    SELECT MAX(a2.id_archivo) FROM archivo a2
+                    WHERE a2.modulo      = 'VERSIONAMIENTO'
+                      AND a2.id_referencia = v.id_versionamiento
+                )
             WHERE v.estado_version = 'VIGENTE'
               AND COALESCE(d.estado, 'ACTIVO') = 'ACTIVO'
-            ORDER BY d.codigo
+              AND v.numero_version > 0
+              AND v.numero_version = (
+                  SELECT MAX(v2.numero_version)
+                  FROM versionamiento v2
+                  WHERE v2.id_documento   = v.id_documento
+                    AND v2.estado_version = 'VIGENTE'
+                    AND v2.numero_version > 0
+              )
+            ORDER BY m.macroproceso, p.proceso, td.sigla_tipo_documento, d.codigo
         ")->fetchAll();
     }
 
@@ -77,22 +124,68 @@ class DocumentoModel extends Model
     public function obsoletos(): array
     {
         return $this->query("
-            SELECT d.id_documento, d.codigo, d.codigo AS codigo_documento,
-                   d.nombre_documento,
-                   p.proceso, td.tipo_documento,
-                   v.numero_version, v.fecha_aprobacion, v.fecha_obsoleto,
-                   v.estado_version, v.id_versionamiento, v.documento AS archivo
+            SELECT
+                d.id_documento,
+                d.codigo,
+                d.codigo           AS codigo_documento,
+                d.codigo_anterior,
+                d.nombre_documento,
+                d.objetivo_documento AS descripcion,
+                p.id_proceso,
+                p.proceso,
+                p.sigla_proceso,
+                m.macroproceso,
+                td.tipo_documento,
+                td.sigla_tipo_documento,
+                v.id_versionamiento,
+                v.numero_version,
+                v.fecha_aprobacion,
+                v.fecha_obsoleto,
+                v.estado_version,
+                v.descripcion_version,
+                -- Responsables con FK normalizada → nombre completo; fallback varchar
+                COALESCE(e_cr.nombre_completo, v.usuario_creacion)   AS elaborador,
+                COALESCE(e_rv.nombre_completo, v.usuario_revision)   AS revisor,
+                COALESCE(e_ap.nombre_completo, v.usuario_aprobacion) AS aprobador,
+                -- Archivo: tabla archivo (nuevo) con fallback campo legado
+                ar.id_archivo,
+                COALESCE(ar.ruta_relativa, v.documento) AS archivo_ruta,
+                ar.nombre_original                      AS archivo_nombre
             FROM versionamiento v
-            INNER JOIN documento      d  ON d.id_documento      = v.id_documento
-            INNER JOIN proceso        p  ON p.id_proceso        = d.id_proceso
-            INNER JOIN tipo_documento td ON td.id_tipo_documento = d.id_tipo_documento
+            INNER JOIN documento      d   ON d.id_documento       = v.id_documento
+            INNER JOIN proceso        p   ON p.id_proceso         = d.id_proceso
+            INNER JOIN macroproceso   m   ON m.id_macroproceso    = p.id_macroproceso
+            INNER JOIN tipo_documento td  ON td.id_tipo_documento = d.id_tipo_documento
+            -- FKs normalizadas usuario → empleado
+            LEFT JOIN usuario  u_cr ON u_cr.id_usuario  = v.id_usuario_creacion
+            LEFT JOIN empleado e_cr ON e_cr.id_empleado = u_cr.id_empleado
+            LEFT JOIN usuario  u_rv ON u_rv.id_usuario  = v.id_usuario_revision
+            LEFT JOIN empleado e_rv ON e_rv.id_empleado = u_rv.id_empleado
+            LEFT JOIN usuario  u_ap ON u_ap.id_usuario  = v.id_usuario_aprobacion
+            LEFT JOIN empleado e_ap ON e_ap.id_empleado = u_ap.id_empleado
+            -- Archivo más reciente del versionamiento
+            LEFT JOIN archivo ar ON ar.modulo = 'VERSIONAMIENTO'
+                AND ar.id_referencia = v.id_versionamiento
+                AND ar.id_archivo = (
+                    SELECT MAX(a2.id_archivo) FROM archivo a2
+                    WHERE a2.modulo       = 'VERSIONAMIENTO'
+                      AND a2.id_referencia = v.id_versionamiento
+                )
             WHERE v.estado_version = 'OBSOLETO'
-            ORDER BY d.codigo, v.numero_version DESC
+              AND v.numero_version > 0
+              AND v.numero_version = (
+                  SELECT MAX(v2.numero_version)
+                  FROM versionamiento v2
+                  WHERE v2.id_documento   = v.id_documento
+                    AND v2.estado_version = 'OBSOLETO'
+                    AND v2.numero_version > 0
+              )
+            ORDER BY m.macroproceso, p.proceso, td.sigla_tipo_documento, d.codigo
         ")->fetchAll();
     }
 
     /**
-     * Generar código: SIGLA_TIPO-SIGLA_PROCESO-NNN (máx 10 chars).
+     * Generar código: SIGLA_PROCESO-SIGLA_TIPO-NNN (máx 10 chars).
      * Ej: PR-GC-001
      */
     public function generarCodigo(int $idTipo, int $idProceso): string
@@ -111,7 +204,7 @@ class DocumentoModel extends Model
             throw new \RuntimeException('Tipo o proceso no válido para generar código.');
         }
 
-        $prefijo = strtoupper($tipo) . '-' . strtoupper($proc) . '-';
+        $prefijo = strtoupper($proc) . '-' . strtoupper($tipo) . '-';
         $like    = $prefijo . '%';
 
         // MAX del consecutivo numérico real, respetando gaps por eliminaciones/reasignaciones
@@ -171,7 +264,8 @@ class DocumentoModel extends Model
 
         // Obtener datos para construir la carpeta ANTES de la transacción
         $macro = $this->query("
-            SELECT m.macroproceso, p.proceso, td.tipo_documento,
+            SELECT m.macroproceso, p.proceso, p.sigla_proceso,
+                   td.tipo_documento, td.sigla_tipo_documento,
                    s.subproceso AS nombre_subproceso
             FROM proceso p
             INNER JOIN macroproceso   m  ON m.id_macroproceso    = p.id_macroproceso
@@ -220,13 +314,21 @@ class DocumentoModel extends Model
         // Crear carpeta V0 en disco DESPUÉS de confirmar la transacción
         // (si falla no revierte el doc, pero se puede recrear manualmente)
         try {
-            crearCarpetaVersion(
+            $rutaRelativa = crearCarpetaVersion(
                 $macro['macroproceso'],
                 $macro['proceso'],
                 $macro['nombre_subproceso'] ?? null,
                 $macro['tipo_documento'],
                 $nombre,
-                0  // versión 0
+                0,  // versión 0
+                $macro['sigla_proceso'] ?? '',
+                $macro['sigla_tipo_documento'] ?? '',
+                $codigo
+            );
+            // HU-010: guardar ruta en BD para trazabilidad
+            $this->query(
+                "UPDATE documento SET ruta_carpeta = ? WHERE id_documento = ?",
+                [str_replace(DIRECTORY_SEPARATOR, '/', $rutaRelativa), $idDocumento]
             );
         } catch (\Throwable $e) {
             // No interrumpir el flujo si el sistema de archivos falla
@@ -269,12 +371,12 @@ class DocumentoModel extends Model
         $activas = (int) $this->query("
             SELECT COUNT(*) FROM solicitud
             WHERE codigo_documento = (SELECT codigo FROM documento WHERE id_documento = ? LIMIT 1)
-              AND estado_solicitud IN ('CREADA','ASIGNADA','EN DESARROLLO')
+              AND estado_solicitud IN ('CREADA','ASIGNADA','EN_DESARROLLO')
         ", [$idDocumento])->fetchColumn();
 
         if ($activas > 0) {
             throw new \RuntimeException(
-                "No se puede reubicar: el documento tiene $activas solicitud(es) activa(s) en estado CREADA, ASIGNADA o EN DESARROLLO. Finalícelas primero."
+                "No se puede reubicar: el documento tiene $activas solicitud(es) activa(s) en estado CREADA, ASIGNADA o EN_DESARROLLO. Finalícelas primero."
             );
         }
 
@@ -375,8 +477,8 @@ class DocumentoModel extends Model
                 INSERT INTO documento_reasignacion
                     (id_documento, codigo_anterior, codigo_nuevo,
                      id_proceso_anterior, id_proceso_nuevo,
-                     carpeta_anterior, carpeta_nueva, usuario, observacion)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     carpeta_anterior, carpeta_nueva, usuario, id_usuario, observacion)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ", [
                 $idDocumento,
                 $codigoAnterior,
@@ -386,6 +488,7 @@ class DocumentoModel extends Model
                 $carpetaAnterior,
                 $carpetaNueva,
                 $usuario,
+                \App\Core\Auth::id(),
                 $observacion,
             ]);
 
@@ -409,8 +512,31 @@ class DocumentoModel extends Model
             }
 
             if (!rename($origenAbs, $destinoAbs)) {
-                // No revertir BD, pero avisar
-                error_log("Advertencia: no se pudo mover carpeta de '$origenAbs' a '$destinoAbs'");
+                // SEC-004: la BD ya fue commiteada y no puede revertirse aquí.
+                // Se registra el fallo con toda la información necesaria para
+                // que un administrador ejecute el rename manualmente:
+                //   mv "{$origenAbs}" "{$destinoAbs}"
+                // Los archivos físicos siguen en la ruta anterior; los links
+                // en la BD apuntan a la nueva. El documento sigue funcional
+                // mientras no se mueva/elimine la carpeta origen.
+                error_log(sprintf(
+                    '[DocumentoModel::reubicar] FILESYSTEM_INCONSISTENCY: '
+                    . 'BD actualizada (doc=%d, codigo=%s→%s) pero rename falló. '
+                    . 'Ejecutar manualmente: mv "%s" "%s"',
+                    $idDocumento,
+                    $codigoAnterior,
+                    $codigoNuevo,
+                    $origenAbs,
+                    $destinoAbs
+                ));
+
+                // Lanzar excepción para que el controlador muestre advertencia
+                // (no crítica: la operación de negocio fue exitosa)
+                throw new \RuntimeException(
+                    "El documento fue reubicado en la base de datos, pero no se pudo "
+                    . "mover la carpeta física. Notifique al administrador del sistema. "
+                    . "Código anterior: {$codigoAnterior} → nuevo: {$codigoNuevo}."
+                );
             }
         }
 
@@ -450,7 +576,7 @@ class DocumentoModel extends Model
             throw new \RuntimeException('Tipo o proceso no válido para generar código.');
         }
 
-        $prefijo = strtoupper($tipo) . '-' . strtoupper($proc) . '-';
+        $prefijo = strtoupper($proc) . '-' . strtoupper($tipo) . '-';
         $like    = $prefijo . '%';
 
         // MAX del número al final del código, excluyendo el documento que se está moviendo
@@ -529,6 +655,7 @@ class DocumentoModel extends Model
                     SELECT 1 FROM versionamiento v
                     WHERE v.id_documento = d.id_documento
                     AND v.estado_version = 'VIGENTE'
+                    AND v.numero_version > 0
                 )
             WHERE p.estado = 'ACTIVO'
             GROUP BY p.id_proceso
@@ -575,6 +702,7 @@ class DocumentoModel extends Model
                     SELECT 1 FROM versionamiento v
                     WHERE v.id_documento = d.id_documento
                     AND v.estado_version = 'VIGENTE'
+                    AND v.numero_version > 0
                 )
             WHERE td.estado = 'ACTIVO'
             GROUP BY td.id_tipo_documento
@@ -598,18 +726,34 @@ class DocumentoModel extends Model
                    d.objetivo_documento,
                    m.macroproceso, p.proceso, p.sigla_proceso,
                    s.subproceso AS nombre_subproceso,
+                   v.id_versionamiento,
                    v.numero_version, v.fecha_aprobacion,
-                   v.usuario_aprobacion, v.documento AS archivo_ruta,
-                   v.descripcion_version
+                   v.usuario_aprobacion, v.documento AS archivo_ruta_legacy,
+                   v.descripcion_version,
+                   ar.id_archivo,
+                   -- Ruta: primero tabla archivo (nuevo sistema), fallback a campo legado
+                   COALESCE(ar.ruta_relativa, v.documento)          AS archivo_ruta,
+                   COALESCE(ar.nombre_original, v.documento)        AS archivo_nombre,
+                   COALESCE(ar.mime_type, 'application/octet-stream') AS mime_type
             FROM documento d
             INNER JOIN proceso        p  ON p.id_proceso        = d.id_proceso
             INNER JOIN macroproceso   m  ON m.id_macroproceso    = p.id_macroproceso
             LEFT  JOIN subproceso     s  ON s.id_subproceso      = d.id_subproceso
             INNER JOIN versionamiento v  ON v.id_documento       = d.id_documento
                 AND v.estado_version = 'VIGENTE'
+                AND v.numero_version > 0
                 AND v.numero_version = (
                     SELECT MAX(v2.numero_version) FROM versionamiento v2
-                    WHERE v2.id_documento = d.id_documento AND v2.estado_version = 'VIGENTE'
+                    WHERE v2.id_documento = d.id_documento
+                    AND v2.estado_version = 'VIGENTE'
+                    AND v2.numero_version > 0
+                )
+            LEFT JOIN archivo ar ON ar.modulo = 'VERSIONAMIENTO'
+                AND ar.id_referencia = v.id_versionamiento
+                AND ar.id_archivo = (
+                    SELECT MAX(ar2.id_archivo) FROM archivo ar2
+                    WHERE ar2.modulo = 'VERSIONAMIENTO'
+                    AND ar2.id_referencia = v.id_versionamiento
                 )
             WHERE d.id_proceso = ?
               AND d.id_tipo_documento = ?
@@ -634,11 +778,59 @@ class DocumentoModel extends Model
     {
         return $this->query("
             SELECT d.id_documento, d.codigo, d.codigo AS codigo_documento,
-                   d.nombre_documento
+                   d.nombre_documento,
+                   d.id_tipo_documento,
+                   td.tipo_documento, td.sigla_tipo_documento
             FROM documento d
+            INNER JOIN tipo_documento td ON td.id_tipo_documento = d.id_tipo_documento
             WHERE (d.codigo LIKE ? OR d.nombre_documento LIKE ?)
               AND COALESCE(d.estado, 'ACTIVO') = 'ACTIVO'
             LIMIT 20
         ", ["%$termino%", "%$termino%"])->fetchAll();
     }
+
+    /**
+     * Contar solicitudes activas (no finalizadas) para un documento.
+     * Usado para bloquear la reasignación si hay trabajo en curso.
+     */
+    public function solicitudesActivasDocumento(int $idDocumento): int
+    {
+        $doc = $this->find($idDocumento);
+        if (!$doc) return 0;
+
+        $row = $this->query("
+            SELECT COUNT(*) FROM solicitud
+            WHERE codigo_documento = ?
+              AND estado_solicitud NOT IN ('FINALIZADA', 'CANCELADA')
+        ", [$doc['codigo']])->fetchColumn();
+        return (int)$row;
+    }
+
+
+    /** Busca documento por código y lo retorna completo */
+    public function buscarPorCodigo(string $codigo): ?array
+    {
+        $id = $this->idPorCodigo($codigo);
+        return $id ? $this->find($id) : null;
+    }
+
+    /** Retorna documento con datos de proceso y macroproceso */
+    public function conDetalle(int $id): ?array
+    {
+        return $this->query("
+            SELECT d.*,
+                   p.proceso, p.id_macroproceso, p.sigla_proceso,
+                   m.macroproceso,
+                   s.subproceso,
+                   td.tipo_documento, td.sigla_tipo_documento
+            FROM documento d
+            LEFT JOIN proceso          p  ON p.id_proceso         = d.id_proceso
+            LEFT JOIN macroproceso     m  ON m.id_macroproceso    = p.id_macroproceso
+            LEFT JOIN subproceso       s  ON s.id_subproceso      = d.id_subproceso
+            LEFT JOIN tipo_documento   td ON td.id_tipo_documento = d.id_tipo_documento
+            WHERE d.id_documento = ?
+            LIMIT 1
+        ", [$id])->fetch() ?: null;
+    }
+
 }

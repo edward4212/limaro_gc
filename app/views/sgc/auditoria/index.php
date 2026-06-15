@@ -12,21 +12,18 @@
 </div>
 
 <!-- KPIs -->
-<div class="row g-3 mb-4">
-    <?php
-    $estados = ['PROGRAMADA'=>['primary','calendar'], 'EN_CURSO'=>['warning','hourglass-split'],
-                'FINALIZADA'=>['success','check-circle'], 'CANCELADA'=>['danger','x-circle']];
-    $totales = array_column($resumen, 'total', 'estado');
-    foreach ($estados as $est => [$color, $icon]): ?>
-    <div class="col-6 col-md-3">
-        <div class="card border-0 shadow-sm text-center py-3">
-            <i class="bi bi-<?= $icon ?> text-<?= $color ?> fs-2"></i>
-            <div class="fw-bold fs-4"><?= $totales[$est] ?? 0 ?></div>
-            <div class="text-muted" style="font-size:12px;"><?= ucfirst(strtolower(str_replace('_',' ',$est))) ?></div>
-        </div>
-    </div>
-    <?php endforeach; ?>
-</div>
+<?php
+$totAud  = array_column($resumen,'total','estado');
+$totalP  = array_sum(array_column($resumen,'total'));
+$kpis = [
+    ['label'=>'Programadas', 'valor'=>$totAud['PROGRAMADA']??0, 'icono'=>'bi-calendar-event','tipo'=>'kpi-blue',  'filtro'=>'PROGRAMADA'],
+    ['label'=>'En Curso',    'valor'=>$totAud['EN_CURSO']??0,   'icono'=>'bi-hourglass-split','tipo'=>'kpi-amber', 'filtro'=>'EN_CURSO'],
+    ['label'=>'Finalizadas', 'valor'=>$totAud['FINALIZADA']??0, 'icono'=>'bi-check-circle',  'tipo'=>'kpi-green', 'filtro'=>'FINALIZADA'],
+    ['label'=>'Canceladas',  'valor'=>$totAud['CANCELADA']??0,  'icono'=>'bi-x-circle',      'tipo'=>'kpi-rose',  'filtro'=>'CANCELADA'],
+];
+$kpiTotal = ['label'=>'Total Programas', 'valor'=>$totalP];
+include APP_ROOT . '/app/views/partials/kpi_cards.php';
+?>
 
 <div class="card">
     <div class="card-body">
@@ -38,8 +35,8 @@
                 <?php foreach ($programas as $p): ?>
                 <tr>
                     <td><strong><?= e($p['anio']) ?></strong></td>
-                    <td><?= e(truncar($p['descripcion'],60)) ?></td>
-                    <td><?= e($p['auditor_lider']) ?></td>
+                    <td class="col-objetivo"><?= e(truncar($p['descripcion'],60)) ?></td>
+                    <td><?= e($p['auditor_nombre']??$p['auditor_lider_nombre']??$p['auditor_lider']??'—') ?></td>
                     <td style="font-size:12px;">
                         <?= $p['fecha_inicio'] ? fechaEs($p['fecha_inicio']) : '—' ?>
                         <?= $p['fecha_fin'] ? ' → ' . fechaEs($p['fecha_fin']) : '' ?>
@@ -47,10 +44,18 @@
                     <td class="text-center"><span class="badge bg-danger"><?= (int)$p['nc'] ?></span></td>
                     <td class="text-center"><span class="badge bg-success"><?= (int)$p['cerrados'] ?>/<?= (int)$p['total_hallazgos'] ?></span></td>
                     <td><?= badgeEstado($p['estado']) ?></td>
-                    <td>
-                        <?php if (Auth::puede('auditoria_interna','editar')): ?>
+                    <td class="text-center" style="white-space:normal;">
+                        <?php if (($p['estado'] ?? '') === 'FINALIZADA'): ?>
+                        <!-- CA-1: auditorías finalizadas → solo Ver detalle -->
+                        <a href="<?= e(APP_URL) ?>/auditoria-interna/ver/<?= (int)$p['id'] ?>"
+                           class="btn btn-sm btn-outline-success py-0 px-2" title="Ver detalle (solo lectura)">
+                            <i class="bi bi-eye me-1"></i>Ver
+                        </a>
+                        <?php elseif (Auth::puede('auditoria_interna','editar')): ?>
                         <a href="<?= e(APP_URL) ?>/auditoria-interna/editar/<?= (int)$p['id'] ?>"
-                           class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-pencil"></i></a>
+                           class="btn btn-sm btn-outline-primary py-0 px-2" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -59,3 +64,11 @@
         </table>
     </div>
 </div>
+
+<script>
+function filtrarTabla(val) {
+    if ($.fn.DataTable.isDataTable('table.datatable')) {
+        $('table.datatable').DataTable().search(val).draw();
+    }
+}
+</script>

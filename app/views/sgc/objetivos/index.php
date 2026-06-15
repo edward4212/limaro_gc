@@ -22,11 +22,11 @@
                 $color = $pct === null ? 'secondary' : ($pct >= 80 ? 'success' : ($pct >= 50 ? 'warning' : 'danger'));
                 ?>
                 <tr>
-                    <td><code><?= e($o['codigo']) ?></code></td>
-                    <td><?= e(truncar($o['objetivo'], 60)) ?></td>
+                    <td><span><?= e($o['codigo']) ?></span></td>
+                    <td class="col-objetivo"><?= e(truncar($o['objetivo'], 500)) ?></td>
                     <td><span class="badge bg-primary"><?= e($o['meta'] ?? '—') ?></span></td>
                     <td style="font-size:12px;"><?= e(truncar($o['indicador'] ?? '', 50)) ?></td>
-                    <td><span class="badge bg-secondary" style="font-size:11px;"><?= e($o['frecuencia']) ?></span></td>
+                    <td><span class="badge bg-secondary" style="font-size:12px;"><?= e($o['frecuencia']) ?></span></td>
                     <td style="font-size:12px;"><?= e($o['responsable'] ?? '—') ?></td>
                     <td>
                         <?php if ($pct !== null): ?>
@@ -42,8 +42,19 @@
                         <?php endif; ?>
                     </td>
                     <td>
+                        <?php if (Auth::puede('objetivos_calidad', 'editar')): ?>
                         <a href="<?= e(APP_URL) ?>/objetivos-calidad/editar/<?= (int)$o['id'] ?>"
-                           class="btn btn-sm btn-outline-primary py-0"><i class="bi bi-pencil"></i></a>
+                           class="btn btn-sm btn-outline-primary py-0" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <?php endif; ?>
+                        <?php if (Auth::puede('objetivos_calidad', 'eliminar')): ?>
+                        <button class="btn btn-sm btn-outline-danger py-0"
+                                onclick="setModalConfirm('<?= e(APP_URL) ?>/objetivos-calidad/eliminar/<?= (int)$o['id'] ?>','¿Eliminar este objetivo?')"
+                                title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
