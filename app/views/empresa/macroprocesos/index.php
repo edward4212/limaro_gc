@@ -15,10 +15,10 @@
         <table class="table table-hover datatable datatable-export" style="width:100%;">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <!--<th>#</th>-->
                     <th>Macroproceso</th>
                     <th>Objetivo</th>
-                    <th>Procesos</th>
+                    <!--<th>Procesos</th>-->
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -26,10 +26,10 @@
             <tbody>
                 <?php foreach ($macroprocesos as $m): ?>
                 <tr>
-                    <td><?= e($m['id_macroproceso']) ?></td>
+                    <!--<td><?= e($m['id_macroproceso']) ?></td>-->
                     <td><strong><?= e($m['macroproceso']) ?></strong></td>
-                    <td class="col-objetivo"><?= e(truncar($m['objetivo'] ?? '', 80)) ?></td>
-                    <td><span class="badge bg-info text-dark"><?= e($m['total_procesos']) ?></span></td>
+                    <td class="col-objetivo"><?= e(truncar($m['objetivo'] ?? '', 500)) ?></td>
+                    <!--<td><span class="badge bg-info text-dark"><?= e($m['total_procesos']) ?></span></td>-->
                     <td><?= badgeEstado($m['estado']) ?></td>
                     <td>
                         <?php if (Auth::puede('macroprocesos', 'editar')): ?>

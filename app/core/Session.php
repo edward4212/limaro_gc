@@ -39,11 +39,11 @@ class Session
 
         session_name(SESSION_NAME);
 
-        $secure   = (APP_ENV === 'production');
-        $lifetime = (int) env('SESSION_LIFETIME', 7200);
-
+        $secure  = (APP_ENV === 'production');
+        // Cookie lifetime=0 → expira al cerrar el navegador
+        // El timeout de inactividad se maneja con _last_activity en sesión
         session_set_cookie_params([
-            'lifetime' => $lifetime,
+            'lifetime' => 0,
             'path'     => '/',
             'domain'   => '',
             'secure'   => $secure,
@@ -51,8 +51,28 @@ class Session
             'samesite' => 'Lax',
         ]);
 
+        // Timeout de inactividad: 10 minutos (600 segundos)
+        ini_set('session.gc_maxlifetime', 600);
+
         session_start();
         self::$started = true;
+
+        // ── Control de inactividad ──────────────────────────────────────
+        $inactivityLimit = (int) env('SESSION_INACTIVITY', 600); // 10 min default
+        if (isset($_SESSION['_last_activity'])) {
+            if ((time() - $_SESSION['_last_activity']) > $inactivityLimit) {
+                // Sesión expirada — limpiar datos de autenticación
+                // pero mantener sesión activa para que el token CSRF funcione
+                $flashMsg = 'Su sesión expiró por inactividad. Por favor ingrese de nuevo.';
+                self::destroy();
+                session_start();
+                self::$started = true;
+                $_SESSION['_flash']['warning'] = $flashMsg;
+                return;
+            }
+        }
+        // Actualizar timestamp de última actividad
+        $_SESSION['_last_activity'] = time();
     }
 
     /**

@@ -32,7 +32,7 @@
                 ?>
                 <tr>
                     <td><?= e($u['nombre_completo']) ?></td>
-                    <td><code style="font-size:12px;"><?= e($u['usuario']) ?></code></td>
+                    <td><code style="font-size:12px;"><?= e($u['usuario']) ?></span></td>
                     <td style="font-size:12px;"><?= e($u['roles'] ?? '—') ?></td>
                     <td class="text-center"><?= badgeEstado($u['estado']) ?></td>
                     <td style="font-size:12px;"><?= $u['fecha_activacion'] ? fechaEs($u['fecha_activacion']) : '—' ?></td>

@@ -55,7 +55,7 @@ $modoDias = ($filtros['modo_tiempo'] ?? 'calendario') === 'habiles';
                     <td style="font-size:12px;"><?= e($d['tipo_documento'] ?? '—') ?></td>
                     <td style="font-size:12px;"><?= e($d['solicitante']) ?></td>
                     <td style="font-size:12px;"><?= e($d['funcionario_asignado'] ?? '—') ?></td>
-                    <td><?= badgeEstado($d['tarea_estado']) ?></td>
+                    <td><?= badgeEstado($d['tarea_estado'] ?? 'CREADO') ?></td>
                     <td style="font-size:12px;"><?= fechaEs($d['fecha_creacion'] ?? $d['fecha_tarea_estado']) ?></td>
                     <td class="text-center">
                         <span class="badge bg-<?= $semaforo ?>" title="<?= $diasMost ?> días">

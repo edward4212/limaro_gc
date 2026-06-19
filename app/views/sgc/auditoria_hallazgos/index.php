@@ -37,7 +37,7 @@
     <div class="col-md-2">
         <select name="estado" class="form-select form-select-sm" onchange="this.form.submit()">
             <option value="">Todos los estados</option>
-            <?php foreach(['ABIERTO','EN_PROCESO','CERRADO'] as $e): ?>
+            <?php foreach(['ABIERTO','EN_TRATAMIENTO','CERRADO'] as $e): ?>
             <option value="<?= $e ?>" <?= ($filtros['estado']??'')===$e?'selected':'' ?>><?= $e ?></option>
             <?php endforeach; ?>
         </select>
@@ -102,7 +102,7 @@
                     <td style="max-width:100px;"><?= e($h['proceso_nombre']??$h['proceso_auditado']??'—') ?></td>
                     <td style="max-width:200px;"><?= e(mb_strimwidth($h['descripcion']??'',0,80,'…')) ?></td>
                     <td><?= e($h['responsable_nombre']??$h['responsable']??'—') ?></td>
-                    <td style="white-space:nowrap;">
+                    <td style="white-space:normal;">
                         <?php if ($h['fecha_cierre']): ?>
                             <?php $dias = (strtotime($h['fecha_cierre']) - time()) / 86400; ?>
                             <span class="<?= $dias < 0 ? 'text-danger fw-bold' : ($dias < 7 ? 'text-warning' : '') ?>">
@@ -112,7 +112,7 @@
                     </td>
                     <td class="text-center">
                         <?php if ($h['ac_codigo']): ?>
-                        <a href="<?= e(APP_URL) ?>/acciones/<?= (int)$h['id_accion_correctiva'] ?>"
+                        <a href="<?= e(APP_URL) ?>/acciones-correctivas/editar/<?= (int)$h['id_accion_correctiva'] ?>"
                            class="badge bg-success text-decoration-none"><?= e($h['ac_codigo']) ?></a>
                         <?php elseif ($h['estado'] !== 'CERRADO'): ?>
                         <form method="POST" action="<?= e(APP_URL) ?>/auditoria/hallazgos/<?= (int)$h['id'] ?>/generar-ac" style="display:inline;">
@@ -132,7 +132,7 @@
                             <select name="estado" class="form-select form-select-sm py-0"
                                     style="font-size:11px;width:auto;display:inline;"
                                     onchange="this.form.submit()">
-                                <?php foreach(['ABIERTO','EN_PROCESO','CERRADO'] as $est): ?>
+                                <?php foreach(['ABIERTO','EN_TRATAMIENTO','CERRADO'] as $est): ?>
                                 <option value="<?= $est ?>" <?= $h['estado']===$est?'selected':'' ?>><?= $est ?></option>
                                 <?php endforeach; ?>
                             </select>

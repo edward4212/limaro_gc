@@ -34,7 +34,7 @@
                 ?>
                 <tr>
                     <td><?= e($u['nombre_completo']) ?></td>
-                    <td><code style="font-size:12px;"><?= e($u['usuario']) ?></code></td>
+                    <td><code style="font-size:12px;"><?= e($u['usuario']) ?></span></td>
                     <td class="text-center"><?= badgeEstado($u['estado']) ?></td>
                     <td style="font-size:12px;"><?= $u['fecha_registro'] ? fechaEs($u['fecha_registro']) : '—' ?></td>
                     <td style="font-size:12px;"><?= $ultimoCambio ? fechaEs($ultimoCambio) : '<em class="text-muted">Sin cambios</em>' ?></td>

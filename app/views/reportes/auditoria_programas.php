@@ -14,7 +14,7 @@
 <tbody>
 <?php $items = $programas ?? $informes ?? []; foreach($items as $r): ?>
 <tr>
-    <td><code><?= e($r['codigo']??'—') ?></code></td>
+    <td><span><?= e($r['codigo']??'—') ?></span></td>
     <td class="col-objetivo"><?= e(mb_strimwidth($r['descripcion']??$r['sumario_ejecutivo']??$r['titulo']??'—',0,60,'…')) ?></td>
     <td><?= e($r['tipo_auditoria']??'—') ?></td>
     <td><?= e($r['auditor_nombre']??$r['auditor_lider']??'—') ?></td>

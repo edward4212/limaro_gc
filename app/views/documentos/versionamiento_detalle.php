@@ -27,8 +27,17 @@ $soloConsulta = \App\Core\Request::get('consulta') === '1';
         <?php endif; ?>
         <?php
         // CA-1: ocultar Descargar Carpeta cuando viene de Documentos Registrados
-        $fromParam = \App\Core\Request::get('from', 'versionamiento');
-        $esDesdeDocumentos = in_array($fromParam, ['documentos', 'empresa/documentos']);
+        $fromRaw   = \App\Core\Request::get('from', 'versionamiento');
+        // Mapear el parámetro 'from' a la URL de retorno correcta
+        $fromMap   = [
+            'versionamiento'    => 'versionamiento',
+            'documentos'        => 'documentos',
+            'empresa/documentos'=> 'documentos',
+            'obsoletos'         => 'documentos/obsoletos',
+            'vigentes'          => 'documentos/vigentes',
+        ];
+        $fromParam = $fromMap[$fromRaw] ?? 'versionamiento';
+        $esDesdeDocumentos = in_array($fromRaw, ['documentos', 'empresa/documentos']);
         ?>
         <?php if (!$esDesdeDocumentos):
             // HU-019 CA-3: contar archivos en la carpeta del documento
@@ -45,14 +54,14 @@ $soloConsulta = \App\Core\Request::get('consulta') === '1';
                 }
             } catch (Throwable $eN) { $nArchivos = 0; }
         ?>
-        <a href="<?= e(APP_URL) ?>/versionamiento/descargar/<?= (int)$documento['id_documento'] ?>"
-           class="btn btn-success btn-sm"
-           title="<?= $nArchivos > 0 ? "Contiene $nArchivos archivo(s)" : 'Carpeta' ?>">
-            <i class="bi bi-file-zip me-1"></i>Descargar carpeta
-            <?php if ($nArchivos > 0): ?>
-            <span class="badge bg-light text-success ms-1" style="font-size:10px;"><?= $nArchivos ?></span>
-            <?php endif; ?>
-        </a>
+        <!--<a href="<?= e(APP_URL) ?>/versionamiento/descargar/<?= (int)$documento['id_documento'] ?>"-->
+        <!--   class="btn btn-success btn-sm"-->
+        <!--   title="<?= $nArchivos > 0 ? "Contiene $nArchivos archivo(s)" : 'Carpeta' ?>">-->
+        <!--    <i class="bi bi-file-zip me-1"></i>Descargar carpeta-->
+        <!--    <?php if ($nArchivos > 0): ?>-->
+        <!--    <span class="badge bg-light text-success ms-1" style="font-size:12px;"><?= $nArchivos ?></span>-->
+        <!--    <?php endif; ?>-->
+        <!--</a>-->
         <?php endif; ?>
         <a href="<?= e(APP_URL) ?>/<?= e($fromParam) ?>" class="btn btn-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i>Volver
@@ -65,22 +74,22 @@ $soloConsulta = \App\Core\Request::get('consulta') === '1';
     <div class="card-body py-3">
         <div class="row g-2">
             <div class="col-md-2">
-                <div class="text-muted" style="font-size:11px;">CÓDIGO</div>
+                <div class="text-muted" style="font-size:12px;">CÓDIGO</div>
                 <code class="fs-6"><?= e($documento['codigo'] ?? $documento['codigo_documento'] ?? '') ?></code>
                 <!--<?php if (!empty($documento['codigo_anterior'])): ?>-->
                 <!--<div class="form-text">Antes: <del><?= e($documento['codigo_anterior']) ?></del></div>-->
                 <!--<?php endif; ?>-->
             </div>
             <div class="col-md-5">
-                <div class="text-muted" style="font-size:11px;">DOCUMENTO</div>
+                <div class="text-muted" style="font-size:12px;">DOCUMENTO</div>
                 <strong><?= e($documento['nombre_documento']) ?></strong>
             </div>
             <div class="col-md-3">
-                <div class="text-muted" style="font-size:11px;">PROCESO</div>
+                <div class="text-muted" style="font-size:12px;">PROCESO</div>
                 <?= e($documento['proceso'] ?? '—') ?>
             </div>
             <div class="col-md-2">
-                <div class="text-muted" style="font-size:11px;">ESTADO</div>
+                <div class="text-muted" style="font-size:12px;">ESTADO</div>
                 <?= badgeEstado($documento['estado'] ?? 'ACTIVO') ?>
             </div>
         </div>
@@ -143,7 +152,7 @@ $soloConsulta = \App\Core\Request::get('consulta') === '1';
                         $idArch   = $v['id_archivo'] ?? null;
                         if ($esDesdeDocumentos): ?>
                             <!-- CA-1/CA-2 HU-011: sin descarga desde Documentos Registrados -->
-                            <span class="badge bg-secondary" style="font-size:10px;"
+                            <span class="badge bg-secondary" style="font-size:12px;"
                                   title="Descarga no disponible desde Documentos Registrados">
                                 <i class="bi bi-lock me-1"></i>Restringido
                             </span>
@@ -160,6 +169,17 @@ $soloConsulta = \App\Core\Request::get('consulta') === '1';
                         <?php endif; ?>
                     </td>
                     <td>
+                        <!-- Reemplazar archivo — solo ADMIN/COORDINADOR/LIDER y versión VIGENTE -->
+                        <?php if (!$soloConsulta
+                            && ($v['estado_version'] ?? '') === 'VIGENTE'
+                            && Auth::hasRole(['ADMINISTRADOR','COORDINADOR CALIDAD','LIDER PROCESO'])): ?>
+                        <a href="<?= e(APP_URL) ?>/versionamiento/reemplazar/<?= (int)$v['id_versionamiento'] ?>"
+                           class="btn btn-sm btn-outline-warning py-0 me-1"
+                           title="Reemplazar archivo sin crear nueva versión">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </a>
+                        <?php endif; ?>
+
                         <!-- Cambiar estado -->
                         <?php if (!$soloConsulta && Auth::puede('versionamiento', 'editar')): ?>
                         <div class="dropdown">

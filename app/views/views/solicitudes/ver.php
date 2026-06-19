@@ -83,7 +83,7 @@ function submitFinalizarST() {
                 <div class="row mb-2">
                     <div class="col-sm-4 fw-bold text-muted">Código Documento:</div>
                     <div class="col-sm-8">
-                        <code><?= e($sol['codigo_documento']) ?></code>
+                        <span><?= e($sol['codigo_documento']) ?></span>
                     </div>
                 </div>
                 <?php endif; ?>

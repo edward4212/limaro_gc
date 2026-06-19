@@ -162,12 +162,27 @@ class Auth
      */
     public static function tieneRol(string $rolNombre): bool
     {
-        $roles = self::get('roles_nombres', '');
-        if (is_array($roles)) {
-            return in_array(strtoupper($rolNombre), array_map('strtoupper', $roles), true);
+        // Fuente primaria: array 'roles' guardado en sesión al login
+        $roles = self::get('roles', []);
+        if (is_array($roles) && !empty($roles)) {
+            foreach ($roles as $r) {
+                if (strtoupper($r['rol'] ?? '') === strtoupper($rolNombre)) {
+                    return true;
+                }
+            }
+            return false;
         }
-        // Puede venir como string CSV desde el SELECT GROUP_CONCAT
-        return stripos((string)$roles, $rolNombre) !== false;
+
+        // Fallback: string CSV 'rol' (ej: "ADMINISTRADOR, COORDINADOR CALIDAD")
+        // Usa comparación de token completo, no stripos parcial
+        $csv = (string) self::get('rol', '');
+        if ($csv === '') return false;
+        foreach (array_map('trim', explode(',', $csv)) as $token) {
+            if (strtoupper($token) === strtoupper($rolNombre)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

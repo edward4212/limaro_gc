@@ -136,12 +136,14 @@ document.addEventListener('DOMContentLoaded', function () {
             return acc;
         }, []);
 
-        // ── Crear tfoot con inputs ANTES de inicializar DataTables ──────
-        if (hasFilter && !tabla.querySelector('tfoot')) {
-            var tfoot = tabla.createTFoot();
-            var tfRow = tfoot.insertRow();
+        // ── Crear segunda fila en thead con inputs de filtro (cabecera, no pie) ──
+        // antes de inicializar DataTables, ya que orderCellsTop:true exige que la
+        // PRIMERA fila del thead sea la de títulos/orden, y cualquier fila adicional
+        // (esta, con los filtros) queda automáticamente excluida del ordenamiento por clic.
+        if (hasFilter && thead.querySelectorAll('tr').length === 1) {
+            var thFilterRow = thead.insertRow();
             thCells.forEach(function (th, i) {
-                var td   = tfRow.insertCell();
+                var thFilter = document.createElement('th');
                 var txt  = th.textContent.trim();
                 var skip = noOrderIdx.indexOf(i) !== -1 || !txt;
                 if (!skip) {
@@ -151,8 +153,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     inp.className   = 'col-filter';
                     inp.placeholder = lbl;
                     inp.setAttribute('data-col', i);
-                    td.appendChild(inp);
+                    thFilter.appendChild(inp);
                 }
+                thFilterRow.appendChild(thFilter);
             });
         }
 
@@ -200,12 +203,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 ] : [],
             });
 
-            // ── Conectar filtros de tfoot DESPUÉS de que DataTables inició ──
+            // ── Conectar filtros de la cabecera DESPUÉS de que DataTables inició ──
             if (hasFilter) {
                 var api = dt;
 
                 // Buscar inputs por atributo data-col (más confiable que col.footer())
-                tabla.querySelectorAll('tfoot input.col-filter').forEach(function (inp) {
+                tabla.querySelectorAll('input.col-filter').forEach(function (inp) {
                     var colIdx = parseInt(inp.getAttribute('data-col'), 10);
                     inp.addEventListener('keyup', function () {
                         api.column(colIdx).search(this.value).draw();
@@ -225,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         .attr('title', 'Limpiar todos los filtros')
                         .html('<i class="bi bi-x-circle me-1"></i>Limpiar')
                         .on('click', function () {
-                            tabla.querySelectorAll('tfoot input.col-filter').forEach(function (inp) {
+                            tabla.querySelectorAll('input.col-filter').forEach(function (inp) {
                                 inp.value = '';
                                 var colIdx = parseInt(inp.getAttribute('data-col'), 10);
                                 api.column(colIdx).search('');

@@ -11,20 +11,22 @@
     <div class="card-body">
         <table class="table table-hover datatable datatable-export" style="width:100%;">
             <thead>
-                <tr><th>#</th><th>Tipo de Documento</th><th>Sigla</th><th>Documentos</th><th>Estado</th><th>Acciones</th></tr>
+                <tr>
+                    <!--<th>#</th>-->
+                    <th>Tipo de Documento</th><th>Sigla</th><th>Estado</th><th>Acciones</th></tr>
             </thead>
             <tbody>
                 <?php foreach ($tipos as $t): ?>
                 <tr>
-                    <td><?= e($t['id_tipo_documento']) ?></td>
+                    <!--<td><?= e($t['id_tipo_documento']) ?></td>-->
                     <td><strong><?= e($t['tipo_documento']) ?></strong></td>
-                    <td><code class="bg-light px-2 py-1 rounded"><?= e($t['sigla_tipo_documento']) ?></code></td>
-                    <td>
-                        <?php $totalTipo = ($t['total_docs'] ?? 0) + ($t['total_acuerdos'] ?? 0); ?>
-                        <span class="badge <?= $totalTipo > 0 ? 'bg-primary' : 'bg-secondary' ?>">
-                            <?= $totalTipo ?>
-                        </span>
-                    </td>
+                    <td><span><?= e($t['sigla_tipo_documento']) ?></span></td>
+                    <!--<td>-->
+                    <!--    <?php $totalTipo = ($t['total_docs'] ?? 0) + ($t['total_acuerdos'] ?? 0); ?>-->
+                    <!--    <span class="badge <?= $totalTipo > 0 ? 'bg-primary' : 'bg-secondary' ?>">-->
+                    <!--        <?= $totalTipo ?>-->
+                    <!--    </span>-->
+                    <!--</td>-->
                     <td><?= badgeEstado($t['estado']) ?></td>
                     <td>
                         <?php if (Auth::puede('tipo_documentos', 'editar')): ?>

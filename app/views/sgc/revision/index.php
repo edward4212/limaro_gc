@@ -1,10 +1,10 @@
 <?php include APP_ROOT . '/app/views/partials/modal_confirm.php'; ?>
 <div class="page-header">
     <div>
-        <h2><i class="bi bi-clipboard-check me-2"></i>Revisión por la Dirección — §9.3</h2>
-        <p class="text-muted mb-0" style="font-size:13px;">
-            ISO 9001:2015 — Cláusula 9.3
-        </p>
+        <h2><i class="bi bi-clipboard-check me-2"></i>Revisión por la Dirección </h2>
+        <!--<p class="text-muted mb-0" style="font-size:13px;">-->
+        <!--    ISO 9001:2015 — Cláusula 9.3-->
+        <!--</p>-->
     </div>
     <?php if (Auth::puede('revision_direccion','crear')): ?>
     <a href="<?= e(APP_URL) ?>/revision-direccion/crear" class="btn btn-lim-primary btn-sm">
@@ -83,7 +83,7 @@
                     <?= $rev['fecha_revision'] ? date('d/m/Y', strtotime($rev['fecha_revision'])) : '—' ?>
                 </td>
                 <td style="font-size:12px;"><?= e($rev['convocado_por'] ?? '—') ?></td>
-                <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:normal;">
                     <?= e(truncar($rev['participantes'] ?? '—', 50)) ?>
                 </td>
                 <td class="text-center">

@@ -120,7 +120,7 @@ $ultimaVer = $ultimaVersion ? (int)$ultimaVersion['numero_version'] : null;
                 <div class="form-text">
                     PDF, Word, Excel o PowerPoint.
                     Se guardará en:
-                    <code>.../<strong>V<?= $siguiente ?></strong>/</code>
+                    <span>.../<strong>V<?= $siguiente ?></strong>/</span>
                     dentro de la carpeta del documento.
                 </div>
                 <!-- Preview nombre del archivo seleccionado -->

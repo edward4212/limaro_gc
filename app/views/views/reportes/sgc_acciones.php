@@ -12,9 +12,9 @@ $opciones = ['anio'=>true,'estados'=>['ABIERTA','EN_TRATAMIENTO','VERIFICACION',
 <?php foreach ($datos as $d): ?>
 <?php $vencida = ($d['dias_diferencia']??0)>0 && !in_array($d['estado'],['CERRADA','CANCELADA']); ?>
 <tr class="<?= $vencida ? 'table-danger' : '' ?>">
-<td><code><?= e($d['codigo']) ?></code></td>
+<td><span><?= e($d['codigo']) ?></span></td>
 <td><span class="badge bg-secondary" style="font-size:12px;"><?= e($d['origen']) ?></span></td>
-<td style="font-size:12px;"><?= e(truncar($d['descripcion_nc'],60)) ?></td>
+<td style="font-size:12px;"><?= e(truncar($d['descripcion_nc'],500)) ?></td>
 <td style="font-size:12px;"><?= e($d['responsable_nombre']??$d['responsable']??'—') ?></td>
 <td style="font-size:12px;"><?= fechaEs($d['fecha_planificada']) ?></td>
 <td style="font-size:12px;"><?= $d['fecha_cierre'] ? fechaEs($d['fecha_cierre']) : '—' ?></td>

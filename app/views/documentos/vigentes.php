@@ -30,10 +30,11 @@
 
 <div class="page-header">
     <div><h2><i class="bi bi-list-check me-2"></i>Listado Maestro — Documentos Vigentes</h2></div>
-    <div class="d-flex gap-2"><a href="<?= e(APP_URL) ?>/documentos/vigentes/descargar-zip"
-           class="btn btn-success btn-sm" title="Descargar todos como ZIP">
-            <i class="bi bi-file-zip me-1"></i>Descargar Todo
-        </a>
+    <div class="d-flex gap-2">
+        <!--<a href="<?= e(APP_URL) ?>/documentos/vigentes/descargar-zip"-->
+        <!--   class="btn btn-success btn-sm" title="Descargar todos como ZIP">-->
+        <!--    <i class="bi bi-file-zip me-1"></i>Descargar Todo-->
+        <!--</a>-->
         <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
             <i class="bi bi-printer me-1"></i>Imprimir
         </button></div>
@@ -43,6 +44,18 @@
 <div class="alert alert-info">No hay documentos registrados.</div>
 <?php else: ?>
 
+<?php
+$filtroId = 'docs-vigentes';
+$tablaId  = 'tbl-docs-documentos';
+$columnas = [
+    ['idx'=>0, 'label'=>'Proceso', 'categoria'=>'proceso'],
+    ['idx'=>1, 'label'=>'Código'],
+    ['idx'=>2, 'label'=>'Nombre del Documento'],
+    ['idx'=>3, 'label'=>'Tipo', 'categoria'=>'tipo_documento'],
+    ['idx'=>5, 'label'=>'Últ. Aprobación'],
+];
+include APP_ROOT . '/app/views/partials/filtro_avanzado.php';
+?>
 <div class="card">
     <div class="card-body p-0">
         <table id="tbl-docs-documentos" class="table table-hover table-sm mb-0" style="width:100%;">
@@ -61,20 +74,20 @@
             <?php foreach ($documentos as $d): ?>
             <tr>
                 <td><?= e(($d['macroproceso'] ?? '') . ' — ' . ($d['proceso'] ?? '')) ?></td>
-                <td><code style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($d['codigo'] ?? $d['codigo_documento'] ?? '') ?></code></td>
+                <td><code style="font-size:12px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($d['codigo'] ?? $d['codigo_documento'] ?? '') ?></code></td>
                 <td style="font-size:12px;"><?= e($d['nombre_documento'] ?? '') ?></td>
                 <td>
-                    <span class="badge bg-secondary" style="font-size:10px;">
-                        <?= e($d['sigla_tipo_documento'] ?? '') ?><?php if(!empty($d['tipo_documento'])): ?><br><small style='font-size:9px;font-weight:normal;opacity:.85;'><?= e($d['tipo_documento']) ?></small><?php endif; ?>
+                    <span class="badge bg-secondary" style="font-size:12px;">
+                        <?= e($d['sigla_tipo_documento'] ?? '') ?><?php if(!empty($d['tipo_documento'])): ?><br><small style='font-size:12px;font-weight:normal;opacity:.85;'><?= e($d['tipo_documento']) ?></small><?php endif; ?>
                     </span>
-                    <?php if (!empty($d['tipo_documento'])): ?>
-                    <div style="font-size:10px;color:#64748b;margin-top:2px;">
-                        <?= e($d['tipo_documento']) ?>
-                    </div>
-                    <?php endif; ?>
+                    <!--<?php if (!empty($d['tipo_documento'])): ?>-->
+                    <!--<div style="font-size:12px;color:#64748b;margin-top:2px;">-->
+                    <!--    <?= e($d['tipo_documento']) ?>-->
+                    <!--</div>-->
+                    <!--<?php endif; ?>-->
                 </td>
                 <td class="text-center"><span class="badge bg-primary">V<?= e($d['numero_version'] ?? 0) ?></span></td>
-                <td style="font-size:11px;"><?= fechaEs($d['fecha_aprobacion'] ?? null) ?></td>
+                <td style="font-size:12px;"><?= fechaEs($d['fecha_aprobacion'] ?? null) ?></td>
                 <td class="text-center"><a href="<?= e(APP_URL) ?>/versionamiento/documento/<?= (int)$d['id_documento'] ?>"
                class="btn btn-sm btn-outline-info py-0" title="Ver historial">
                 <i class="bi bi-clock-history"></i>
@@ -115,9 +128,10 @@ document.addEventListener('DOMContentLoaded', function () {
         pageLength: 25,
         lengthMenu: [[15,25,50,100,-1],['15','25','50','100','Todos']],
         orderFixed: [[0,'asc']],
+        orderCellsTop: true,
         columnDefs: [
             { targets: 0, visible: false },
-            { targets: [-1], orderable: false }
+            { targets: [-1], orderable: false, searchable: false }
         ],
         rowGroup: {
             dataSrc: 0,
@@ -130,7 +144,35 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
         dom: '<"row mb-2"<"col-sm-6"l><"col-sm-6"f>>tip',
-        order: [[1,'asc']]
+        order: [[1,'asc']],
+        initComplete: function () {
+            // Registrar API en el filtro avanzado
+            if (window.FAR && window.FAR['docs-vigentes']) {
+                window.FAR['docs-vigentes'].setApi(this.api());
+            }
+            // Fila de filtros por columna, construida solo sobre columnas visibles
+            // (la columna Proceso está oculta; iterar visible-only evita el
+            // desalineamiento documentado cuando se mezcla con columnas ocultas).
+            var api = this.api();
+            var thead = $(api.table().header());
+            var filterRow = $('<tr class="fila-filtros"></tr>');
+            api.columns().every(function (idx) {
+                var col = api.column(idx);
+                if (!col.visible()) return;
+                var th = $('<th></th>');
+                if (idx !== api.columns().count() - 1) {
+                    var titulo = $(col.header()).text().trim();
+                    var inp = $('<input type="text" class="col-filter">')
+                        .attr('placeholder', titulo.length > 12 ? titulo.substring(0, 12) + '…' : titulo)
+                        .attr('data-col', idx)
+                        .on('keyup change', function () { api.column(idx).search(this.value).draw(); })
+                        .on('click', function (e) { e.stopPropagation(); });
+                    th.append(inp);
+                }
+                filterRow.append(th);
+            });
+            thead.append(filterRow);
+        }
     });
 });
 </script>
@@ -138,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <?php endif; ?>
 
 <script>
-const APP_URL = '<?= e(APP_URL) ?>';
+// APP_URL ya está disponible globalmente (declarada en assets/js/app.js)
 function abrirVisor(urlArchivo, urlDescarga, nombreDoc, mimeType) {
     const modal    = new bootstrap.Modal(document.getElementById('modalVisor'));
     const iframe   = document.getElementById('visorIframe');

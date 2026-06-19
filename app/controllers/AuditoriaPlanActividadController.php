@@ -87,8 +87,32 @@ class AuditoriaPlanActividadController extends Controller
             $this->redirect("/auditoria/plan/{$idPlan}/actividades");
             return;
         }
+        // Verificar que la actividad pertenece al plan indicado
+        $actividad = $this->model->find($act_id);
+        if (!$actividad || (int)$actividad['id_plan'] !== $idPlan) {
+            $this->abort(404);
+        }
+        // Una vez COMPLETADA o CANCELADA, la actividad queda en estado terminal: no se permite más edición
+        if (in_array($actividad['estado'], ['COMPLETADA','CANCELADA'], true)) {
+            Session::flash('error', 'Esta actividad ya está ' . $actividad['estado'] . ' y no puede modificarse.');
+            $this->redirect("/auditoria/plan/{$idPlan}/actividades");
+            return;
+        }
         $data = Request::only(['fecha','hora_inicio','hora_fin','actividad',
                                 'auditado','id_proceso_actividad','id_auditor','orden','estado']);
+
+        // EN_CURSO: solo se permite registrar avance (estado), el resto del cronograma
+        // ya quedó fijo en BORRADOR. Se ignora cualquier otro campo aunque llegue en el POST.
+        if ($plan['estado'] === 'EN_CURSO') {
+            $estados = ['PENDIENTE','EN_CURSO','COMPLETADA','CANCELADA'];
+            if (empty($data['estado']) || !in_array($data['estado'], $estados, true)) {
+                Session::flash('error', 'Estado de actividad inválido.');
+                $this->redirect("/auditoria/plan/{$idPlan}/actividades");
+                return;
+            }
+            $data = ['estado' => $data['estado']];
+        }
+
         if (!empty($data['hora_inicio']) && !empty($data['hora_fin'])) {
             $data['duracion_minutos'] = $this->model->calcularDuracion(
                 $data['hora_inicio'], $data['hora_fin']
@@ -113,6 +137,11 @@ class AuditoriaPlanActividadController extends Controller
             Session::flash('error', 'No se pueden eliminar actividades de un plan ' . ($plan['estado'] ?? '') . '.');
             $this->redirect("/auditoria/plan/{$idPlan}/actividades");
             return;
+        }
+        // Verificar que la actividad pertenece al plan indicado
+        $actividad = $this->model->find($act_id);
+        if (!$actividad || (int)$actividad['id_plan'] !== $idPlan) {
+            $this->abort(404);
         }
         try {
             $this->model->delete($act_id);

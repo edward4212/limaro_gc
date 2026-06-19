@@ -9,8 +9,8 @@
 <?php foreach ($datos as $d): ?>
 <?php $pct = $d['pct_cumplimiento'] ?? null; $color = $pct===null?'secondary':($pct>=80?'success':($pct>=50?'warning':'danger')); ?>
 <tr>
-<td><code><?= e($d['codigo']) ?></code></td>
-<td><?= e(truncar($d['objetivo'],60)) ?></td>
+<td><span><?= e($d['codigo']) ?></span></td>
+<td><?= e(truncar($d['objetivo'],500)) ?></td>
 <td><span class="badge bg-primary"><?= e($d['meta'] ?? '—') ?></span></td>
 <td style="font-size:12px;"><?= e($d['frecuencia']) ?></td>
 <td style="font-size:12px;"><?= e($d['responsable_nombre']??$d['responsable']??'—') ?></td>

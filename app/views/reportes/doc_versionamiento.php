@@ -19,7 +19,7 @@
                     <td style="font-size:12px;"><?= e(truncar($d['nombre_documento'],45)) ?></td>
                     <td style="font-size:12px;"><?= e($d['proceso']) ?></td>
                     <td class="text-center"><span class="badge bg-<?= $d['estado_version']==='VIGENTE'?'success':($d['estado_version']==='OBSOLETO'?'secondary':'primary') ?>">V<?= e($d['numero_version']) ?></span></td>
-                    <td><?= badgeEstado($d['estado_version']) ?></td>
+                    <td><?= badgeEstado($d['estado_version'] ?? 'CREADO') ?></td>
                     <td style="font-size:12px;"><?= e(truncar($d['descripcion_version']??'',50)) ?></td>
                     <td style="font-size:12px;"><?= e($d['elaborador']??$d['usuario_creacion']??'—') ?></td>
                     <td style="font-size:12px;"><?= e($d['revisor']??$d['usuario_revision']??'—') ?></td>

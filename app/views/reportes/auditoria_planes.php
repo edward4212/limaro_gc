@@ -52,7 +52,7 @@ $borrador  = count(array_filter($planes, fn($p) => $p['estado']==='BORRADOR'));
                     <?php endif; ?>
                 </td>
                 <td style="font-size:12px;"><?= $p['fecha_inicio']?fechaEs($p['fecha_inicio']):'—' ?> <?= $p['fecha_fin']?'→'.fechaEs($p['fecha_fin']):'' ?></td>
-                <td class="text-center"><?= badgeEstado($p['estado']) ?></td>
+                <td class="text-center"><?= badgeEstado($d['estado'] ?? 'ACTIVO') ?></td>
             </tr>
             <?php endforeach; ?>
             </tbody>

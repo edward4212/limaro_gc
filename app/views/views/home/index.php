@@ -139,7 +139,7 @@ $mapaEsPdf = $mapaUrl && str_ends_with(strtolower($empresa['mapa_procesos']), '.
                 <li class="list-group-item border-0 py-2 px-3">
                     <div class="d-flex justify-content-between align-items-start mb-1 gap-2">
                         <span style="font-size:12px;font-weight:600;flex:1;">
-                            <?= e(truncar($o['objetivo'], 60)) ?>
+                            <?= e(truncar($o['objetivo'], 500)) ?>
                         </span>
                         <div class="d-flex gap-1 flex-shrink-0">
                             <span class="badge bg-primary" style="font-size:12px;">

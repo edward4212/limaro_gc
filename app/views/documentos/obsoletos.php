@@ -20,6 +20,21 @@
 <div class="alert alert-info">No hay documentos obsoletos registrados.</div>
 <?php else: ?>
 
+<?php
+$filtroId = 'docs-obsoletos';
+$tablaId  = 'tbl-obsoletos';
+$columnas = [
+    ['idx'=>0, 'label'=>'Proceso', 'categoria'=>'proceso'],
+    ['idx'=>1, 'label'=>'Código'],
+    ['idx'=>2, 'label'=>'Nombre del Documento'],
+    ['idx'=>3, 'label'=>'Tipo', 'categoria'=>'tipo_documento'],
+    ['idx'=>4, 'label'=>'Elaboró'],
+    ['idx'=>5, 'label'=>'Revisó'],
+    ['idx'=>6, 'label'=>'Aprobó'],
+    ['idx'=>7, 'label'=>'F. Aprobación'],
+];
+include APP_ROOT . '/app/views/partials/filtro_avanzado.php';
+?>
 <div class="card">
     <div class="card-body p-0">
         <table id="tbl-obsoletos" class="table table-hover table-sm mb-0" style="width:100%;">
@@ -43,7 +58,7 @@
                 <td><?= e(($d['macroproceso'] ?? '') . ' — ' . ($d['proceso'] ?? '')) ?></td>
                 <td><code style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($d['codigo'] ?? '') ?></code></td>
                 <td style="font-size:12px;"><?= e($d['nombre_documento'] ?? '') ?></td>
-                <td><span class="badge bg-secondary" style="font-size:10px;line-height:1.4;"><?= e($d['sigla_tipo_documento'] ?? '') ?><br><small style='font-size:9px;font-weight:normal;opacity:.85;'><?= e($d['tipo_documento'] ?? '') ?></small></span></td>
+                <td><span class="badge bg-secondary" style="font-size:10px;"><?= e($d['sigla_tipo_documento'] ?? $d['tipo_documento'] ?? '') ?></span></td>
                 <td class="text-center"><span class="badge bg-dark">V<?= e($d['numero_version'] ?? 0) ?></span></td>
                 <td style="font-size:11px;"><?= e(truncar($d['elaborador'] ?? $d['usuario_creacion'] ?? '—', 25)) ?></td>
                 <td style="font-size:11px;"><?= e(truncar($d['revisor'] ?? $d['usuario_revision'] ?? '—', 25)) ?></td>
@@ -70,9 +85,10 @@ document.addEventListener('DOMContentLoaded', function () {
         pageLength: 25,
         lengthMenu: [[15,25,50,100,-1],['15','25','50','100','Todos']],
         orderFixed: [[0,'asc']],
+        orderCellsTop: true,
         columnDefs: [
             { targets: 0, visible: false },
-            { targets: [-1], orderable: false }
+            { targets: [-1], orderable: false, searchable: false }
         ],
         rowGroup: {
             dataSrc: 0,
@@ -85,7 +101,34 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
         dom: '<"row mb-2"<"col-sm-6"l><"col-sm-6"f>>tip',
-        order: [[1,'asc']]
+        order: [[1,'asc']],
+        initComplete: function () {
+            if (window.FAR && window.FAR['docs-obsoletos']) {
+                window.FAR['docs-obsoletos'].setApi(this.api());
+            }
+            // Fila de filtros por columna, construida solo sobre columnas visibles
+            // (la columna Proceso está oculta; iterar visible-only evita el
+            // desalineamiento documentado cuando se mezcla con columnas ocultas).
+            var api = this.api();
+            var thead = $(api.table().header());
+            var filterRow = $('<tr class="fila-filtros"></tr>');
+            api.columns().every(function (idx) {
+                var col = api.column(idx);
+                if (!col.visible()) return;
+                var th = $('<th></th>');
+                if (idx !== api.columns().count() - 1) {
+                    var titulo = $(col.header()).text().trim();
+                    var inp = $('<input type="text" class="col-filter">')
+                        .attr('placeholder', titulo.length > 12 ? titulo.substring(0, 12) + '…' : titulo)
+                        .attr('data-col', idx)
+                        .on('keyup change', function () { api.column(idx).search(this.value).draw(); })
+                        .on('click', function (e) { e.stopPropagation(); });
+                    th.append(inp);
+                }
+                filterRow.append(th);
+            });
+            thead.append(filterRow);
+        }
     });
 });
 </script>

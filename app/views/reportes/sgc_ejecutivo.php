@@ -119,7 +119,7 @@ $sgc = $resumen['sgc'] ?? [];
                     <td><span class="badge bg-<?= $ct ?>" style="font-size:12px;"><?= str_replace('_',' ',$h['tipo']) ?></span></td>
                     <td><code style="font-size:12px;"><?= e($h['clausula_iso']??'—') ?></code></td>
                     <td style="font-size:12px;"><?= e(truncar($h['descripcion'],50)) ?></td>
-                    <td><?= badgeEstado($h['estado']) ?></td>
+                    <td><?= badgeEstado($d['estado'] ?? 'ACTIVO') ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

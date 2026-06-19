@@ -137,6 +137,7 @@ class EmpresaController extends Controller
         } catch (\Throwable $e) {
             Session::flash('error', 'Error al guardar: Error interno. Contacte al administrador.');
             $this->redirect('/empresa/editar');
+            return;
         }
     }
 }

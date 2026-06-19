@@ -86,9 +86,15 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Fecha Vencimiento</label>
+                    <?php if (\App\Core\Auth::tieneRol('ADMINISTRADOR')): ?>
+                    <input type="date" class="form-control" name="fecha_vencimiento"
+                           value="<?= !empty($item['fecha_vencimiento']) ? date('Y-m-d', strtotime($item['fecha_vencimiento'])) : '' ?>">
+                    <div class="form-text">Solo Administrador puede extender manualmente esta fecha.</div>
+                    <?php else: ?>
                     <input type="text" class="form-control"
                            value="<?= !empty($item['fecha_vencimiento']) ? fechaEs($item['fecha_vencimiento']) : '—' ?>"
                            readonly style="background:#f8f9fa;">
+                    <?php endif; ?>
                 </div>
                 <div class="col-12">
                     <div class="form-check">

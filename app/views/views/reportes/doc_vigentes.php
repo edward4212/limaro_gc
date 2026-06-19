@@ -23,7 +23,7 @@ $opciones = ['procesos' => $procesos, 'tipos' => $tipos];
             <tbody>
                 <?php foreach ($datos as $d): ?>
                 <tr>
-                    <td><code><?= e($d['codigo']) ?></code></td>
+                    <td><span><?= e($d['codigo']) ?></span></td>
                     <td><?= e($d['nombre_documento']) ?></td>
                     <td><span class="badge bg-secondary" style="font-size:12px;"><?= e($d['sigla_tipo_documento']) ?></span></td>
                     <td style="font-size:12px;"><?= e($d['macroproceso']) ?></td>

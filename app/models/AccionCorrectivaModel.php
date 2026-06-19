@@ -52,4 +52,13 @@ class AccionCorrectivaModel extends Model
         )->fetchColumn();
         return "AC-$anio-" . str_pad((string)($max + 1), 3, '0', STR_PAD_LEFT);
     }
+
+    /** Busca la Acción Correctiva vinculada a un riesgo (id_riesgo), si existe. */
+    public function porRiesgo(int $idRiesgo): ?array
+    {
+        return $this->query(
+            "SELECT id, codigo, estado FROM accion_correctiva WHERE id_riesgo = ? LIMIT 1",
+            [$idRiesgo]
+        )->fetch() ?: null;
+    }
 }

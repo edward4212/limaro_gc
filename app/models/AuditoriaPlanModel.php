@@ -48,7 +48,7 @@ class AuditoriaPlanModel extends Model
     public function detalle(int $id): ?array
     {
         $plan = $this->query("
-            SELECT p.*, e.nombre_completo AS auditor_nombre
+            SELECT p.*, e.nombre_completo AS auditor_nombre, e.estado_empleado AS auditor_estado
             FROM auditoria_plan p
             LEFT JOIN empleado e ON e.id_empleado = p.id_auditor_lider
             WHERE p.id = ?
@@ -111,6 +111,21 @@ class AuditoriaPlanModel extends Model
     {
         $row = $this->query(
             "SELECT COUNT(*) AS total FROM auditoria_plan_actividad WHERE id_plan = ?",
+            [$idPlan]
+        )->fetch();
+        return (int)($row['total'] ?? 0);
+    }
+
+    /**
+     * Cuenta actividades del cronograma que aún no llegaron a un estado terminal
+     * (PENDIENTE o EN_CURSO). Usado para validar que el cronograma esté completo
+     * antes de aprobar el Informe y finalizar el Plan.
+     */
+    public function actividadesPendientes(int $idPlan): int
+    {
+        $row = $this->query(
+            "SELECT COUNT(*) AS total FROM auditoria_plan_actividad
+             WHERE id_plan = ? AND estado IN ('PENDIENTE','EN_CURSO')",
             [$idPlan]
         )->fetch();
         return (int)($row['total'] ?? 0);

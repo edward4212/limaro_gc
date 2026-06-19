@@ -6,12 +6,20 @@ use App\Models\AuditoriaInternaModel;
 class AuditoriaInternaController extends Controller
 {
     private AuditoriaInternaModel $model;
+
+    /** Roles con acceso de lectura al módulo */
+    private const ROLES_VER    = [1, 2, 3, 8]; // Admin, Coord. Calidad, Líder Proceso, Auditor
+
+    /** Roles con acceso de escritura (crear/editar/hallazgo) */
+    private const ROLES_EDITAR = [1, 2, 8];    // Admin, Coord. Calidad, Auditor
+
     public function __construct() { $this->model = new AuditoriaInternaModel(); }
 
     public function index(): void
     {
+        if (!Auth::hasRole(self::ROLES_VER)) $this->abort(403);
         $this->view('sgc/auditoria/index', [
-            'pageTitle' => 'Auditoría Interna — §9.2',
+            'pageTitle' => 'Auditoría Interna',
             'programas' => $this->model->listar(),
             'resumen'   => $this->model->resumenEstados(),
         ]);
@@ -19,7 +27,7 @@ class AuditoriaInternaController extends Controller
 
     public function crear(): void
     {
-        Session::clearOldInput();
+        if (!Auth::hasRole(self::ROLES_EDITAR)) $this->abort(403);
         $um = new \App\Models\UsuarioModel();
         $pm = new \App\Models\ProcesoModel();
         $this->view('sgc/auditoria/form', [
@@ -33,9 +41,8 @@ class AuditoriaInternaController extends Controller
 
     public function guardar(): void
     {
+        if (!Auth::hasRole(self::ROLES_EDITAR)) $this->abort(403);
         Csrf::verify();
-        $data = Request::only([
-            'anio','descripcion','objetivo','alcance',
             'auditor_lider','id_auditor_lider',
             'tipo_auditoria','objetivos_especificos',
             'auditores','fecha_inicio','fecha_fin','estado'
@@ -124,6 +131,7 @@ class AuditoriaInternaController extends Controller
 
     public function editar(int $id): void
     {
+        if (!Auth::hasRole(self::ROLES_EDITAR)) $this->abort(403);
         $item = $this->model->find($id);
         if (!$item) $this->abort(404);
 
@@ -147,8 +155,8 @@ class AuditoriaInternaController extends Controller
 
     public function actualizar(int $id): void
     {
+        if (!Auth::hasRole(self::ROLES_EDITAR)) $this->abort(403);
         Csrf::verify();
-        $antes = $this->model->find($id);
         $data  = Request::only(['anio','descripcion','objetivo','alcance',
             'auditor_lider','id_auditor_lider','tipo_auditoria','objetivos_especificos',
             'auditores','fecha_inicio','fecha_fin','estado']);
@@ -203,6 +211,7 @@ class AuditoriaInternaController extends Controller
 
     public function guardarHallazgo(int $idPrograma): void
     {
+        if (!Auth::hasRole(self::ROLES_EDITAR)) $this->abort(403);
         Csrf::verify();
         $data = Request::only(['tipo','clausula_iso','proceso_auditado','descripcion','evidencia','accion_correctiva','responsable','fecha_cierre','estado']);
         if (empty($data['descripcion'])) { Session::flash('error', 'La descripción del hallazgo es obligatoria.'); $this->redirect("/auditoria-interna/editar/$idPrograma"); return; }
@@ -280,6 +289,7 @@ class AuditoriaInternaController extends Controller
     /** GET /auditoria-interna/ver/{id} — detalle solo lectura */
     public function ver(int $id): void
     {
+        if (!Auth::hasRole(self::ROLES_VER)) $this->abort(403);
         $item = $this->model->find($id);
         if (!$item) $this->abort(404);
         $um = new \App\Models\UsuarioModel();

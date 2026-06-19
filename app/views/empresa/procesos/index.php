@@ -16,7 +16,7 @@
         <table class="table table-hover table-sm datatable datatable-export mb-0" style="width:100%;">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <!--<th>#</th>-->
                     <th>Macroproceso</th>
                     <th>Proceso</th>
                     <th style="width:70px" class="text-center">Sigla</th>
@@ -30,16 +30,16 @@
                 $nDoc = $conteosDocumentos[$p['id_proceso']] ?? 0;
             ?>
             <tr>
-                <td style="font-size:12px;"><?= (int)$p['id_proceso'] ?></td>
-                <td style="font-size:12px;"><?= e($p['nombre_macroproceso'] ?? '—') ?></td>
-                <td style="font-size:13px;font-weight:600;"><?= e($p['proceso']) ?></td>
-                <td class="text-center">
-                    <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">
+                <!--<td style="font-size:12px;"><?= (int)$p['id_proceso'] ?></td>-->
+                <td style="font-size:12px;"><strong><?= e($p['nombre_macroproceso'] ?? '—') ?></strong></td>
+                <td ><strong><?= e($p['proceso']) ?></strong></td>
+                <td class="text-center"><strong>
+                    <span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;">
                         <?= e($p['sigla_proceso'] ?? '—') ?>
-                    </code>
-                </td>
-                <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                    <?= e(truncar($p['objetivo'] ?? '', 60)) ?>
+                    </span>
+                </strong></td>
+                <td >
+                    <?= e(truncar($p['objetivo'] ?? '', 500)) ?>
                 </td>
                 <td class="text-center">
                     <span class="badge <?= $p['estado'] === 'ACTIVO' ? 'bg-success' : 'bg-secondary' ?>">

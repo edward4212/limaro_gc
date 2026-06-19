@@ -2,9 +2,9 @@
 <div class="page-header">
     <div>
         <h2><i class="bi bi-grid-3x3-gap me-2"></i>Análisis DOFA</h2>
-        <p class="text-muted mb-0" style="font-size:13px;">
-            Contexto de la organización — ISO 9001:2015 Cláusula 4.1
-        </p>
+        <!--<p class="text-muted mb-0" style="font-size:13px;">-->
+        <!--    Contexto de la organización — ISO 9001:2015 Cláusula 4.1-->
+        <!--</p>-->
     </div>
     <?php if (Auth::puede('contexto_foda','crear')): ?>
     <a href="<?= e(APP_URL) ?>/contexto/foda/crear" class="btn btn-lim-primary btn-sm">
@@ -17,9 +17,9 @@
 <div class="row g-3 mb-4">
     <?php
     $configs = [
-        'FORTALEZA'  => ['bg-success',  'bi-shield-check',   'Fortalezas',   'F'],
-        'OPORTUNIDAD'=> ['bg-info',     'bi-graph-up-arrow', 'Oportunidades','O'],
         'DEBILIDAD'  => ['bg-warning text-dark','bi-exclamation-triangle','Debilidades','D'],
+        'OPORTUNIDAD'=> ['bg-info',     'bi-graph-up-arrow', 'Oportunidades','O'],
+        'FORTALEZA'  => ['bg-success',  'bi-shield-check',   'Fortalezas',   'F'],
         'AMENAZA'    => ['bg-danger',   'bi-lightning',      'Amenazas',     'A'],
     ];
     foreach ($configs as $tipo => [$cls, $ico, $label, $letra]):
@@ -123,7 +123,7 @@
                     <?php endif; ?>
                     <?php if (Auth::puede('contexto_foda','eliminar')): ?>
                     <button class="btn btn-sm btn-outline-danger py-0 px-2"
-                            onclick="setModalConfirm('<?= e(APP_URL) ?>/contexto/foda/eliminar/<?= $item['id'] ?>','¿Eliminar este elemento FODA?')">
+                            onclick="setModalConfirm('<?= e(APP_URL) ?>/contexto/foda/eliminar/<?= $item['id'] ?>','¿Eliminar este elemento DOFA?')">
                         <i class="bi bi-trash"></i>
                     </button>
                     <?php endif; ?>

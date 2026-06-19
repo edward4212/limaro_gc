@@ -174,7 +174,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <strong><i class="bi bi-send me-1"></i>Distribución del Informe</strong>
-                <?php if(in_array($item['estado'],['APROBADO','DISTRIBUIDO'])): ?>
+                <?php if(in_array($item['estado'],['FINALIZADO','DISTRIBUIDO'])): ?>
                 <button class="btn btn-lim-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalDistribuir">
                     <i class="bi bi-plus-circle me-1"></i>Enviar
                 </button>
@@ -210,9 +210,9 @@
             </ul>
             <?php else: ?>
             <div class="card-body text-center text-muted py-3" style="font-size:12px;">
-                <?= in_array($item['estado'],['APROBADO','DISTRIBUIDO'])
+                <?= in_array($item['estado'],['FINALIZADO','DISTRIBUIDO'])
                     ? 'Sin destinatarios. Use el botón Enviar.'
-                    : 'Disponible cuando el informe esté APROBADO.' ?>
+                    : 'Disponible cuando el informe esté FINALIZADO.' ?>
             </div>
             <?php endif; ?>
         </div>
@@ -276,52 +276,63 @@
 <?php endif; ?>
 
 <!-- Modal Distribuir -->
-<?php if(in_array($item['estado'],['APROBADO','DISTRIBUIDO'])): ?>
+<?php if(in_array($item['estado'],['FINALIZADO','DISTRIBUIDO'])): ?>
 <div class="modal fade" id="modalDistribuir" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header" style="background:var(--lim-blue);color:#fff;">
         <h6 class="modal-title mb-0"><i class="bi bi-send me-2"></i>Distribuir Informe</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <form method="POST" action="<?= e(APP_URL) ?>/auditoria/informe/<?= (int)$item['id'] ?>/distribuir">
+      <form method="POST" action="<?= e(APP_URL) ?>/auditoria/informe/<?= (int)$item['id'] ?>/distribuir" id="formDistribuir">
         <?= csrfField() ?>
         <div class="modal-body">
             <div class="row g-3">
                 <div class="col-12">
-                    <label class="form-label fw-semibold">Empleado (opcional)</label>
-                    <select class="form-select" name="id_empleado" id="selEmpDist"
-                            onchange="llenarDestinatario(this)">
-                        <option value="">— O ingrese manualmente —</option>
+                    <label class="form-label fw-semibold">Empleados del sistema</label>
+                    <div class="border rounded p-2" style="max-height:220px;overflow-y:auto;">
+                        <?php if (empty($empleados)): ?>
+                        <div class="text-muted small">No hay empleados activos.</div>
+                        <?php else: ?>
                         <?php foreach($empleados as $emp): ?>
-                        <option value="<?= (int)$emp['id_empleado'] ?>"
-                                data-nombre="<?= e($emp['nombre_completo']) ?>"
-                                data-correo="<?= e($emp['correo_empleado']??'') ?>"
-                                data-cargo="<?= e($emp['cargo']??'') ?>">
-                            <?= e($emp['nombre_completo']) ?>
-                        </option>
+                        <div class="row g-1 align-items-center mb-1">
+                            <div class="col-auto">
+                                <input class="form-check-input" type="checkbox" name="ids_empleados[]"
+                                       value="<?= (int)$emp['id_empleado'] ?>" id="empDist<?= (int)$emp['id_empleado'] ?>">
+                            </div>
+                            <div class="col">
+                                <label class="form-check-label small mb-0" for="empDist<?= (int)$emp['id_empleado'] ?>">
+                                    <?= e($emp['nombre_completo']) ?>
+                                    <?php if (!empty($emp['cargo'])): ?>
+                                    <span class="text-muted">— <?= e($emp['cargo']) ?></span>
+                                    <?php endif; ?>
+                                    <?php if (empty($emp['correo_empleado'])): ?>
+                                    <span class="badge bg-warning text-dark" style="font-size:10px;">sin correo</span>
+                                    <?php endif; ?>
+                                </label>
+                            </div>
+                            <div class="col-auto">
+                                <select class="form-select form-select-sm" name="medio_empleado[<?= (int)$emp['id_empleado'] ?>]" style="font-size:11px;width:auto;">
+                                    <option value="CORREO_ELECTRONICO">📧 Correo</option>
+                                    <option value="IMPRESO">📄 Impreso</option>
+                                    <option value="PORTAL">🌐 Portal</option>
+                                    <option value="OTRO">📦 Otro</option>
+                                </select>
+                            </div>
+                        </div>
                         <?php endforeach; ?>
-                    </select>
+                        <?php endif; ?>
+                    </div>
                 </div>
-                <div class="col-md-7">
-                    <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="nombre_destinatario" id="inpNombreDist" required>
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label">Cargo</label>
-                    <input type="text" class="form-control" name="cargo_destinatario" id="inpCargoDist">
-                </div>
-                <div class="col-md-7">
-                    <label class="form-label">Correo</label>
-                    <input type="email" class="form-control" name="correo_destinatario" id="inpCorreoDist">
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label">Medio</label>
-                    <select class="form-select" name="medio">
-                        <option value="CORREO">📧 Correo</option>
-                        <option value="FISICO">📄 Físico</option>
-                        <option value="DIGITAL">💾 Digital</option>
-                    </select>
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="form-label fw-semibold mb-0">Destinatarios externos</label>
+                        <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:11px;"
+                                onclick="agregarDestinatarioExterno()">
+                            <i class="bi bi-plus-circle me-1"></i>Agregar
+                        </button>
+                    </div>
+                    <div id="contenedorExternos"></div>
                 </div>
             </div>
         </div>
@@ -334,14 +345,46 @@
   </div>
 </div>
 <script>
-function llenarDestinatario(sel) {
-    var opt = sel.options[sel.selectedIndex];
-    if (opt.value) {
-        document.getElementById('inpNombreDist').value = opt.dataset.nombre || '';
-        document.getElementById('inpCorreoDist').value = opt.dataset.correo || '';
-        document.getElementById('inpCargoDist').value  = opt.dataset.cargo  || '';
-    }
+function agregarDestinatarioExterno() {
+    var cont = document.getElementById('contenedorExternos');
+    var fila = document.createElement('div');
+    fila.className = 'row g-2 mb-2 align-items-end';
+    fila.innerHTML =
+        '<div class="col-md-4">' +
+            '<input type="text" class="form-control form-control-sm" name="nombre_externo[]" placeholder="Nombre">' +
+        '</div>' +
+        '<div class="col-md-3">' +
+            '<input type="email" class="form-control form-control-sm" name="correo_externo[]" placeholder="Correo">' +
+        '</div>' +
+        '<div class="col-md-2">' +
+            '<input type="text" class="form-control form-control-sm" name="cargo_externo[]" placeholder="Cargo">' +
+        '</div>' +
+        '<div class="col-md-2">' +
+            '<select class="form-select form-select-sm" name="medio_externo[]" style="font-size:11px;">' +
+                '<option value="CORREO_ELECTRONICO">📧 Correo</option>' +
+                '<option value="IMPRESO">📄 Impreso</option>' +
+                '<option value="PORTAL">🌐 Portal</option>' +
+                '<option value="OTRO">📦 Otro</option>' +
+            '</select>' +
+        '</div>' +
+        '<div class="col-md-1">' +
+            '<button type="button" class="btn btn-xs btn-outline-danger py-0 px-1" onclick="this.closest(\'.row\').remove()">' +
+                '<i class="bi bi-trash" style="font-size:11px;"></i>' +
+            '</button>' +
+        '</div>';
+    cont.appendChild(fila);
 }
+document.getElementById('formDistribuir').addEventListener('submit', function(e) {
+    var hayEmpleado = this.querySelectorAll('input[name="ids_empleados[]"]:checked').length > 0;
+    var hayExterno = false;
+    this.querySelectorAll('input[name="nombre_externo[]"]').forEach(function(inp) {
+        if (inp.value.trim() !== '') hayExterno = true;
+    });
+    if (!hayEmpleado && !hayExterno) {
+        e.preventDefault();
+        alert('Seleccione al menos un empleado o agregue un destinatario externo.');
+    }
+});
 </script>
 <?php endif; ?>
 

@@ -116,7 +116,12 @@ class AuditoriaInformeController extends Controller
     public function eliminarComponente(int $id, int $cid): void
     {
         Csrf::verify();
-        (new AuditoriaInformeComponenteModel())->delete($cid);
+        $compModel = new AuditoriaInformeComponenteModel();
+        $comp = $compModel->find($cid);
+        if (!$comp || (int)$comp['id_informe'] !== $id) {
+            $this->abort(404);
+        }
+        $compModel->delete($cid);
         Session::flash('success', 'Componente eliminado.');
         $this->redirect("/auditoria/informe/{$id}");
     }
@@ -130,69 +135,115 @@ class AuditoriaInformeController extends Controller
     {
         Csrf::verify();
         $item = $this->model->detalle($id);
-        if (!$item || $item['estado'] !== 'APROBADO') {
-            Session::flash('error', 'Solo informes APROBADOS pueden distribuirse.');
+        if (!$item || $item['estado'] !== 'FINALIZADO') {
+            Session::flash('error', 'Solo informes FINALIZADOS pueden distribuirse.');
             $this->redirect("/auditoria/informe/{$id}"); return;
         }
 
-        $correo     = trim(Request::post('correo_destinatario',''));
-        $nombre     = trim(Request::post('nombre_destinatario',''));
-        $cargo      = trim(Request::post('cargo_destinatario',''));
-        $medio      = Request::post('medio','CORREO');
-        $idEmpleado = Request::post('id_empleado','') ?: null;
+        // Destinatarios de la lista de empleados (checkboxes, pueden venir varios)
+        $idsEmpleados = Request::post('ids_empleados', []);
+        if (!is_array($idsEmpleados)) $idsEmpleados = [];
+        $mediosEmpleado = Request::post('medio_empleado', []);
+        if (!is_array($mediosEmpleado)) $mediosEmpleado = [];
 
-        // Si seleccionó empleado, traer sus datos
-        if ($idEmpleado) {
-            $emp = (new EmpleadoModel())->correoYNombre((int)$idEmpleado);
-            if ($emp) {
-                $nombre = $nombre ?: $emp['nombre_completo'];
-                $correo = $correo ?: ($emp['correo_empleado'] ?? '');
-            }
-        }
+        // Destinatarios externos manuales (filas dinámicas: nombre[], correo[], cargo[], medio[])
+        $nombresExt = Request::post('nombre_externo', []);
+        $correosExt = Request::post('correo_externo', []);
+        $cargosExt  = Request::post('cargo_externo', []);
+        $mediosExt  = Request::post('medio_externo', []);
+        if (!is_array($nombresExt)) $nombresExt = [];
 
-        if (empty($nombre)) {
-            Session::flash('error', 'El nombre del destinatario es requerido.');
+        if (empty($idsEmpleados) && empty($nombresExt)) {
+            Session::flash('error', 'Seleccione al menos un empleado o agregue un destinatario manual.');
             $this->redirect("/auditoria/informe/{$id}"); return;
         }
 
-        $distModel = new AuditoriaInformeDistribucionModel();
-        $distModel->insert([
-            'id_informe'          => $id,
-            'id_empleado'         => $idEmpleado,
-            'nombre_destinatario' => $nombre,
-            'cargo_destinatario'  => $cargo,
-            'correo_destinatario' => $correo,
-            'medio'               => $medio,
-            'fecha_envio'         => date('Y-m-d H:i:s'),
-            'confirmacion_recibo' => 0,
-        ]);
+        $mediosPermitidos = ['CORREO_ELECTRONICO','IMPRESO','PORTAL','OTRO'];
+        $validarMedio = function($m) use ($mediosPermitidos) {
+            return in_array($m, $mediosPermitidos, true) ? $m : 'CORREO_ELECTRONICO';
+        };
 
-        // Enviar correo si tiene email válido
-        if ($medio === 'CORREO' && filter_var($correo, FILTER_VALIDATE_EMAIL)) {
-            try {
-                $html = "<h2 style='color:#1B3A6B;'>📄 Informe de Auditoría</h2>
-                    <p>Estimado/a <strong>" . htmlspecialchars($nombre) . "</strong>,</p>
-                    <p>Se ha puesto a su disposición el informe de auditoría
-                    <strong>{$item['codigo']}</strong> para su conocimiento.</p>
-                    <table style='font-size:13px;border-collapse:collapse;'>
-                        <tr><td style='color:#6b7280;padding:4px 8px;'>Tipo:</td><td>" . htmlspecialchars($item['tipo_auditoria']??'') . "</td></tr>
-                        <tr><td style='color:#6b7280;padding:4px 8px;'>Fecha:</td><td>" . htmlspecialchars($item['fecha_informe']??'') . "</td></tr>
-                        <tr><td style='color:#6b7280;padding:4px 8px;'>Auditor:</td><td>" . htmlspecialchars($item['auditor_nombre']??'') . "</td></tr>
-                    </table>
-                    <br><p style='color:#9ca3af;font-size:11px;'>Limaro SGC — Mensaje automático</p>";
-                enviarCorreo([$correo => $nombre],
-                    "[SGC] Informe de Auditoría {$item['codigo']}", $html);
-            } catch (\Throwable $e) {
-                error_log('[Informe] correo distribucion: ' . $e->getMessage());
+        $distModel  = new AuditoriaInformeDistribucionModel();
+        $empModel   = new EmpleadoModel();
+        $enviados   = 0;
+        $correosOk  = 0;
+
+        $registrarYEnviar = function(?int $idEmpleado, string $nombre, string $cargo, string $correo, string $medioDest) use (
+            $distModel, $id, $item, &$enviados, &$correosOk
+        ) {
+            if (empty($nombre)) return;
+
+            $distModel->insert([
+                'id_informe'          => $id,
+                'id_empleado'         => $idEmpleado,
+                'nombre_destinatario' => $nombre,
+                'cargo_destinatario'  => $cargo ?: null,
+                'correo_destinatario' => $correo ?: null,
+                'medio'               => $medioDest,
+                'fecha_envio'         => date('Y-m-d H:i:s'),
+                'confirmacion_recibo' => 0,
+            ]);
+            $enviados++;
+
+            if ($medioDest === 'CORREO_ELECTRONICO' && filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+                try {
+                    $html = "<h2 style='color:#1B3A6B;'>📄 Informe de Auditoría</h2>
+                        <p>Estimado/a <strong>" . htmlspecialchars($nombre) . "</strong>,</p>
+                        <p>Se ha puesto a su disposición el informe de auditoría
+                        <strong>{$item['codigo']}</strong> para su conocimiento.</p>
+                        <table style='font-size:13px;border-collapse:collapse;'>
+                            <tr><td style='color:#6b7280;padding:4px 8px;'>Tipo:</td><td>" . htmlspecialchars($item['tipo_auditoria']??'') . "</td></tr>
+                            <tr><td style='color:#6b7280;padding:4px 8px;'>Fecha:</td><td>" . htmlspecialchars($item['fecha_informe']??'') . "</td></tr>
+                            <tr><td style='color:#6b7280;padding:4px 8px;'>Auditor:</td><td>" . htmlspecialchars($item['auditor_nombre']??'') . "</td></tr>
+                        </table>
+                        <br><p style='color:#9ca3af;font-size:11px;'>Limaro SGC — Mensaje automático</p>";
+                    enviarCorreo([$correo => $nombre],
+                        "[SGC] Informe de Auditoría {$item['codigo']}", $html);
+                    $correosOk++;
+                } catch (\Throwable $e) {
+                    error_log('[Informe] correo distribucion: ' . $e->getMessage());
+                }
             }
+        };
+
+        // 1) Empleados seleccionados de la lista (activos() ya resuelve el nombre del cargo via JOIN)
+        if (!empty($idsEmpleados)) {
+            $idsEmpleadosInt = array_map('intval', $idsEmpleados);
+            $empleadosActivos = $empModel->activos();
+            $empleadosPorId = [];
+            foreach ($empleadosActivos as $e) {
+                $empleadosPorId[(int)$e['id_empleado']] = $e;
+            }
+            foreach ($idsEmpleadosInt as $idEmp) {
+                if ($idEmp <= 0 || !isset($empleadosPorId[$idEmp])) continue;
+                $emp = $empleadosPorId[$idEmp];
+                $medioEmp = $validarMedio($mediosEmpleado[$idEmp] ?? 'CORREO_ELECTRONICO');
+                $registrarYEnviar($idEmp, $emp['nombre_completo'] ?? '', $emp['cargo'] ?? '', $emp['correo_empleado'] ?? '', $medioEmp);
+            }
+        }
+
+        // 2) Destinatarios externos manuales (filas dinámicas)
+        foreach ($nombresExt as $i => $nombreExt) {
+            $nombreExt = trim((string) $nombreExt);
+            $correoExt = trim((string) ($correosExt[$i] ?? ''));
+            $cargoExt  = trim((string) ($cargosExt[$i] ?? ''));
+            $medioExt  = $validarMedio($mediosExt[$i] ?? 'CORREO_ELECTRONICO');
+            $registrarYEnviar(null, $nombreExt, $cargoExt, $correoExt, $medioExt);
+        }
+
+        if ($enviados === 0) {
+            Session::flash('error', 'No se registró ningún destinatario válido.');
+            $this->redirect("/auditoria/informe/{$id}"); return;
         }
 
         // Cambiar estado a DISTRIBUIDO si es primera distribución
-        if ($item['estado'] === 'APROBADO') {
+        if ($item['estado'] === 'FINALIZADO') {
             $this->model->cambiarEstado($id, 'DISTRIBUIDO');
         }
 
-        Session::flash('success', "Informe distribuido a {$nombre}" . ($correo ? " y correo enviado." : "."));
+        Session::flash('success',
+            "Informe distribuido a {$enviados} destinatario(s)" .
+            ($correosOk > 0 ? " ({$correosOk} correo(s) enviado(s))." : "."));
         $this->redirect("/auditoria/informe/{$id}");
     }
 
@@ -200,7 +251,12 @@ class AuditoriaInformeController extends Controller
     public function confirmarRecibo(int $id, int $did): void
     {
         Csrf::verify();
-        (new AuditoriaInformeDistribucionModel())->update($did, ['confirmacion_recibo' => 1]);
+        $distModel = new AuditoriaInformeDistribucionModel();
+        $dist = $distModel->find($did);
+        if (!$dist || (int)$dist['id_informe'] !== $id) {
+            $this->abort(404);
+        }
+        $distModel->update($did, ['confirmacion_recibo' => 1]);
         Session::flash('success', 'Recibo confirmado.');
         $this->redirect("/auditoria/informe/{$id}");
     }
@@ -280,12 +336,24 @@ class AuditoriaInformeController extends Controller
             Session::flash('error', 'Solo informes en EN REVISIÓN pueden aprobarse.');
             $this->redirect("/auditoria/informe/{$id}"); return;
         }
+
+        // Validar que el cronograma del plan esté completo antes de finalizar
+        $informe = $this->model->detalle($id);
+        if (!empty($informe['id_plan'])) {
+            $pendientes = (new AuditoriaPlanModel())->actividadesPendientes((int)$informe['id_plan']);
+            if ($pendientes > 0) {
+                Session::flash('error',
+                    "No se puede aprobar el informe: el cronograma del plan tiene {$pendientes} actividad(es) " .
+                    "sin finalizar (PENDIENTE o EN CURSO). Marque todas las actividades como COMPLETADA o CANCELADA antes de continuar.");
+                $this->redirect("/auditoria/informe/{$id}"); return;
+            }
+        }
+
         $this->model->cambiarEstado($id, 'FINALIZADO');
         registrarAuditoria('auditoria_informe','APROBAR','auditoria_informe',$id,
             ['estado'=>'EN_REVISION'],['estado'=>'FINALIZADO']);
 
         // Finalizar también el Plan y el Programa vinculados
-        $informe = $this->model->detalle($id);
         if (!empty($informe['id_plan'])) {
             (new AuditoriaPlanModel())->cambiarEstado((int)$informe['id_plan'], 'FINALIZADO');
             (new AuditoriaPlanModel())->sincronizarEstadoPrograma((int)$informe['id_plan'], 'FINALIZADO');

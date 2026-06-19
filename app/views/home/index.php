@@ -16,17 +16,17 @@ $mapaEsPdf = $mapaUrl && str_ends_with(strtolower($empresa['mapa_procesos']), '.
     <div class="card-body py-4">
         <div class="d-flex align-items-center gap-4 flex-wrap">
             <?php if ($logo): ?>
-            <img src="<?= e($logo) ?>" alt="Logo" style="max-height:72px;max-width:200px;object-fit:contain;">
+            <img src="<?= e($logo) ?>" alt="Logo empresa" alt="Logo" style="max-height:72px;max-width:200px;object-fit:contain;">
             <?php endif; ?>
             <div>
                 <h2 class="mb-0 fw-bold" style="color:var(--lim-blue);">
                     <?= e($empresa['nombre_empresa'] ?? 'Bienvenido') ?>
                 </h2>
-                <?php if ($empresa['URL'] ?? null): ?>
-                <a href="<?= e($empresa['URL']) ?>" target="_blank"
-                   class="text-muted" style="font-size:13px;">
-                    <i class="bi bi-globe me-1"></i><?= e($empresa['URL']) ?>
-                </a>
+                <!--<?php if ($empresa['URL'] ?? null): ?>-->
+                <!--<a href="<?= e($empresa['URL']) ?>" target="_blank"-->
+                <!--   class="text-muted" style="font-size:13px;">-->
+                <!--    <i class="bi bi-globe me-1"></i><?= e($empresa['URL']) ?>-->
+                <!--</a>-->
                 <?php endif; ?>
             </div>
         </div>
@@ -142,11 +142,11 @@ $mapaEsPdf = $mapaUrl && str_ends_with(strtolower($empresa['mapa_procesos']), '.
                             <?= e(truncar($o['objetivo'], 60)) ?>
                         </span>
                         <div class="d-flex gap-1 flex-shrink-0">
-                            <span class="badge bg-primary" style="font-size:10px;">
+                            <span class="badge bg-primary" style="font-size:12px;">
                                 Meta: <?= e($o['meta'] ?? '—') ?>
                             </span>
                             <span class="badge bg-light text-dark border"
-                                  style="font-size:10px;"><?= $totalMed ?> med.</span>
+                                  style="font-size:12px;"><?= $totalMed ?> med.</span>
                         </div>
                     </div>
                     <?php if ($pct !== null && $totalMed > 0): ?>
@@ -161,7 +161,7 @@ $mapaEsPdf = $mapaUrl && str_ends_with(strtolower($empresa['mapa_procesos']), '.
                         </span>
                     </div>
                     <?php else: ?>
-                    <small class="text-muted fst-italic" style="font-size:11px;">
+                    <small class="text-muted fst-italic" style="font-size:12px;">
                         Sin mediciones registradas
                     </small>
                     <?php endif; ?>
@@ -176,7 +176,7 @@ $mapaEsPdf = $mapaUrl && str_ends_with(strtolower($empresa['mapa_procesos']), '.
                 ?>
                 <div class="px-3 py-2 border-top" style="background:#f8fafc;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted fw-semibold" style="font-size:11px;">
+                        <small class="text-muted fw-semibold" style="font-size:12px;">
                             Cumplimiento Promedio Global
                         </small>
                         <strong class="text-<?= $cg ?>" style="font-size:16px;"><?= $prom ?>%</strong>
@@ -209,7 +209,7 @@ $mapaEsPdf = $mapaUrl && str_ends_with(strtolower($empresa['mapa_procesos']), '.
                 </a>
                 <?php else: ?>
                 <a href="<?= e($orgUrl) ?>" target="_blank">
-                    <img src="<?= e($orgUrl) ?>" alt="Organigrama"
+                    <img src="<?= e($orgUrl) ?>" alt="Organigrama" alt="Organigrama"
                          class="img-fluid rounded" style="max-height:280px;object-fit:contain;">
                 </a>
                 <?php endif; ?>
@@ -235,7 +235,7 @@ $mapaEsPdf = $mapaUrl && str_ends_with(strtolower($empresa['mapa_procesos']), '.
                 </a>
                 <?php else: ?>
                 <a href="<?= e($mapaUrl) ?>" target="_blank">
-                    <img src="<?= e($mapaUrl) ?>" alt="Mapa de Procesos"
+                    <img src="<?= e($mapaUrl) ?>" alt="Mapa de procesos" alt="Mapa de Procesos"
                          class="img-fluid rounded" style="max-height:280px;object-fit:contain;">
                 </a>
                 <?php endif; ?>

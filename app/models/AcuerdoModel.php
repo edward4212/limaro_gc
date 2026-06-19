@@ -9,7 +9,7 @@ use App\Core\Model;
  *
  * Tabla real: `acuerdos` (plural).
  * Columnas: id_acuerdo, id_tipo_documento, año_acuerdo, numero_acuerdo,
- *           nombre_acuerdo, documento (archivo), fecha_aprobacion, acta_aprobacion
+ *           nombre_acuerdo, fecha_aprobacion, acta_aprobacion, estado
  */
 class AcuerdoModel extends Model
 {

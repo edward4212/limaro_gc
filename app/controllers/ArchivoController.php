@@ -229,6 +229,7 @@ class ArchivoController extends Controller
             WHERE aat.token = ?
               AND aat.id_archivo = ?
               AND aat.expira_en > NOW()
+              AND aat.usado_en IS NULL
             LIMIT 1
         ");
         $stmt->execute([$token, $id]);
@@ -238,6 +239,10 @@ class ArchivoController extends Controller
             error_log("[ArchivoController] Intento de acceso con token inválido o expirado: token=$token, id=$id");
             $this->abort(403, 'Token inválido o expirado.');
         }
+
+        // M-01: invalidar el token inmediatamente (uso único)
+        $db->prepare("UPDATE archivo_acceso_temporal SET usado_en = NOW() WHERE token = ? AND id_archivo = ?")
+           ->execute([$token, $id]);
 
         // Construir ruta absoluta del archivo
         $model = new ArchivoModel();

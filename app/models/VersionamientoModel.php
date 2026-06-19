@@ -41,6 +41,14 @@ class VersionamientoModel extends Model
         ")->fetchAll();
     }
 
+    /**
+     * Actualizar la ruta del archivo físico en versionamiento.
+     */
+    public function actualizarRutaDocumento(int $idVersion, string $ruta): bool
+    {
+        return $this->update($idVersion, ['documento' => $ruta]);
+    }
+
     public function porDocumento(int $idDocumento): array
     {
         return $this->query("
@@ -60,6 +68,12 @@ class VersionamientoModel extends Model
             LEFT JOIN empleado e_ap ON e_ap.id_empleado = u_ap.id_empleado
             LEFT JOIN archivo  ar   ON ar.modulo = 'VERSIONAMIENTO'
                                     AND ar.id_referencia = v.id_versionamiento
+                                    AND ar.id_archivo = (
+                                        SELECT MAX(a2.id_archivo)
+                                        FROM archivo a2
+                                        WHERE a2.modulo       = 'VERSIONAMIENTO'
+                                          AND a2.id_referencia = v.id_versionamiento
+                                    )
             WHERE v.id_documento = ?
             ORDER BY v.numero_version DESC
         ", [$idDocumento])->fetchAll();

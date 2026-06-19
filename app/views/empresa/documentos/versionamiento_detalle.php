@@ -31,10 +31,10 @@ $soloConsulta = \App\Core\Request::get('consulta') === '1';
         $esDesdeDocumentos = in_array($fromParam, ['documentos', 'empresa/documentos']);
         ?>
         <?php if (!$esDesdeDocumentos): ?>
-        <a href="<?= e(APP_URL) ?>/versionamiento/descargar/<?= (int)$documento['id_documento'] ?>"
-           class="btn btn-success btn-sm">
-            <i class="bi bi-file-zip me-1"></i>Descargar carpeta
-        </a>
+        <!--<a href="<?= e(APP_URL) ?>/versionamiento/descargar/<?= (int)$documento['id_documento'] ?>"-->
+        <!--   class="btn btn-success btn-sm">-->
+        <!--    <i class="bi bi-file-zip me-1"></i>Descargar carpeta-->
+        <!--</a>-->
         <?php endif; ?>
         <a href="<?= e(APP_URL) ?>/<?= e($fromParam) ?>" class="btn btn-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i>Volver
@@ -48,7 +48,7 @@ $soloConsulta = \App\Core\Request::get('consulta') === '1';
         <div class="row g-2">
             <div class="col-md-2">
                 <div class="text-muted" style="font-size:11px;">CÓDIGO</div>
-                <code class="fs-6"><?= e($documento['codigo'] ?? $documento['codigo_documento'] ?? '') ?></code>
+                <code class="fs-6"><?= e($documento['codigo'] ?? $documento['codigo_documento'] ?? '') ?></span>
                 <!--<?php if (!empty($documento['codigo_anterior'])): ?>-->
                 <!--<div class="form-text">Antes: <del><?= e($documento['codigo_anterior']) ?></del></div>-->
                 <!--<?php endif; ?>-->

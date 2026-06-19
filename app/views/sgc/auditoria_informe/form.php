@@ -47,7 +47,7 @@
                         <?php endforeach; ?>
                     </select>
                     <input type="hidden" name="id_plan" id="hidPlan">
-                    <div class="form-text"><i class="bi bi-info-circle me-1"></i>Solo programas con plan APROBADO.</div>
+                    <div class="form-text"><i class="bi bi-info-circle me-1"></i>Solo programas con plan APROBADO o EN CURSO.</div>
                     <?php endif; ?>
                 </div>
                 <div class="col-md-3">

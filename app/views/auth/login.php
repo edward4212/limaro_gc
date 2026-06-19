@@ -72,13 +72,15 @@ $empInicial = mb_strtoupper(mb_substr($empNombre, 0, 1, 'UTF-8'), 'UTF-8');
         /* ── Cabecera ── */
         .login-header { display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .login-logo-wrap {
-            width: 72px; height: 72px; border-radius: 18px;
-            background: rgba(255,255,255,0.08);
-            border: 0.5px solid rgba(255,255,255,0.15);
+            width: 80px; height: 80px; border-radius: 16px;
+            background: #fff;
+            border: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
+            padding: 6px;
         }
-        .login-logo-wrap img { width: 52px; height: 52px; object-fit: contain; }
+        .login-logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
         .login-logo-initials {
             font-size: 32px; font-weight: 700; color: #fff;
         }
@@ -195,10 +197,10 @@ $empInicial = mb_strtoupper(mb_substr($empNombre, 0, 1, 'UTF-8'), 'UTF-8');
             </div>
             <div class="login-badge">
                 <div class="login-badge-dot"></div>
-                <span>ISO 9001:2015 · Sistema activo</span>
+                <span>Sistema de Gestión Integrado (SGI)</span>
             </div>
             <div class="login-emp-nombre"><?= e($empNombre) ?></div>
-            <div class="login-emp-sub">Sistema de Gestión de Calidad</div>
+            <div class="login-emp-sub"></div>
         </div>
 
         <!-- Flash messages -->

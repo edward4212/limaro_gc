@@ -210,7 +210,7 @@ class ReporteController extends Controller
         } catch (\Throwable $e) { /* módulo Contexto pendiente de activar */ }
 
         $this->view('reportes/sgc_contexto', [
-            'pageTitle' => 'Reporte: Contexto Organizacional §4.1/4.2',
+            'pageTitle' => 'Reporte: Contexto Organizacional',
             'foda'      => $foda,
             'partes'    => $partes,
             'filtros'   => ['anio' => $anio],

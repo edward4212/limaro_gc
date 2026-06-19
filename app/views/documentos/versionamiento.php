@@ -15,6 +15,19 @@
 <div class="alert alert-info">No hay documentos con versiones.</div>
 <?php else: ?>
 
+<?php
+$filtroId = 'docs-versionamiento';
+$tablaId  = 'tbl-versionamiento';
+$columnas = [
+    ['idx'=>0, 'label'=>'Proceso', 'categoria'=>'proceso'],
+    ['idx'=>1, 'label'=>'Código'],
+    ['idx'=>2, 'label'=>'Nombre del Documento'],
+    ['idx'=>3, 'label'=>'Tipo', 'categoria'=>'tipo_documento'],
+    ['idx'=>5, 'label'=>'Estado', 'categoria'=>'estado_version'],
+    ['idx'=>6, 'label'=>'Última Apro.'],
+];
+include APP_ROOT . '/app/views/partials/filtro_avanzado.php';
+?>
 <div class="card">
     <div class="card-body p-0">
         <table id="tbl-versionamiento" class="table table-hover table-sm mb-0" style="width:100%;">
@@ -34,12 +47,12 @@
             <?php foreach ($versiones as $v): ?>
             <tr>
                 <td><?= e(($v['macroproceso'] ?? '') . ' — ' . ($v['proceso'] ?? '')) ?></td>
-                <td><code style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($v['codigo'] ?? '') ?></code></td>
+                <td><code style="font-size:12px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($v['codigo'] ?? '') ?></code></td>
                 <td style="font-size:12px;"><?= e($v['nombre_documento'] ?? '') ?></td>
-                <td><span class="badge bg-secondary" style="font-size:10px;line-height:1.4;"><?= e($v['sigla_tipo'] ?? '') ?><br><small style='font-size:9px;font-weight:normal;opacity:.85;'><?= e($v['tipo_documento'] ?? '') ?></small></span></td>
+                <td><span class="badge bg-secondary" style="font-size:12px;line-height:1.4;"><?= e($v['sigla_tipo'] ?? '') ?><br><small style='font-size:12px;font-weight:normal;opacity:.85;'><?= e($v['tipo_documento'] ?? '') ?></small></span></td>
                 <td class="text-center"><span class="badge bg-primary">V<?= e($v['max_version'] ?? 0) ?></span></td>
                 <td><?= badgeEstado($v['estado_version'] ?? 'CREADO') ?></td>
-                <td style="font-size:11px;"><?= fechaEs($v['fecha_aprobacion'] ?? null) ?></td>
+                <td style="font-size:12px;"><?= fechaEs($v['fecha_aprobacion'] ?? null) ?></td>
                 <td class="text-center">
                     <a href="<?= e(APP_URL) ?>/versionamiento/documento/<?= (int)$v['id_documento'] ?>"
                        class="btn btn-sm btn-outline-info py-0" title="Ver historial">
@@ -69,9 +82,10 @@ document.addEventListener('DOMContentLoaded', function () {
         pageLength: 25,
         lengthMenu: [[15, 25, 50, 100, -1], ['15', '25', '50', '100', 'Todos']],
         orderFixed: [[0, 'asc']],   // siempre ordenar por proceso primero
+        orderCellsTop: true,
         columnDefs: [
             { targets: 0, visible: false },  // ocultar col Proceso (usada por RowGroup)
-            { targets: [4, 7], orderable: false }
+            { targets: [4, 7], orderable: false, searchable: false } // Versión (badge) y Acciones: sin filtro
         ],
         rowGroup: {
             dataSrc: 0,
@@ -85,7 +99,35 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         },
         dom: '<"row mb-2"<"col-sm-6"l><"col-sm-6"f>>tip',
-        order: [[1, 'asc']]
+        order: [[1, 'asc']],
+        initComplete: function () {
+            if (window.FAR && window.FAR['docs-versionamiento']) {
+                window.FAR['docs-versionamiento'].setApi(this.api());
+            }
+            // Fila de filtros por columna, respetando las columnas marcadas como
+            // searchable:false (Versión por ser badge visual, Acciones por no
+            // tener texto buscable), además de excluir la columna oculta Proceso.
+            var api = this.api();
+            var thead = $(api.table().header());
+            var filterRow = $('<tr class="fila-filtros"></tr>');
+            var NO_SEARCHABLE = [4, 7]; // Versión (badge) y Acciones: sin filtro
+            api.columns().every(function (idx) {
+                var col = api.column(idx);
+                if (!col.visible()) return;
+                var th = $('<th></th>');
+                if (NO_SEARCHABLE.indexOf(idx) === -1) {
+                    var titulo = $(col.header()).text().trim();
+                    var inp = $('<input type="text" class="col-filter">')
+                        .attr('placeholder', titulo.length > 12 ? titulo.substring(0, 12) + '…' : titulo)
+                        .attr('data-col', idx)
+                        .on('keyup change', function () { api.column(idx).search(this.value).draw(); })
+                        .on('click', function (e) { e.stopPropagation(); });
+                    th.append(inp);
+                }
+                filterRow.append(th);
+            });
+            thead.append(filterRow);
+        }
     });
 });
 </script>

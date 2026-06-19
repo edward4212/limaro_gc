@@ -94,8 +94,9 @@ class TareaController extends Controller
     {
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
-
-        $idSolicitud    = (int)($tarea['id_solicitud'] ?? 0);
+        if (!Auth::hasRole([1]) && Auth::id() != ($tarea['elaborador_id_usuario'] ?? null)) {
+            $this->abort(403);
+        }
         $archivosAnexos = $idSolicitud
             ? $this->archivoModel->deEntidad('SOLICITUD', $idSolicitud)
             : [];
@@ -144,8 +145,9 @@ class TareaController extends Controller
 
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
-
-        // Subir archivo (Base64 o $_FILES)
+        if (!Auth::hasRole([1]) && Auth::id() != ($tarea['elaborador_id_usuario'] ?? null)) {
+            $this->abort(403);
+        }
         $this->subirArchivoTarea($id);
 
         if ($accion !== 'enviar') {
@@ -212,8 +214,9 @@ class TareaController extends Controller
     {
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
-
-        $idSolicitud    = (int)($tarea['id_solicitud'] ?? 0);
+        if (!Auth::hasRole([1]) && Auth::id() != ($tarea['revisor_id_usuario'] ?? null)) {
+            $this->abort(403);
+        }
         $archivosAnexos = $idSolicitud
             ? $this->archivoModel->deEntidad('SOLICITUD', $idSolicitud)
             : [];
@@ -238,6 +241,12 @@ class TareaController extends Controller
         $accion      = Request::post('accion', 'aprobar');
         $comentario  = trim((string) Request::post('comentario', ''));
         $idAprobador = (int) Request::post('id_empleado_aprobador', 0);
+
+        $tarea = $this->model->detalle($id);
+        if (!$tarea) $this->abort(404);
+        if (!Auth::hasRole([1]) && Auth::id() != ($tarea['revisor_id_usuario'] ?? null)) {
+            $this->abort(403);
+        }
 
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
@@ -301,6 +310,9 @@ class TareaController extends Controller
     {
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
+        if (!Auth::hasRole([1]) && Auth::id() != ($tarea['aprobador_id_usuario'] ?? null)) {
+            $this->abort(403);
+        }
 
         $idSolicitud    = (int)($tarea['id_solicitud'] ?? 0);
         $archivosAnexos = $idSolicitud
@@ -351,6 +363,9 @@ class TareaController extends Controller
 
         $tarea = $this->model->detalle($id);
         if (!$tarea) $this->abort(404);
+        if (!Auth::hasRole([1]) && Auth::id() != ($tarea['aprobador_id_usuario'] ?? null)) {
+            $this->abort(403);
+        }
 
         if ($accion === 'rechazar') {
             try {

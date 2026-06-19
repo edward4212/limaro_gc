@@ -75,10 +75,16 @@ $procSeleccionados = array_column($item['procesos'] ?? [], 'id_proceso');
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Auditor Líder</label>
-                            <input type="text" class="form-control" name="id_auditor_lider"
+                            <input type="text" class="form-control"
                                    list="listaAuditores" id="inputAuditor"
-                                   value="<?= e(old('id_auditor_lider', $item['auditor_nombre'] ?? '')) ?>"
+                                   value="<?= e(old('auditor_lider_nombre', $item['auditor_nombre'] ?? '')) ?>"
                                    placeholder="Buscar auditor...">
+                            <?php if (($item['auditor_estado'] ?? null) === 'INACTIVO'): ?>
+                            <div class="form-text text-danger">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                El auditor asignado actualmente está <strong>(inactivo)</strong>. Seleccione un auditor activo antes de guardar.
+                            </div>
+                            <?php endif; ?>
                             <datalist id="listaAuditores">
                                 <?php foreach ($auditores as $a): ?>
                                 <option value="<?= e($a['nombre_completo']) ?>" data-id="<?= (int)$a['id_empleado'] ?>">
@@ -134,7 +140,7 @@ $procSeleccionados = array_column($item['procesos'] ?? [], 'id_proceso');
                                <?= in_array($proc['id_proceso'], $procSeleccionados) ? 'checked' : '' ?>>
                         <label class="form-check-label" for="proc_<?= $proc['id_proceso'] ?>"
                                style="font-size:12px;">
-                            <code style="font-size:10px;"><?= e($proc['sigla_proceso'] ?? '') ?></code>
+                            <code style="font-size:10px;"><?= e($proc['sigla_proceso'] ?? '') ?></span>
                             <?= e($proc['proceso']) ?>
                         </label>
                     </div>
@@ -177,13 +183,18 @@ $procSeleccionados = array_column($item['procesos'] ?? [], 'id_proceso');
 
 <script>
 // Sincronizar ID del auditor al seleccionar del datalist
-document.getElementById('inputAuditor').addEventListener('change', function() {
-    var opts = document.getElementById('listaAuditores').options;
+function _sincronizarAuditor() {
+    var valor = document.getElementById('inputAuditor').value;
+    var opts  = document.getElementById('listaAuditores').options;
     for (var i = 0; i < opts.length; i++) {
-        if (opts[i].value === this.value) {
+        if (opts[i].value === valor) {
             document.getElementById('hidAuditorId').value = opts[i].dataset.id || '';
             return;
         }
     }
-});
+    // Texto no coincide con ninguna opción activa: no enviar un ID obsoleto/inválido
+    document.getElementById('hidAuditorId').value = '';
+}
+document.getElementById('inputAuditor').addEventListener('change', _sincronizarAuditor);
+document.getElementById('inputAuditor').addEventListener('input', _sincronizarAuditor);
 </script>

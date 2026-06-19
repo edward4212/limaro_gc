@@ -24,7 +24,7 @@ class AuditoriaPlanController extends Controller
             'estado' => Request::get('estado', ''),
         ];
         $this->view('sgc/auditoria_plan/index', [
-            'pageTitle' => 'Planes de Auditoría §9.2',
+            'pageTitle' => 'Planes de Auditoría',
             'planes'    => $this->model->listar($filtros),
             'filtros'   => $filtros,
         ]);
@@ -52,6 +52,7 @@ class AuditoriaPlanController extends Controller
             'alcance','criterios','id_auditor_lider','equipo_auditor',
             'fecha_inicio','fecha_fin',
         ]);
+        $data['id_auditor_lider'] = ((int)($data['id_auditor_lider'] ?? 0)) ?: null;
         $data['estado']     = 'BORRADOR';
         $data['id_usuario'] = Auth::id();
 
@@ -61,8 +62,14 @@ class AuditoriaPlanController extends Controller
             'alcance'          => 'required',
             'anio'             => 'required|integer',
         ]);
+        if (!$errors && $data['id_auditor_lider'] !== null && !$this->empModel->esActivo($data['id_auditor_lider'])) {
+            $errors = ['id_auditor_lider' => 'El Auditor Líder seleccionado no es válido. Seleccione un empleado activo.'];
+        }
         if ($errors) {
-            Session::flash('error', 'Corrija los campos requeridos.');
+            $msg = isset($errors['id_auditor_lider'])
+                ? $errors['id_auditor_lider']
+                : 'Corrija los campos requeridos.';
+            Session::flash('error', $msg);
             Session::setOldInput($data);
             $this->redirect('/auditoria/plan/crear');
             return;
@@ -159,6 +166,13 @@ class AuditoriaPlanController extends Controller
             'alcance','criterios','id_auditor_lider','equipo_auditor',
             'fecha_inicio','fecha_fin',
         ]);
+        $data['id_auditor_lider'] = ((int)($data['id_auditor_lider'] ?? 0)) ?: null;
+        if ($data['id_auditor_lider'] !== null && !$this->empModel->esActivo($data['id_auditor_lider'])) {
+            Session::flash('error', 'El Auditor Líder seleccionado no es válido. Seleccione un empleado activo.');
+            Session::setOldInput($data);
+            $this->redirect("/auditoria/plan/editar/{$id}");
+            return;
+        }
         $this->model->update($id, $data);
         $procesos = Request::post('id_procesos', []);
         $this->model->guardarProcesos($id, (array)$procesos);
@@ -242,6 +256,49 @@ class AuditoriaPlanController extends Controller
         }
 
         $this->redirectSuccess('/auditoria/plan', 'Plan aprobado. Programa asociado: ' . $programa['codigo'] . '.');
+    }
+
+    /** POST /auditoria/plan/iniciar/{id} — APROBADO → EN_CURSO: marca el inicio real de la ejecución */
+    public function iniciarEjecucion(int $id): void
+    {
+        Csrf::verify();
+        if (!Auth::hasRole([1,2])) $this->abort(403);
+        $item = $this->model->find($id);
+        if (!$item || $item['estado'] !== 'APROBADO') {
+            Session::flash('error', 'Solo se puede iniciar ejecución en planes con estado APROBADO.');
+            $this->redirect("/auditoria/plan/{$id}");
+            return;
+        }
+
+        $this->model->cambiarEstado($id, 'EN_CURSO');
+        $this->model->sincronizarEstadoPrograma($id, 'EN_CURSO');
+        registrarAuditoria('auditoria_plan','INICIAR_EJECUCION','auditoria_plan',$id,
+            ['estado'=>'APROBADO'],['estado'=>'EN_CURSO']);
+
+        // Correo al auditor líder
+        try {
+            if (!empty($item['id_auditor_lider'])) {
+                $correoAuditor = (new EmpleadoModel())->correoYNombre((int)$item['id_auditor_lider']);
+                if ($correoAuditor && filter_var($correoAuditor['correo_empleado'] ?? '', FILTER_VALIDATE_EMAIL)) {
+                    $htmlInicio = "<h2 style='color:#1B3A6B;margin-top:0;'>▶️ Ejecución de Auditoría Iniciada</h2>
+                        <p>El plan <strong>" . htmlspecialchars($item['codigo']) . " — " . htmlspecialchars($item['titulo']) . "</strong>
+                        ha pasado a estado <strong>EN CURSO</strong>. Ya puede registrar el avance de las actividades en el cronograma.</p>
+                        <a href='" . APP_URL . "/auditoria/plan/{$id}/actividades' style='background:#1B3A6B;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:14px;display:inline-block;'>
+                            Ver Cronograma →
+                        </a>
+                        <br><br><p style='color:#9ca3af;font-size:11px;'>Limaro SGC — Mensaje automático</p>";
+                    enviarCorreo(
+                        [$correoAuditor['correo_empleado'] => $correoAuditor['nombre_completo']],
+                        "[SGC] Plan {$item['codigo']} — Ejecución iniciada",
+                        $htmlInicio
+                    );
+                }
+            }
+        } catch (\Throwable $eC) {
+            error_log('[AuditoriaPlan] correo iniciar ejecución: ' . $eC->getMessage());
+        }
+
+        $this->redirectSuccess("/auditoria/plan/{$id}", 'Ejecución del plan iniciada. Ya puede registrar avance en el cronograma.');
     }
 
     /** POST /auditoria/plan/retornar/{id} — devolver a BORRADOR */

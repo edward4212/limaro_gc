@@ -22,8 +22,8 @@
                 $color = $pct === null ? 'secondary' : ($pct >= 80 ? 'success' : ($pct >= 50 ? 'warning' : 'danger'));
                 ?>
                 <tr>
-                    <td><code><?= e($o['codigo']) ?></code></td>
-                    <td><?= e(truncar($o['objetivo'], 60)) ?></td>
+                    <td><span><?= e($o['codigo']) ?></span></td>
+                    <td><?= e(truncar($o['objetivo'], 500)) ?></td>
                     <td><span class="badge bg-primary"><?= e($o['meta'] ?? '—') ?></span></td>
                     <td style="font-size:12px;"><?= e(truncar($o['indicador'] ?? '', 50)) ?></td>
                     <td><span class="badge bg-secondary" style="font-size:12px;"><?= e($o['frecuencia']) ?></span></td>

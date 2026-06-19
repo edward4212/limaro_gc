@@ -2,7 +2,7 @@
 <div class="page-header">
     <div>
         <h2><i class="bi bi-calendar3 me-2"></i><?= e($pageTitle) ?></h2>
-        <small class="text-muted">ISO 9001:2015 §9.2 — Auditoría Interna</small>
+        <!--<small class="text-muted">ISO 9001:2015 §9.2 — Auditoría Interna</small>-->
     </div>
     <?php if (Auth::puede('audit_plan','crear')): ?>
     <a href="<?= e(APP_URL) ?>/auditoria/plan/crear" class="btn btn-lim-primary btn-sm">
@@ -63,7 +63,7 @@
                     $pct  = $tot > 0 ? round($comp/$tot*100) : 0;
                 ?>
                 <tr>
-                    <td><code style="font-size:11px;"><?= e($p['codigo']) ?></code></td>
+                    <td><code style="font-size:11px;"><?= e($p['codigo']) ?></span></td>
                     <td style="font-size:12px;max-width:200px;"><?= e($p['titulo']) ?></td>
                     <td class="text-center"><?= (int)$p['anio'] ?></td>
                     <td style="font-size:11px;"><?= e($p['tipo_auditoria'] ?? '—') ?></td>
@@ -85,7 +85,7 @@
                         <?= $p['fecha_fin'] ? ' → '.fechaEs($p['fecha_fin']) : '' ?>
                     </td>
                     <td class="text-center"><?= badgeEstado($p['estado']) ?></td>
-                    <td class="text-center d-print-none" style="white-space:nowrap;">
+                    <td class="text-center d-print-none" style="white-space:normal;">
                         <a href="<?= e(APP_URL) ?>/auditoria/plan/<?= (int)$p['id'] ?>"
                            class="btn btn-sm btn-outline-info py-0 px-2" title="Ver"><i class="bi bi-eye"></i></a>
                         <?php if ($p['estado'] === 'BORRADOR' && Auth::puede('audit_plan','editar')): ?>

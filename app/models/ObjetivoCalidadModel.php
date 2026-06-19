@@ -21,6 +21,22 @@ class ObjetivoCalidadModel extends Model
         ")->fetchAll();
     }
 
+    /** HU-E01: detalle con nombre del responsable vía JOIN (no existe columna 'responsable' en BD) */
+    public function detalle(int $id): ?array
+    {
+        return $this->query("
+            SELECT o.*,
+                   e.nombre_completo AS responsable_nombre,
+                   e.estado_empleado AS responsable_estado,
+                   c.cargo            AS responsable_cargo
+            FROM objetivo_calidad o
+            LEFT JOIN empleado e ON e.id_empleado = o.id_responsable
+            LEFT JOIN cargo    c ON c.id_cargo    = e.id_cargo
+            WHERE o.id = ?
+            LIMIT 1
+        ", [$id])->fetch() ?: null;
+    }
+
     public function mediciones(int $id): array
     {
         return $this->query("

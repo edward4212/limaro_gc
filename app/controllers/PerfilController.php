@@ -165,10 +165,19 @@ class PerfilController extends Controller
 
         $this->userModel->cambiarClave($idUsuario, $data['clave_nueva']);
 
+        // Si el usuario estaba en CREADO (primer login), activarlo automáticamente
+        $estadoActual = Auth::get('estado', '');
+        if ($estadoActual === 'CREADO') {
+            $this->userModel->activarConVencimiento($idUsuario);
+        }
+
         // Limpiar el flag de reset en sesión
         $userData = Auth::user();
         if ($userData) {
             $userData['clave_requiere_reset'] = 0;
+            if ($estadoActual === 'CREADO') {
+                $userData['estado'] = 'ACTIVO';
+            }
             Auth::login($userData);
         }
 

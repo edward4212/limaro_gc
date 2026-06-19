@@ -12,7 +12,7 @@
         <div class="row mt-2">
             <div class="col-12">
                 <strong>Documento:</strong>
-                <code><?= e($t['codigo_documento']) ?></code> — <?= e($t['nombre_documento']) ?>
+                <span><?= e($t['codigo_documento']) ?></span> — <?= e($t['nombre_documento']) ?>
             </div>
         </div>
         <?php endif; ?>

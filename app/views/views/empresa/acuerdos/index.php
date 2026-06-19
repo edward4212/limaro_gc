@@ -27,7 +27,7 @@
                 <tr>
                     <td><?= e($a['año_acuerdo']) ?></td>
                     <td><strong><?= e($a['numero_acuerdo']) ?></strong></td>
-                    <td><?= e(truncar($a['nombre_acuerdo'], 60)) ?></td>
+                    <td><?= e(truncar($a['nombre_acuerdo'], 500)) ?></td>
                     <td><span class="badge bg-info text-dark"><?= e($a['acta_aprobacion'] ?? '—') ?></span></td>
                     <td><?= fechaEs($a['fecha_aprobacion']) ?></td>
                     <td><?= badgeEstado($a['estado'] ?? 'ACTIVO') ?></td>

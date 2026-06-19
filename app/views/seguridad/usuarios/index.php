@@ -11,7 +11,7 @@
     <div class="card-body">
         <table class="table table-hover datatable datatable-export" style="width:100%;">
             <thead>
-                <tr><th>Avatar</th><th>Usuario</th><th>Nombre</th><th>Cargo</th><th>Roles</th><th>Último Login</th><th>Estado</th><th>Acciones</th></tr>
+                <tr><th>Avatar</th><th>Usuario</th><th>Nombre</th><th>Cargo</th><th>Roles</th><th>Último Login</th><th>Vencimiento</th><th>Estado</th><th>Acciones</th></tr>
             </thead>
             <tbody>
                 <?php foreach ($usuarios as $u): ?>
@@ -34,6 +34,17 @@
                         <?php endforeach; ?>
                     </td>
                     <td><?= $u['ultimo_login'] ? fechaEs($u['ultimo_login'], 'hora') : '<span class="text-muted">Nunca</span>' ?></td>
+                    <td>
+                        <?php if (!empty($u['fecha_vencimiento'])):
+                            $diasRestantes = (int) ceil((strtotime($u['fecha_vencimiento']) - time()) / 86400);
+                        ?>
+                            <span class="<?= $diasRestantes <= 5 ? 'text-danger fw-semibold' : ($diasRestantes <= 30 ? 'text-warning' : '') ?>">
+                                <?= fechaEs($u['fecha_vencimiento']) ?>
+                            </span>
+                        <?php else: ?>
+                            <span class="text-muted">—</span>
+                        <?php endif; ?>
+                    </td>
                     <td><?= badgeEstado($u['estado']) ?></td>
                     <td>
                         <?php if (Auth::puede('usuarios', 'editar')): ?>

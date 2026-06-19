@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Csrf;
 use App\Core\Auth;
+use App\Core\Database;
 use App\Core\Request;
 use App\Core\Session;
 use App\Models\AcuerdoModel;
@@ -437,11 +438,12 @@ class AcuerdoController extends Controller
 
         // Registrar en log_descarga_masiva
         try {
-            $this->query(
+            $db   = Database::getInstance();
+            $stmt = $db->prepare(
                 "INSERT IGNORE INTO log_descarga_masiva (modulo, filtro, total_items, id_usuario, ip)
-                 VALUES ('ACUERDOS', 'estado=ACTIVO', ?, ?, ?)",
-                [$agregados, Auth::id() ?? 0, Request::ip() ?? '']
+                 VALUES ('ACUERDOS', 'estado=ACTIVO', ?, ?, ?)"
             );
+            $stmt->execute([$agregados, Auth::id() ?? 0, Request::ip() ?? '']);
         } catch (\Throwable $e) {
             error_log('[Limaro] log_descarga_masiva: ' . $e->getMessage());
         }

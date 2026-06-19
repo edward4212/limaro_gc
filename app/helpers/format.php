@@ -22,6 +22,10 @@ if (!function_exists('fechaEs')) {
         } catch (Exception) {
             return htmlspecialchars($fecha);
         }
+        // Evitar años inválidos (0001, 0000) por datos migrados
+        if ((int)$dt->format('Y') < 1900) {
+            return '—';
+        }
 
         $meses = [
             1  => 'enero', 2  => 'febrero', 3  => 'marzo',
@@ -83,6 +87,7 @@ if (!function_exists('badgeEstado')) {
             'EN_CURSO'                => 'primary',
             'BORRADOR'                => 'secondary',
             'FINALIZADO'              => 'success',
+            'DISTRIBUIDO'             => 'info',
             'FINALIZADA_SIN_TRAMITE'   => 'dark',
             'CREADO'       => 'secondary',
             'REVISION'     => 'info',

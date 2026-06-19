@@ -19,7 +19,7 @@
                 <div class="col-md-3">
                     <label class="form-label">Código</label>
                     <input type="text" class="form-control <?= $isEdit ? 'bg-light' : '' ?>"
-                           name="codigo" value="<?= e($isEdit ? $item['codigo'] : $codigo) ?>"
+                           name="codigo" value="<?= e($isEdit ? $item['codigo'] : old('codigo', $codigo)) ?>"
                            <?= $isEdit ? 'readonly' : '' ?> required>
                 </div>
                 <div class="col-md-5">
@@ -28,7 +28,7 @@
                         <option value="">— General —</option>
                         <?php foreach ($procesos as $p): ?>
                         <option value="<?= e($p['id_proceso']) ?>"
-                            <?= ($isEdit && ($item['id_proceso']??'') == $p['id_proceso']) ? 'selected' : '' ?>>
+                            <?= ($isEdit ? ($item['id_proceso']??'') == $p['id_proceso'] : old('id_proceso') == $p['id_proceso']) ? 'selected' : '' ?>>
                             <?= e($p['proceso']) ?>
                         </option>
                         <?php endforeach; ?>
@@ -38,53 +38,62 @@
                     <label class="form-label">Frecuencia</label>
                     <select class="form-select" name="frecuencia">
                         <?php foreach (['MENSUAL','TRIMESTRAL','SEMESTRAL','ANUAL'] as $f): ?>
-                        <option value="<?= $f ?>" <?= ($isEdit && ($item['frecuencia']??'')===$f)?'selected':'' ?>><?= ucfirst(strtolower($f)) ?></option>
+                        <option value="<?= $f ?>" <?= ($isEdit ? ($item['frecuencia']??'')===$f : old('frecuencia')===$f)?'selected':'' ?>><?= ucfirst(strtolower($f)) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Objetivo <span class="text-danger">*</span></label>
-                <textarea class="form-control" name="objetivo" rows="2" required><?= $isEdit ? e($item['objetivo']) : '' ?></textarea>
+                <textarea class="form-control" name="objetivo" rows="2" required><?= $isEdit ? e($item['objetivo']) : old('objetivo') ?></textarea>
             </div>
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label">Meta</label>
                     <input type="text" class="form-control" name="meta" placeholder="Ej: ≥ 90%"
-                           value="<?= $isEdit ? e($item['meta']??'') : '' ?>">
+                           value="<?= $isEdit ? e($item['meta']??'') : old('meta') ?>">
                 </div>
                 <div class="col-md-8">
                     <label class="form-label">Responsable</label>
                     <input type="hidden" name="id_responsable" id="hidIdResponsable"
-                           value="<?= $isEdit ? (int)($item['id_responsable']??0) : 0 ?>">
+                           value="<?= $isEdit ? (int)($item['id_responsable']??0) : old('id_responsable', '0') ?>">
                     <input type="text" class="form-control" name="responsable"
                            id="inputResponsable"
                            list="listaResponsables"
-                           value="<?= $isEdit ? e($item['responsable']??'') : '' ?>"
-                           placeholder="Escriba para buscar..."
-                           autocomplete="off"
-                           oninput="sincronizarResponsable(this.value)">
+                           value="<?= $isEdit && !empty($item['responsable_nombre'])
+                               ? e($item['responsable_nombre'] . (!empty($item['responsable_cargo']) ? ' — ' . $item['responsable_cargo'] : ''))
+                               : '' ?>"
+                           placeholder="Escriba nombre o cargo para buscar..."
+                           autocomplete="off">
                     <datalist id="listaResponsables">
                         <?php foreach ($empleados ?? [] as $emp): ?>
-                        <option value="<?= e($emp['nombre_completo']) ?>">
+                        <option value="<?= e($emp['nombre_completo']) ?><?= !empty($emp['cargo']) ? ' — ' . e($emp['cargo']) : '' ?>"
+                                data-id="<?= (int)$emp['id_empleado'] ?>">
                         <?php endforeach; ?>
                     </datalist>
+                    <?php if ($isEdit && ($item['responsable_estado'] ?? null) === 'INACTIVO'): ?>
+                    <div class="form-text text-danger">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        El responsable asignado actualmente está <strong>(inactivo)</strong>. Seleccione uno activo antes de guardar.
+                    </div>
+                    <?php else: ?>
                     <div class="form-text">
                         <i class="bi bi-person-check me-1 text-success"></i>
                         Solo empleados activos del sistema. Escriba para filtrar.
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="mb-3">
                 <label class="form-label">Indicador</label>
                 <input type="text" class="form-control" name="indicador"
-                       value="<?= $isEdit ? e($item['indicador']??'') : '' ?>">
+                       value="<?= $isEdit ? e($item['indicador']??'') : old('indicador') ?>">
             </div>
             <div class="mb-4">
                 <label class="form-label">Fórmula de Cálculo</label>
                 <input type="text" class="form-control" name="formula"
                        placeholder="Ej: (Satisfechos / Total) × 100"
-                       value="<?= $isEdit ? e($item['formula']??'') : '' ?>">
+                       value="<?= $isEdit ? e($item['formula']??'') : old('formula') ?>">
             </div>
             <button type="submit" class="btn btn-lim-primary"><i class="bi bi-save me-1"></i>Guardar</button>
             <a href="<?= e(APP_URL) ?>/objetivos-calidad" class="btn btn-secondary ms-2">Cancelar</a>
@@ -156,4 +165,22 @@
 <?php endif; ?>
 </div>
 <?php endif; ?>
+
+<script>
+// Sincronizar ID del responsable al seleccionar del datalist
+function _sincronizarResponsable() {
+    var valor = document.getElementById('inputResponsable').value;
+    var opts  = document.getElementById('listaResponsables').options;
+    for (var i = 0; i < opts.length; i++) {
+        if (opts[i].value === valor) {
+            document.getElementById('hidIdResponsable').value = opts[i].dataset.id || '';
+            return;
+        }
+    }
+    // Texto no coincide con ninguna opción activa: no enviar un ID obsoleto/inválido
+    document.getElementById('hidIdResponsable').value = '';
+}
+document.getElementById('inputResponsable').addEventListener('change', _sincronizarResponsable);
+document.getElementById('inputResponsable').addEventListener('input', _sincronizarResponsable);
+</script>
 </div>

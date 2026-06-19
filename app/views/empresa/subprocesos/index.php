@@ -25,10 +25,10 @@
             <tbody>
                 <?php foreach ($subprocesos as $s): ?>
                 <tr>
-                    <td><span class="badge bg-secondary"><?= e($s['nombre_macroproceso']) ?></span></td>
-                    <td><?= e($s['nombre_proceso']) ?> <code class="ms-1"><?= e($s['sigla_proceso']) ?></code></td>
-                    <td><strong><?= e($s['subproceso']) ?></strong></td>
-                    <td><code><?= e($s['sigla_subproceso']) ?></code></td>
+                    <td><strong><?= e($s['nombre_macroproceso']) ?></strong></td>
+                    <td><strong><?= e($s['nombre_proceso']) ?> <span class="ms-1"> - <?= e($s['sigla_proceso']) ?></span></strong></td>
+                    <td><?= e($s['subproceso']) ?></td>
+                    <td><span><?= e($s['sigla_subproceso']) ?></span></td>
                     <td><?= badgeEstado($s['estado']) ?></td>
                     <td>
                         <?php if (Auth::puede('subprocesos', 'editar')): ?>

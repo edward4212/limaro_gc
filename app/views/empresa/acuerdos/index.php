@@ -3,11 +3,11 @@
     <div><h2><i class="bi bi-journal-check me-2"></i>Acuerdos</h2></div>
     <div class="d-flex gap-2">
         <?php if (Auth::puede('acuerdos', 'ver')): ?>
-        <a href="<?= e(APP_URL) ?>/acuerdos/descargar-zip"
-           class="btn btn-outline-success btn-sm"
-           title="Descargar todos los acuerdos vigentes con archivo como ZIP">
-            <i class="bi bi-file-zip me-1"></i>Descargar ZIP
-        </a>
+        <!--<a href="<?= e(APP_URL) ?>/acuerdos/descargar-zip"-->
+        <!--   class="btn btn-outline-success btn-sm"-->
+        <!--   title="Descargar todos los acuerdos vigentes con archivo como ZIP">-->
+        <!--    <i class="bi bi-file-zip me-1"></i>Descargar ZIP-->
+        <!--</a>-->
         <?php endif; ?>
         <?php if (Auth::puede('acuerdos', 'crear')): ?>
         <a href="<?= e(APP_URL) ?>/acuerdos/crear" class="btn btn-lim-primary btn-sm">
@@ -27,7 +27,7 @@
                 <tr>
                     <td><?= e($a['año_acuerdo']) ?></td>
                     <td><strong><?= e($a['numero_acuerdo']) ?></strong></td>
-                    <td><?= e(truncar($a['nombre_acuerdo'], 60)) ?></td>
+                    <td title="<?= e($a['nombre_acuerdo']) ?>"><?= e(truncar($a['nombre_acuerdo'], 60)) ?></td>
                     <td><span class="badge bg-info text-dark"><?= e($a['acta_aprobacion'] ?? '—') ?></span></td>
                     <td><?= fechaEs($a['fecha_aprobacion']) ?></td>
                     <td><?= badgeEstado($a['estado'] ?? 'ACTIVO') ?></td>

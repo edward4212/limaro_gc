@@ -90,7 +90,7 @@ $procesosJson = json_encode(array_column($procesos, 'sigla_proceso', 'id_proceso
             <!-- Nombre -->
             <div class="mb-3">
                 <label class="form-label">Nombre del Subproceso <span class="text-danger">*</span></label>
-                <input type="text" class="form-control text-uppercase" name="subproceso"
+                <input type="text" class="form-control" name="subproceso"
                        value="<?= $isEdit ? e($item['subproceso']) : old('subproceso') ?>"
                        maxlength="200" required>
             </div>

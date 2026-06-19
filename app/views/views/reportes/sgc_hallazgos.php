@@ -25,7 +25,7 @@ $opciones = [
 <td><?= e($d['anio']) ?></td>
 <td style="font-size:12px;"><?= e(truncar($d['programa'],40)) ?></td>
 <td><span class="badge bg-<?= $colorT ?>" style="font-size:12px;"><?= str_replace('_',' ',$d['tipo']) ?></span></td>
-<td><code style="font-size:12px;"><?= e($d['clausula_iso'] ?? '—') ?></code></td>
+<td><code style="font-size:12px;"><?= e($d['clausula_iso'] ?? '—') ?></span></td>
 <td style="font-size:12px;"><?= e($d['proceso_auditado'] ?? '—') ?></td>
 <td style="font-size:12px;"><?= e(truncar($d['descripcion'],70)) ?></td>
 <td style="font-size:12px;"><?= e($d['responsable_nombre']??$d['responsable']??'—') ?></td>

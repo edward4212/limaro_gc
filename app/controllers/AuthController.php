@@ -35,6 +35,13 @@ class AuthController extends Controller
      */
     public function login(): void
     {
+        // Si el token CSRF es inválido (sesión expirada por inactividad),
+        // redirigir al login con mensaje amigable en lugar de mostrar error crudo
+        if (!Csrf::check()) {
+            Session::regenerate();
+            Session::flash('warning', 'Su sesión expiró. Por favor ingrese de nuevo.');
+            $this->redirect('/login');
+        }
         Csrf::verify();
 
         $usuario = trim((string) Request::post('usuario', ''));
@@ -51,7 +58,7 @@ class AuthController extends Controller
 
         // Verificar si está bloqueado
         if ($model->estaBloqueado($usuario)) {
-            Session::flash('error', 'Cuenta bloqueada temporalmente por múltiples intentos fallidos. Intente en 15 minutos.');
+            Session::flash('error', 'Usuario o clave incorrectos. Intente de nuevo más tarde.');
             Session::setOldInput(['usuario' => $usuario]);
             registrarLoginAudit(null, $usuario, false, Request::ip(), Request::userAgent());
             Response::redirect('/login');
@@ -71,6 +78,14 @@ class AuthController extends Controller
         // Verificar estado del usuario
         if (($user['estado'] ?? '') !== 'ACTIVO') {
             Session::flash('error', 'Su cuenta está inactiva. Contacte al administrador.');
+            Response::redirect('/login');
+        }
+
+        // HU-E05: verificación de vencimiento al login (respaldo del cron de inactivación)
+        $vencimiento = $user['fecha_vencimiento'] ?? null;
+        if ($vencimiento && strtotime($vencimiento) <= time()) {
+            $model->inactivarPorVencimiento((int)$user['id_usuario']);
+            Session::flash('error', 'Tu cuenta ha expirado. Contacta al administrador.');
             Response::redirect('/login');
         }
 

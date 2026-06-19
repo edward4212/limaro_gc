@@ -1,7 +1,7 @@
 <div class="page-header">
     <div>
         <h2><i class="bi bi-tools me-2"></i><?= e($pageTitle) ?></h2>
-        <small class="text-muted">ISO 9001:2015 — Cláusula 10.2</small>
+        <!--<small class="text-muted">ISO 9001:2015 — Cláusula 10.2</small>-->
     </div>
     <?php if (Auth::puede('acciones_correctivas','crear')): ?>
     <a href="<?= e(APP_URL) ?>/acciones-correctivas/crear" class="btn btn-lim-primary btn-sm">
@@ -48,7 +48,7 @@ include APP_ROOT . '/app/views/partials/kpi_cards.php';
                 $vencida = ($a['dias_vencida'] ?? 0) > 0 && !in_array($a['estado'],['CERRADA','CANCELADA']);
                 ?>
                 <tr class="<?= $vencida ? 'table-danger' : '' ?>">
-                    <td><code><?= e($a['codigo']) ?></code></td>
+                    <td><span><?= e($a['codigo']) ?></span></td>
                     <td><span class="badge bg-secondary" style="font-size:10px;"><?= e($a['origen']) ?></span></td>
                     <td style="font-size:12px;"><?= e(truncar($a['descripcion_nc'],65)) ?></td>
                     <td style="font-size:12px;"><?= e($a['responsable_nombre']??$a['responsable']??'—') ?></td>

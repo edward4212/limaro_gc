@@ -3,7 +3,7 @@
 <div class="page-header">
     <div>
         <h2><i class="bi bi-exclamation-triangle me-2"></i>Gestión de Hallazgos</h2>
-        <small class="text-muted">ISO 9001:2015 — Cláusula 9.2</small>
+        <!--<small class="text-muted">ISO 9001:2015 — Cláusula 9.2</small>-->
     </div>
     <?php if (Auth::puede('gestion_hallazgos','crear')): ?>
     <a href="<?= e(APP_URL) ?>/hallazgos/crear" class="btn btn-lim-primary btn-sm">

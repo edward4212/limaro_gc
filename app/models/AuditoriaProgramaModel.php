@@ -89,7 +89,7 @@ class AuditoriaProgramaModel extends Model
             FROM auditoria_programa p
             INNER JOIN auditoria_plan pl ON pl.id = p.id_plan
             LEFT JOIN empleado e ON e.id_empleado = pl.id_auditor_lider
-            WHERE pl.estado = 'APROBADO'
+            WHERE pl.estado IN ('APROBADO','EN_CURSO')
               AND NOT EXISTS (
                   SELECT 1 FROM auditoria_informe inf WHERE inf.id_programa = p.id
               )

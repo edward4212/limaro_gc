@@ -19,6 +19,8 @@ $router->get('/foto-usuario/{id}', 'FotoController@perfil');
 $router->get('/login',   'AuthController@showLogin');
 $router->post('/login',  'AuthController@login');
 $router->get('/logout',  'AuthController@logout');
+$router->get('/recuperar-clave',  'RecuperarClaveController@show');
+$router->post('/recuperar-clave', 'RecuperarClaveController@enviar');
 
 // -----------------------------------------------------------------------
 // Inicio / Dashboard
@@ -114,6 +116,8 @@ $router->get('/versionamiento/documento/{id}',     'VersionamientoController@det
 $router->get('/versionamiento/descargar/{id}',     'VersionamientoController@descargar',['auth', 'permiso']);
 $router->get('/versionamiento/nueva/{id}',         'VersionamientoController@nueva',    ['auth', 'permiso']);
 $router->post('/versionamiento/nueva/{id}',        'VersionamientoController@guardar',  ['auth', 'permiso']);
+$router->get('/versionamiento/reemplazar/{id_ver}',  'VersionamientoController@reemplazarForm',  ['auth', 'permiso']);
+$router->post('/versionamiento/reemplazar/{id_ver}', 'VersionamientoController@reemplazarGuardar',['auth', 'permiso']);
 $router->post('/versionamiento/cambiar-estado/{id}','VersionamientoController@cambiarEstado',['auth', 'permiso']);
 
 // -----------------------------------------------------------------------
@@ -175,6 +179,7 @@ $router->get('/usuarios/crear',         'UsuarioController@crear',      ['auth',
 $router->post('/usuarios/crear',        'UsuarioController@guardar',    ['auth', 'permiso']);
 $router->get('/usuarios/editar/{id}',   'UsuarioController@editar',     ['auth', 'permiso']);
 $router->post('/usuarios/editar/{id}',  'UsuarioController@actualizar', ['auth', 'permiso']);
+$router->post('/usuarios/activar/{id}', 'UsuarioController@activar',    ['auth', 'permiso']);
 $router->post('/usuarios/eliminar/{id}','UsuarioController@eliminar',   ['auth', 'permiso']);
 $router->post('/usuarios/resetear/{id}','UsuarioController@resetearClave', ['auth', 'permiso']);
 
@@ -308,6 +313,7 @@ $router->post('/auditoria/plan/editar/{id}',      'AuditoriaPlanController@actua
 $router->post('/auditoria/plan/devolver/{id}',    'AuditoriaPlanController@devolver',       ['auth','permiso']);
 $router->post('/auditoria/plan/revisar/{id}',     'AuditoriaPlanController@enviarARevision',['auth','permiso']);
 $router->post('/auditoria/plan/aprobar/{id}',     'AuditoriaPlanController@aprobar',   ['auth','permiso']);
+$router->post('/auditoria/plan/iniciar/{id}',     'AuditoriaPlanController@iniciarEjecucion', ['auth','permiso']);
 $router->post('/auditoria/plan/retornar/{id}',    'AuditoriaPlanController@retornar',  ['auth','permiso']);
 $router->get('/auditoria/plan/{id}/actividades',              'AuditoriaPlanActividadController@index',     ['auth','permiso']);
 $router->post('/auditoria/plan/{id}/actividades',             'AuditoriaPlanActividadController@guardar',    ['auth','permiso']);
@@ -345,6 +351,46 @@ $router->post('/acciones-correctivas/crear',        'AccionCorrectivaController@
 $router->get('/acciones-correctivas/ver/{id}',    'AccionCorrectivaController@ver',      ['auth','permiso']);
 $router->get('/acciones-correctivas/editar/{id}',   'AccionCorrectivaController@editar',   ['auth','permiso']);
 $router->post('/acciones-correctivas/editar/{id}',  'AccionCorrectivaController@actualizar',['auth','permiso']);
+
+// ── §6.1 Gestión de Riesgos por Proceso ─────────────────────────────────
+$router->get('/riesgos',                            'RiesgoController@index',     ['auth','permiso']);
+$router->get('/riesgos/crear',                       'RiesgoController@crear',     ['auth','permiso']);
+$router->post('/riesgos/crear',                      'RiesgoController@guardar',   ['auth','permiso']);
+$router->get('/riesgos/ver/{id}',                    'RiesgoController@ver',       ['auth','permiso']);
+$router->get('/riesgos/editar/{id}',                 'RiesgoController@editar',    ['auth','permiso']);
+$router->post('/riesgos/editar/{id}',                'RiesgoController@actualizar',['auth','permiso']);
+$router->post('/riesgos/{id}/generar-ac',            'RiesgoController@generarAC', ['auth','permiso']);
+
+// ── §8.4 Gestión de Proveedores ─────────────────────────────────────────
+$router->get('/proveedores',                          'ProveedorController@index',         ['auth','permiso']);
+$router->get('/proveedores/crear',                     'ProveedorController@crear',         ['auth','permiso']);
+$router->post('/proveedores/crear',                    'ProveedorController@guardar',       ['auth','permiso']);
+$router->get('/proveedores/ver/{id}',                  'ProveedorController@ver',           ['auth','permiso']);
+$router->get('/proveedores/editar/{id}',               'ProveedorController@editar',        ['auth','permiso']);
+$router->post('/proveedores/editar/{id}',              'ProveedorController@actualizar',    ['auth','permiso']);
+$router->get('/proveedores/{id}/evaluar',              'ProveedorController@evaluarForm',   ['auth','permiso']);
+$router->post('/proveedores/{id}/evaluar',             'ProveedorController@evaluarGuardar',['auth','permiso']);
+$router->get('/proveedores/comparativo',               'ProveedorController@comparativo',   ['auth','permiso']);
+
+// ── §7.2/7.3 Competencia y Capacitación ─────────────────────────────────
+$router->get('/competencia',                            'CompetenciaController@index',              ['auth','permiso']);
+$router->get('/competencia/cargo/{id}',                 'CompetenciaController@editarPerfil',       ['auth','permiso']);
+$router->post('/competencia/cargo/{id}',                'CompetenciaController@guardarPerfil',      ['auth','permiso']);
+$router->get('/competencia/capacitaciones',             'CompetenciaController@capacitaciones',     ['auth','permiso']);
+$router->get('/competencia/capacitaciones/crear',       'CompetenciaController@crearCapacitacion',  ['auth','permiso']);
+$router->post('/competencia/capacitaciones/crear',      'CompetenciaController@guardarCapacitacion',['auth','permiso']);
+
+// ── §10.3 Oportunidades de Mejora ───────────────────────────────────────
+$router->get('/mejora',                    'OportunidadMejoraController@index',         ['auth','permiso']);
+$router->get('/mejora/crear',              'OportunidadMejoraController@crear',         ['auth','permiso']);
+$router->post('/mejora/crear',             'OportunidadMejoraController@guardar',       ['auth','permiso']);
+$router->get('/mejora/ver/{id}',           'OportunidadMejoraController@ver',           ['auth','permiso']);
+$router->get('/mejora/{id}/evaluar',       'OportunidadMejoraController@evaluarForm',   ['auth','permiso']);
+$router->post('/mejora/{id}/evaluar',      'OportunidadMejoraController@evaluarGuardar',['auth','permiso']);
+$router->post('/mejora/{id}/generar-ac',   'OportunidadMejoraController@generarAC',     ['auth','permiso']);
+
+// ── Filtro Avanzado: opciones reales por categoría ──────────────────────
+$router->get('/filtro-opciones/{categoria}', 'FiltroOpcionesController@opciones', ['auth']);
 
 // ── Centro de Reportes ─────────────────────────────────────────────────
 $router->get('/reportes',                          'ReporteController@index',          ['auth','permiso']);

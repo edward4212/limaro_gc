@@ -1,8 +1,11 @@
 <?php include APP_ROOT . '/app/views/partials/modal_confirm.php'; ?>
 <?php
 // Puede gestionar actividades si el plan no está CANCELADO ni FINALIZADO
-// Solo BORRADOR permite crear/editar/eliminar actividades
+// Solo BORRADOR permite crear/editar/eliminar actividades por completo
 $puedeEditar = $plan['estado'] === 'BORRADOR';
+// EN_CURSO: solo se permite marcar el Estado de cada actividad (avance real),
+// sin tocar fecha/hora/descripción/auditado/proceso/auditor — eso ya quedó fijo en BORRADOR
+$soloMarcarEstado = $plan['estado'] === 'EN_CURSO';
 $estadosAct  = ['PENDIENTE','EN_CURSO','COMPLETADA','CANCELADA'];
 ?>
 
@@ -146,14 +149,14 @@ $estadosAct  = ['PENDIENTE','EN_CURSO','COMPLETADA','CANCELADA'];
                             <th>Proceso</th>
                             <th>Auditor</th>
                             <th class="text-center">Estado</th>
-                            <?php if ($puedeEditar): ?><th class="text-center d-print-none">Acc.</th><?php endif; ?>
+                            <?php if ($puedeEditar || $soloMarcarEstado): ?><th class="text-center d-print-none">Acc.</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($actividades as $a): ?>
                         <tr>
-                            <td style="white-space:nowrap;"><?= fechaEs($a['fecha']) ?></td>
-                            <td style="white-space:nowrap;">
+                            <td style="white-space:normal;"><?= fechaEs($a['fecha']) ?></td>
+                            <td style="white-space:normal;">
                                 <?= $a['hora_inicio'] ? substr($a['hora_inicio'],0,5) : '—' ?>
                                 <?= $a['hora_fin'] ? '→'.substr($a['hora_fin'],0,5) : '' ?>
                                 <?php if ($a['duracion_minutos']): ?>
@@ -182,6 +185,20 @@ $estadosAct  = ['PENDIENTE','EN_CURSO','COMPLETADA','CANCELADA'];
                                     </button>
                                 </form>
                             </td>
+                            <?php elseif ($soloMarcarEstado): ?>
+                            <td class="text-center d-print-none">
+                                <?php if (in_array($a['estado'], ['COMPLETADA','CANCELADA'], true)): ?>
+                                <span class="text-muted" title="Estado final, no editable">
+                                    <i class="bi bi-lock-fill" style="font-size:11px;"></i>
+                                </span>
+                                <?php else: ?>
+                                <button class="btn btn-xs btn-outline-primary py-0 px-1"
+                                        title="Marcar avance"
+                                        onclick="editarActividad(<?= htmlspecialchars(json_encode($a)) ?>, true)">
+                                    <i class="bi bi-check2-square" style="font-size:11px;"></i>
+                                </button>
+                                <?php endif; ?>
+                            </td>
                             <?php endif; ?>
                         </tr>
                         <?php endforeach; ?>
@@ -199,34 +216,34 @@ $estadosAct  = ['PENDIENTE','EN_CURSO','COMPLETADA','CANCELADA'];
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header" style="background:var(--lim-blue);color:#fff;">
-        <h6 class="modal-title mb-0"><i class="bi bi-pencil me-2"></i>Editar Actividad</h6>
+        <h6 class="modal-title mb-0" id="tituloModalEditarAct"><i class="bi bi-pencil me-2"></i>Editar Actividad</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <form id="formEditarAct" method="POST">
         <?= csrfField() ?>
         <div class="modal-body">
-          <div class="row g-3" id="seccionForm">
-            <div class="col-md-4">
+          <div class="row g-3" id="seccionFormEditar">
+            <div class="col-md-4" id="grpFecha">
                 <label class="form-label fw-semibold">Fecha</label>
                 <input type="date" class="form-control" name="fecha" id="editFecha" required>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4" id="grpHoraIni">
                 <label class="form-label">Hora inicio</label>
                 <input type="time" class="form-control" name="hora_inicio" id="editHoraIni">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4" id="grpHoraFin">
                 <label class="form-label">Hora fin</label>
                 <input type="time" class="form-control" name="hora_fin" id="editHoraFin">
             </div>
-            <div class="col-12">
+            <div class="col-12" id="grpActividad">
                 <label class="form-label fw-semibold">Actividad</label>
                 <textarea class="form-control" name="actividad" id="editActividad" rows="2" required></textarea>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6" id="grpAuditado">
                 <label class="form-label">Auditado</label>
                 <input type="text" class="form-control" name="auditado" id="editAuditado">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6" id="grpEstado">
                 <label class="form-label">Estado</label>
                 <select class="form-select" name="estado" id="editEstado">
                     <?php foreach ($estadosAct as $est): ?>
@@ -234,7 +251,7 @@ $estadosAct  = ['PENDIENTE','EN_CURSO','COMPLETADA','CANCELADA'];
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6" id="grpProceso">
                 <label class="form-label">Proceso</label>
                 <select class="form-select" name="id_proceso_actividad" id="editProceso">
                     <option value="">— Sin proceso —</option>
@@ -243,7 +260,7 @@ $estadosAct  = ['PENDIENTE','EN_CURSO','COMPLETADA','CANCELADA'];
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6" id="grpAuditor">
                 <label class="form-label">Auditor</label>
                 <select class="form-select" name="id_auditor" id="editAuditor">
                     <option value="">— Sin asignar —</option>
@@ -304,7 +321,7 @@ function calcDuracion() {
 document.addEventListener('DOMContentLoaded', function() { syncTime('ini'); syncTime('fin'); });
 
 // Poblar modal de edición
-function editarActividad(a) {
+function editarActividad(a, soloEstado) {
     var base = '<?= e(APP_URL) ?>/auditoria/plan/<?= (int)$plan['id'] ?>/actividades/editar/';
     document.getElementById('formEditarAct').action = base + a.id;
     document.getElementById('editFecha').value     = a.fecha || '';
@@ -315,6 +332,19 @@ function editarActividad(a) {
     document.getElementById('editEstado').value    = a.estado || 'PENDIENTE';
     document.getElementById('editProceso').value   = a.id_proceso_actividad || '';
     document.getElementById('editAuditor').value   = a.id_auditor || '';
+
+    // EN_CURSO: solo se permite marcar avance (Estado), el resto del cronograma queda fijo
+    var gruposOcultables = ['grpFecha','grpHoraIni','grpHoraFin','grpActividad','grpAuditado','grpProceso','grpAuditor'];
+    gruposOcultables.forEach(function(idGrupo) {
+        var el = document.getElementById(idGrupo);
+        if (el) el.style.display = soloEstado ? 'none' : '';
+    });
+    document.getElementById('editFecha').required     = !soloEstado;
+    document.getElementById('editActividad').required = !soloEstado;
+    document.getElementById('tituloModalEditarAct').innerHTML = soloEstado
+        ? '<i class="bi bi-check2-square me-2"></i>Marcar Avance — ' + (a.actividad || '')
+        : '<i class="bi bi-pencil me-2"></i>Editar Actividad';
+
     new bootstrap.Modal(document.getElementById('modalEditarAct')).show();
 }
 </script>

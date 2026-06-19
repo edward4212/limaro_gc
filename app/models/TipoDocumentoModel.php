@@ -75,7 +75,7 @@ class TipoDocumentoModel extends Model
     public function crear(string $tipo, string $sigla, string $estado = 'ACTIVO'): int
     {
         return $this->insert([
-            'tipo_documento'       => strtoupper($tipo),
+            'tipo_documento'       => trim($tipo),
             'sigla_tipo_documento' => strtoupper($sigla),
             'estado'               => $estado,
         ]);
@@ -84,7 +84,7 @@ class TipoDocumentoModel extends Model
     public function actualizar(int $id, string $tipo, string $sigla, string $estado): bool
     {
         return $this->update($id, [
-            'tipo_documento'       => strtoupper($tipo),
+            'tipo_documento'       => trim($tipo),
             'sigla_tipo_documento' => strtoupper($sigla),
             'estado'               => $estado,
         ]);
@@ -118,6 +118,13 @@ class TipoDocumentoModel extends Model
         return $docs + $acuerdos;
     }
 
+
+    public function getSiglas(): array
+    {
+        return $this->query(
+            "SELECT sigla_tipo_documento FROM tipo_documento ORDER BY id_tipo_documento"
+        )->fetchAll(\PDO::FETCH_COLUMN);
+    }
 
     public function porNombre(string $nombre): ?array
     {

@@ -44,43 +44,75 @@ $pageTitle = $pageTitle ?? $empNombre;
     <link rel="stylesheet" href="<?= e(APP_URL) ?>/assets/css/app.css">
     
     <style>
-    /* ── Tipografía global responsive ── */
-    *, body, p, span, div, td, th, li, a, label, input, select, textarea, button {
+    /* ── 1. FUENTE GLOBAL Arial ── */
+    *, *::before, *::after {
         font-family: Arial, 'Helvetica Neue', sans-serif !important;
     }
-    /* Base: 14px para pantallas normales (< 1400px) */
-    body, p, span, div, td, th, li, a, label {
-        font-size: 14px;
-        color: #000;
-    }
-    /* Pantallas grandes (≥ 1400px): 15px */
-    @media (min-width: 1400px) {
-        body, p, span, div, td, th, li, a, label { font-size: 15px; }
-        table, table th, table td,
-        table.dataTable, table.dataTable th, table.dataTable td {
-            font-size: 15px !important;
-        }
-    }
-    /* Móvil (< 576px): 13px para no desbordar */
-    @media (max-width: 575px) {
-        body, p, span, div, td, th, li, a, label { font-size: 13px; }
-        table, table th, table td { font-size: 13px !important; }
-    }
-    /* Iconos Bootstrap no cambian font-family */
     .bi, [class^="bi-"], [class*=" bi-"] {
         font-family: 'Bootstrap Icons' !important;
-        color: inherit !important;
     }
-    /* Títulos */
-    h1 { font-size: 22px !important; }
-    h2 { font-size: 18px !important; }
-    h3 { font-size: 16px !important; }
-    h4 { font-size: 14px !important; }
-    /* Sidebar */
-    .sidebar-link { font-size: 13px !important; color: #94A3B8 !important; }
-    .sidebar-link.active { color: #fff !important; }
-    .sidebar-brand-text strong { font-size: 14px !important; color: #fff !important; }
-    .sidebar-brand-text small { font-size: 11px !important; color: #00B5D8 !important; }
+
+    /* ── 2. COLOR Y TAMAÑO — solo elementos de contenido ── */
+    body { font-size: 14px; color: #000; }
+    p, td, th, li, label, .form-label, .form-text,
+    .card-title, .card-text, .modal-title,
+    h1, h2, h3, h4, h5, h6 { color: #000; }
+    h1 { font-size: 22px; }
+    h2 { font-size: 18px; }
+    h3 { font-size: 16px; }
+    h4 { font-size: 14px; }
+
+    /* ── 3. RESPONSIVE font-size ── */
+    @media (min-width: 1400px) {
+        body { font-size: 15px; }
+        td, th { font-size: 15px !important; }
+    }
+    @media (max-width: 575px) {
+        body { font-size: 13px; }
+        td, th { font-size: 13px !important; }
+    }
+
+    /* ── 4. BOTONES — siempre blanco en fondos sólidos ── */
+    .btn-primary, .btn-lim-primary,
+    .btn-success, .btn-danger, .btn-warning,
+    .btn-info, .btn-dark, .btn-secondary,
+    .btn-primary *, .btn-lim-primary *,
+    .btn-success *, .btn-danger *, .btn-dark * {
+        color: #fff !important;
+    }
+    .btn-outline-primary { color: #1B3A6B !important; }
+    .btn-outline-success { color: #198754 !important; }
+    .btn-outline-danger  { color: #dc3545 !important; }
+    .btn-outline-info    { color: #0dcaf0 !important; }
+    .btn-outline-secondary { color: #6c757d !important; }
+
+    /* ── 5. SIDEBAR — máxima especificidad, color blanco ── */
+    #sidebar, .sidebar,
+    #sidebar *, .sidebar *,
+    #sidebar a, .sidebar a,
+    #sidebar span, .sidebar span,
+    #sidebar i, .sidebar i,
+    .sidebar-link,
+    .sidebar-link span,
+    .sidebar-link i {
+        color: rgba(255,255,255,0.85) !important;
+    }
+    .sidebar-link.active,
+    .sidebar-link.active *,
+    .sidebar-link[aria-expanded="true"],
+    .sidebar-link[aria-expanded="true"] * {
+        color: #fff !important;
+    }
+    .sidebar-link:hover,
+    .sidebar-link:hover * {
+        color: #E0F7FC !important;
+    }
+    .sidebar-brand-text strong { color: #fff !important; font-size: 13px !important; }
+    .sidebar-brand-text small  { color: #00B5D8 !important; font-size: 10px !important; }
+    /* Cerrar sesión */
+    .sidebar .text-danger,
+    .sidebar a.text-danger,
+    .sidebar .text-danger * { color: #EF4444 !important; }
     </style>
 </head>
 <body>
@@ -93,11 +125,11 @@ $pageTitle = $pageTitle ?? $empNombre;
         <!-- Brand -->
        <a class="sidebar-brand" href="<?= e(APP_URL) ?>/inicio">
     <div class="sidebar-logo d-flex align-items-center justify-content-center"
-         style="background:var(--lim-blue);border-radius:8px;overflow:hidden;">
+         style="background:#fff;border-radius:8px;overflow:hidden;padding:4px;width:44px;height:44px;flex-shrink:0;">
         <?php if ($empLogo): ?>
-            <img src="<?= e($empLogo) ?>"
+            <img src="<?= e($empLogo) ?>" alt="<?= e($empNombre) ?>""
                  alt="<?= e($empNombre) ?>"
-                 style="max-width:36px;max-height:36px;object-fit:contain;"
+                 style="max-width:36px;max-height:36px;object-fit:contain;width:36px;height:36px;"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <!-- Fallback SVG oculto por defecto -->
             <svg class="logo-fallback" style="display:none;" width="36" height="36" viewBox="0 0 36 36" fill="none" aria-label="<?= e($empNombre) ?>">
@@ -117,7 +149,7 @@ $pageTitle = $pageTitle ?? $empNombre;
     </div>
     <div class="sidebar-brand-text">
         <strong><?= e($empNombre) ?></strong>
-        <small>ISO 9001:2015</small>
+        <!--<small>ISO 9001:2015</small>-->
     </div>
 </a>
 
@@ -315,7 +347,7 @@ $pageTitle = $pageTitle ?? $empNombre;
             </span>
             <div class="dropdown">
                 <button class="btn p-0 border-0 bg-transparent" data-bs-toggle="dropdown">
-             <img class="topbar-avatar"
+             <img class="topbar-avatar" alt="Foto de perfil"
      src="<?= e(urlFotoPerfil($authUser['img_empleado'] ?? null, Auth::id())) ?>"
      alt="Avatar"
      onerror="this.onerror=null; this.src='<?= e(APP_URL) ?>/assets/img/usuario.png'; this.classList.add('img-error');">
@@ -385,5 +417,83 @@ $pageTitle = $pageTitle ?? $empNombre;
     <span><?= defined('APP_VERSION') ? APP_VERSION : 'V1.0' ?></span>
 </footer>
 
+<script>
+(function() {
+    const TIMEOUT_MS    = 10 * 60 * 1000;  // 10 minutos
+    const AVISO_MS      = 9  * 60 * 1000;  //  9 minutos — aviso 1 min antes
+    const LOGOUT_URL    = '<?= e(APP_URL) ?>/logout';
+    let timerAviso, timerLogout, swalAbierto = false;
+
+    function resetTimer() {
+        clearTimeout(timerAviso);
+        clearTimeout(timerLogout);
+        if (swalAbierto && typeof Swal !== 'undefined') {
+            Swal.close();
+            swalAbierto = false;
+        }
+        // Aviso a los 9 minutos
+        timerAviso = setTimeout(function() {
+            if (typeof Swal === 'undefined') { doLogout(); return; }
+            swalAbierto = true;
+            let segundos = 60;
+            Swal.fire({
+                icon:              'warning',
+                title:             'Sesión por expirar',
+                html:              'Su sesión cerrará en <strong id="cuentaReg">60</strong> segundos por inactividad.',
+                confirmButtonText: 'Seguir conectado',
+                confirmButtonColor:'#1B3A6B',
+                showCancelButton:  true,
+                cancelButtonText:  'Cerrar sesión',
+                cancelButtonColor: '#dc3545',
+                allowOutsideClick: false,
+                didOpen: function() {
+                    const el = document.getElementById('cuentaReg');
+                    const intervalo = setInterval(function() {
+                        segundos--;
+                        if (el) el.textContent = segundos;
+                        if (segundos <= 0) clearInterval(intervalo);
+                    }, 1000);
+                }
+            }).then(function(result) {
+                swalAbierto = false;
+                if (result.isConfirmed) {
+                    resetTimer();
+                    // Ping al servidor para renovar _last_activity
+                    fetch('<?= e(APP_URL) ?>/inicio', { method: 'HEAD', credentials: 'same-origin' });
+                } else {
+                    doLogout();
+                }
+            });
+        }, AVISO_MS);
+
+        // Logout automático a los 10 minutos
+        timerLogout = setTimeout(doLogout, TIMEOUT_MS);
+    }
+
+    function doLogout() {
+        window.location.href = LOGOUT_URL;
+    }
+
+    // Detectar actividad del usuario
+    ['mousemove','keydown','mousedown','touchstart','scroll','click'].forEach(function(ev) {
+        document.addEventListener(ev, resetTimer, { passive: true });
+    });
+
+    // Cerrar sesión si se cierra la pestaña/navegador y no hay otras pestañas abiertas
+    window.addEventListener('beforeunload', function() {
+        // Usar localStorage para contar pestañas abiertas
+        const key = 'limaro_tabs';
+        let tabs = parseInt(localStorage.getItem(key) || '0');
+        localStorage.setItem(key, Math.max(0, tabs - 1));
+    });
+    window.addEventListener('load', function() {
+        const key = 'limaro_tabs';
+        let tabs = parseInt(localStorage.getItem(key) || '0');
+        localStorage.setItem(key, tabs + 1);
+    });
+
+    resetTimer();
+})();
+</script>
 </body>
 </html>

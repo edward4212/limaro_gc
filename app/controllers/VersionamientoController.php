@@ -10,6 +10,7 @@ use App\Core\Session;
 use App\Models\VersionamientoModel;
 use App\Models\DocumentoModel;
 use App\Models\UsuarioModel;
+use App\Core\Database;
 
 /**
  * Controlador de Versionamiento.
@@ -93,6 +94,15 @@ class VersionamientoController extends Controller
             Session::flash('error', 'Descripción, elaborador, revisor, aprobador y estado son obligatorios.');
             $this->redirect("/versionamiento/nueva/$id");
             return;
+        }
+
+        // Segregación de funciones (recomendado, no bloqueante mientras el equipo sea pequeño):
+        // advertir si la misma persona figura en más de un rol de la cadena de aprobación.
+        $idsRoles = [(int)$data['id_usuario_creacion'], (int)$data['id_usuario_revision'], (int)$data['id_usuario_aprobacion']];
+        if (count(array_unique($idsRoles)) < count($idsRoles)) {
+            Session::flash('warning',
+                'Atención: la misma persona figura en más de un rol (elaborador/revisor/aprobador) ' .
+                'de esta versión. Se recomienda que sean personas distintas para mantener la segregación de funciones.');
         }
 
         // Obtener nombres completos desde IDs (para campos varchar legacy)
@@ -180,10 +190,7 @@ class VersionamientoController extends Controller
                         if (file_exists($absOrigen) && copy($absOrigen, $pathInfo['absoluta'])) {
                             @unlink($absOrigen);
                             $rutaFinal = $pathInfo['relativa'];
-                            $this->model->query(
-                                "UPDATE versionamiento SET documento = ? WHERE id_versionamiento = ?",
-                                [$rutaFinal, $idVersion]
-                            );
+                            $this->model->actualizarRutaDocumento($idVersion, $rutaFinal);
                         }
                         $uploadData['ruta_relativa'] = $rutaFinal;
                     }
@@ -245,6 +252,21 @@ class VersionamientoController extends Controller
         }
 
         $antes = $this->model->find($idVersion);
+        if (!$antes) $this->abort(404);
+
+        // Segregación de funciones: solo el usuario designado como aprobador de
+        // ESTA versión puede pasarla a VIGENTE (equivale a "aprobar" el documento).
+        // ADMINISTRADOR conserva override por si el aprobador original ya no está disponible.
+        if ($nuevoEstado === 'VIGENTE') {
+            $idAprobadorAsignado = (int) ($antes['id_usuario_aprobacion'] ?? 0);
+            $esAprobadorAsignado = $idAprobadorAsignado > 0 && $idAprobadorAsignado === (int) Auth::id();
+            if (!$esAprobadorAsignado && !Auth::hasRole([1])) {
+                Session::flash('error',
+                    'Solo el usuario designado como aprobador de esta versión puede marcarla como VIGENTE.');
+                $this->redirect("/versionamiento/documento/$idDocumento");
+                return;
+            }
+        }
 
         if ($nuevoEstado === 'VIGENTE') {
             $this->model->obsoletizarAnteriores($idDocumento, $idVersion);
@@ -351,6 +373,146 @@ class VersionamientoController extends Controller
                 'No se pudo generar la descarga: <strong>' . htmlspecialchars($e->getMessage()) . '</strong>'
             );
             $this->redirect('/versionamiento/documento/' . $id);
+        }
+    }
+
+    /**
+     * GET /versionamiento/reemplazar/{id_ver}
+     * Formulario para reemplazar el archivo sin crear version nueva.
+     * Solo ADMINISTRADOR, COORDINADOR CALIDAD o LIDER PROCESO.
+     */
+    public function reemplazarForm(int $id_ver): void
+    {
+        $rolesPermitidos = ['ADMINISTRADOR', 'COORDINADOR CALIDAD', 'LIDER PROCESO'];
+        if (!Auth::hasRole($rolesPermitidos)) $this->abort(403);
+
+        $version = $this->model->find($id_ver);
+        if (!$version) $this->abort(404);
+
+        $doc = $this->docModel->find($version['id_documento']);
+        if (!$doc) $this->abort(404);
+
+        // Solo versiones VIGENTE pueden reemplazarse
+        if (($version['estado_version'] ?? '') !== 'VIGENTE') {
+            Session::flash('error', 'Solo se puede reemplazar el archivo de versiones en estado VIGENTE.');
+            $this->redirect("/versionamiento/documento/{$version['id_documento']}");
+        }
+
+        $archivoModel  = new \App\Models\ArchivoModel();
+        $archivosActual = $archivoModel->deEntidad('VERSIONAMIENTO', $id_ver);
+
+        $this->view('documentos/versionamiento_reemplazar', [
+            'pageTitle'     => 'Reemplazar Archivo — ' . $doc['nombre_documento'],
+            'version'       => $version,
+            'documento'     => $doc,
+            'archivoActual' => $archivosActual[0] ?? null,
+        ]);
+    }
+
+    /**
+     * POST /versionamiento/reemplazar/{id_ver}
+     * Guarda el nuevo archivo reemplazando el actual sin crear version nueva.
+     */
+    public function reemplazarGuardar(int $id_ver): void
+    {
+        Csrf::verify();
+
+        $rolesPermitidos = ['ADMINISTRADOR', 'COORDINADOR CALIDAD', 'LIDER PROCESO'];
+        if (!Auth::hasRole($rolesPermitidos)) $this->abort(403);
+
+        $version = $this->model->find($id_ver);
+        if (!$version) $this->abort(404);
+
+        $idDocumento = (int)$version['id_documento'];
+        $doc         = $this->docModel->find($idDocumento);
+        if (!$doc) $this->abort(404);
+
+        // Validar que viene el archivo (Base64 o $_FILES)
+        $tieneB64  = !empty($_POST['archivo_nuevo_b64']);
+        $tieneFile = isset($_FILES['archivo_nuevo']) && ($_FILES['archivo_nuevo']['error'] ?? 4) === UPLOAD_ERR_OK;
+
+        if (!$tieneB64 && !$tieneFile) {
+            Session::flash('error', 'Debe seleccionar un archivo.');
+            $this->redirect("/versionamiento/reemplazar/{$id_ver}");
+        }
+
+        try {
+            // 1. Subir nuevo archivo — Base64 o $_FILES
+            $fileRef = $_FILES['archivo_nuevo'] ?? ['error' => UPLOAD_ERR_NO_FILE, 'name' => '', 'size' => 0, 'tmp_name' => ''];
+            $fileRef['field_name'] = 'archivo_nuevo';
+
+            $uploadData = subirArchivo(
+                $fileRef,
+                'versionamiento',
+                ['application/pdf','application/msword',
+                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                 'application/vnd.ms-excel',
+                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                 'application/vnd.ms-powerpoint',
+                 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                 'application/octet-stream'],
+                30971520  // 30 MB
+            );
+
+            // 2. Mover a la carpeta correcta de esta versión
+            $docInfo = $this->docModel->conDetalle($idDocumento);
+            if ($docInfo) {
+                $pathInfo = getVersionPath(
+                    $docInfo['macroproceso']         ?? '',
+                    $docInfo['proceso']              ?? '',
+                    $docInfo['subproceso']           ?? null,
+                    $docInfo['tipo_documento']       ?? '',
+                    $docInfo['nombre_documento']     ?? '',
+                    (int)$version['numero_version'],
+                    $uploadData['nombre_original'],
+                    $docInfo['sigla_proceso']        ?? '',
+                    $docInfo['sigla_tipo_documento'] ?? '',
+                    $docInfo['codigo']               ?? ''
+                );
+                $absOrigen = APP_ROOT . '/public' . $uploadData['ruta_relativa'];
+                if (!is_dir($pathInfo['carpeta_abs'])) {
+                    mkdir($pathInfo['carpeta_abs'], 0755, true);
+                }
+                if (file_exists($absOrigen)) {
+                    rename($absOrigen, $pathInfo['absoluta']);
+                    $uploadData['ruta_relativa'] = $pathInfo['relativa'];
+                }
+            }
+
+            // 3. Eliminar archivos anteriores registrados para esta versión
+            $archivoModel = new \App\Models\ArchivoModel();
+            $anteriores   = $archivoModel->deEntidad('VERSIONAMIENTO', $id_ver);
+            foreach ($anteriores as $ant) {
+                $rutaAbs = APP_ROOT . '/public' . $ant['ruta_relativa'];
+                if (file_exists($rutaAbs)) @unlink($rutaAbs);
+                Database::getInstance()->prepare(
+                    "DELETE FROM archivo WHERE id_archivo = ?"
+                )->execute([$ant['id_archivo']]);
+            }
+
+            // 4. Registrar nuevo archivo
+            $archivoModel->registrar(
+                'VERSIONAMIENTO',
+                $id_ver,
+                $uploadData,
+                Auth::id() ?? 1
+            );
+
+            // 5. Auditoría
+            registrarAuditoria(
+                'versionamiento', 'REEMPLAZAR_ARCHIVO', 'versionamiento', $id_ver,
+                null, ['codigo' => $doc['codigo'], 'version' => $version['numero_version']]
+            );
+
+            $this->redirectSuccess(
+                "/versionamiento/documento/{$idDocumento}",
+                "Archivo reemplazado correctamente en V{$version['numero_version']}."
+            );
+
+        } catch (\Throwable $e) {
+            error_log('[VersionamientoController::reemplazarGuardar] ' . $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine());
+            Session::flash('error', 'Error: ' . $e->getMessage());
+            $this->redirect("/versionamiento/reemplazar/{$id_ver}");
         }
     }
 

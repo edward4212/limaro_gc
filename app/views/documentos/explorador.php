@@ -11,7 +11,7 @@ foreach ($procesos as $p) {
 
 <?php foreach ($porMacro as $macro => $lista): ?>
 <div class="mb-2">
-    <h6 class="text-muted text-uppercase fw-bold px-1" style="font-size:11px;letter-spacing:1px;">
+    <h6 class="text-muted text-uppercase fw-bold px-1" style="font-size:12px;letter-spacing:1px;">
         <i class="bi bi-layers me-1"></i><?= e($macro) ?>
     </h6>
     <div class="row g-3 mb-4">
@@ -54,7 +54,7 @@ foreach ($procesos as $p) {
 
 <!-- ── Modal nivel 2: Tipos (cuando viene de subproceso) ────────────── -->
 <div class="modal fade" id="modalNivel2" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:min(95vw,1100px);width:95vw;">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:min(98vw,1100px);width:98vw;">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="tituloNivel2"></h5>
@@ -75,7 +75,7 @@ foreach ($procesos as $p) {
         <h5 class="modal-title" id="tituloDocs"></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body p-0" id="cuerpoDocs" style="max-height:72vh;overflow-y:auto;">
+      <div class="modal-body p-0" id="cuerpoDocs" style="max-height:98vh;overflow-y:auto;">
         <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
       </div>
     </div>
@@ -86,8 +86,8 @@ foreach ($procesos as $p) {
 .card-proceso:hover { transform:translateY(-3px); box-shadow:0 6px 18px rgba(30,95,191,.18)!important; }
 .card-tipo  { cursor:pointer; border:2px solid transparent; transition:.15s; }
 .card-tipo:hover { border-color:var(--lim-blue); background:#f0f6ff; }
-.badge-vigente   { background:#198754; color:#fff; font-size:11px; padding:3px 7px; border-radius:20px; }
-.badge-sin-arch  { background:#dc3545; color:#fff; font-size:11px; padding:3px 7px; border-radius:20px; }
+.badge-vigente   { background:#198754; color:#fff; font-size:12px; padding:3px 7px; border-radius:20px; }
+.badge-sin-arch  { background:#dc3545; color:#fff; font-size:12px; padding:3px 7px; border-radius:20px; }
 </style>
 
 
@@ -100,9 +100,9 @@ foreach ($procesos as $p) {
            style="background:linear-gradient(135deg,var(--lim-blue-dark),var(--lim-blue));color:#fff;">
         <span class="modal-title" id="visorTitulo" style="font-size:14px;font-weight:600;"></span>
         <div class="d-flex gap-2 ms-auto">
-          <a id="visorDescargar" href="#" class="btn btn-sm btn-outline-light py-0" title="Descargar">
-            <i class="bi bi-download me-1"></i>Descargar
-          </a>
+          <!--<a id="visorDescargar" href="#" class="btn btn-sm btn-outline-light py-0" title="Descargar">-->
+          <!--  <i class="bi bi-download me-1"></i>Descargar-->
+          <!--</a>-->
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
       </div>
@@ -176,7 +176,7 @@ function renderSubprocesos(subprocesos, tiposDirectos, idProceso) {
                      onclick="abrirSubproceso(${s.id_subproceso},'${esc(s.subproceso)}',${idProceso})">
                     <i class="bi bi-folder2 text-info mb-1" style="font-size:1.5rem;"></i>
                     <div style="font-size:13px;font-weight:600;">${esc(s.subproceso)}</div>
-                    <code style="font-size:11px;">${esc(s.sigla_subproceso)}</code>
+                    
                 </div>
             </div>`;
         });
@@ -204,16 +204,20 @@ function abrirSubproceso(idSubproceso, nombreSub, idProceso) {
 
     new bootstrap.Modal(document.getElementById('modalNivel2')).show();
 
-    fetch(`${APP_URL}/documentos/explorador/proceso/${idProceso}`)
+    // Pedir tipos filtrados específicamente por subproceso
+    fetch(`${APP_URL}/documentos/explorador/tipo?id_proceso=${idProceso}&id_tipo=0&id_subproceso=${idSubproceso}&solo_tipos=1`)
         .then(r => r.json())
         .then(data => {
-            // Filtrar tipos que tengan documentos bajo ese subproceso
-            // Pedimos al backend los tipos filtrados
-            fetch(`${APP_URL}/documentos/explorador/tipo?id_proceso=${idProceso}&id_tipo=0&id_subproceso=${idSubproceso}&solo_tipos=1`)
-                .catch(() => null);
-
-            // Mientras tanto usamos los tipos generales del proceso
-            renderTipos(data.tipos, 'cuerpoNivel2', idProceso, idSubproceso);
+            if (data.tipos && data.tipos.length > 0) {
+                renderTipos(data.tipos, 'cuerpoNivel2', idProceso, idSubproceso);
+            } else {
+                document.getElementById('cuerpoNivel2').innerHTML =
+                    '<p class="text-muted text-center py-4"><i class="bi bi-inbox me-2"></i>No hay documentos vigentes en este subproceso.</p>';
+            }
+        })
+        .catch(() => {
+            document.getElementById('cuerpoNivel2').innerHTML =
+                '<p class="text-danger text-center py-4">Error al cargar los tipos de documento.</p>';
         });
 }
 
@@ -302,8 +306,8 @@ function renderDocumentos(docs, pagina) {
         // Puede tener archivo en tabla archivo (nuevo) o ruta legada en versionamiento.documento
         const tieneArch = (d.id_archivo && d.id_archivo > 0) || (d.archivo_ruta && d.archivo_ruta.trim() !== '');
         const dot = tieneArch
-            ? '<i class="bi bi-circle-fill text-success me-1" style="font-size:8px;"></i>'
-            : '<i class="bi bi-circle text-danger me-1" style="font-size:8px;"></i>';
+            ? '<i class="bi bi-circle-fill text-success me-1" style="font-size:12px;"></i>'
+            : '<i class="bi bi-circle text-danger me-1" style="font-size:12px;"></i>';
         const urlVer      = d.id_archivo > 0
             ? `${APP_URL}/archivo/${d.id_archivo}?inline=1`
             : `${APP_URL}/archivo/v/${d.id_versionamiento}?inline=1`;
@@ -325,7 +329,7 @@ function renderDocumentos(docs, pagina) {
                <a href="${urlDescarga}"
                   class="btn btn-sm btn-outline-primary py-0 px-2" title="Descargar">
                   <i class="bi bi-download"></i></a>`
-            : '<span class="text-muted" style="font-size:11px;">Sin archivo</span>';
+            : '<span class="text-muted" style="font-size:12px;">Sin archivo</span>';
         // Tomar solo YYYY-MM-DD (los primeros 10 caracteres) para evitar
         // que la hora afecte el parseo en diferentes zonas horarias
         const fechaStr = d.fecha_aprobacion ? String(d.fecha_aprobacion).substring(0, 10) : null;
@@ -333,16 +337,14 @@ function renderDocumentos(docs, pagina) {
         const fecha = partesFecha && partesFecha.length === 3
             ? `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`
             : '—';
-        const desc = d.descripcion_version || d.objetivo_documento || '';
+        const desc ='';
         html += `<tr>
-            <td><code style="font-size:11px;background:#f1f5f9;padding:2px 5px;border-radius:3px;">${esc(d.codigo)}</code></td>
+            <td><code style="font-size:12px;background:#f1f5f9;padding:2px 5px;border-radius:3px;">${esc(d.codigo)}</code></td>
             <td>
                 <div style="font-size:13px;font-weight:500;">${dot}${esc(d.nombre_documento)}</div>
-                ${desc ? `<small class="text-muted d-block" style="font-size:11px;">${esc(desc).substring(0,100)}${desc.length>100?'...':''}</small>` : ''}
-                ${d.nombre_subproceso ? `<span class="badge bg-info text-dark mt-1" style="font-size:10px;">${esc(d.nombre_subproceso)}</span>` : ''}
             </td>
             <td class="text-center"><span class="badge bg-primary">v${d.numero_version}</span></td>
-            <td><small style="font-size:11px;">${fecha}</small></td>
+            <td><small style="font-size:12px;">${fecha}</small></td>
             <td class="text-center">${btns}</td>
         </tr>`;
     });

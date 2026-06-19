@@ -6,6 +6,7 @@
 if (($_GET['tok'] ?? '') !== 'limaro2026test') die('Acceso denegado.');
 
 require_once dirname(__DIR__) . '/config/config.php';
+require_once APP_ROOT . '/app/helpers/format.php';
 require_once APP_ROOT . '/app/helpers/notificaciones.php';
 
 echo '<pre style="font-family:monospace;font-size:13px;padding:20px;">';

@@ -3,6 +3,7 @@
 </div>
 <div class="row g-3">
     <?php foreach ($cargos as $c): ?>
+    <?php if (!($c['id_archivo'] ?? null)) continue; ?>
     <div class="col-md-4 col-lg-3">
         <div class="card h-100 text-center">
             <div class="card-body d-flex flex-column align-items-center py-4">

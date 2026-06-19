@@ -30,7 +30,7 @@ $opciones = [
 <td style="font-size:12px;"><?= e(truncar($d['descripcion'],70)) ?></td>
 <td style="font-size:12px;"><?= e($d['responsable_nombre']??$d['responsable']??'—') ?></td>
 <td style="font-size:12px;"><?= $d['fecha_cierre'] ? fechaEs($d['fecha_cierre']) : '—' ?></td>
-<td><?= badgeEstado($d['estado']) ?></td>
+<td><?= badgeEstado($d['estado'] ?? 'ABIERTO') ?></td>
 </tr>
 <?php endforeach; ?>
 </tbody></table></div></div>

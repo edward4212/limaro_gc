@@ -107,8 +107,8 @@
                         <?= $p['tipo'] === 'INTERNA' ? '🏢' : '🌐' ?> <?= $p['tipo'] ?>
                     </span>
                 </td>
-                <td style="font-size:12px;"><?= e(truncar($p['necesidades'] ?? '—', 60)) ?></td>
-                <td style="font-size:12px;"><?= e(truncar($p['expectativas'] ?? '—', 60)) ?></td>
+                <td style="font-size:12px;"><?= e(truncar($p['necesidades'] ?? '—', 500)) ?></td>
+                <td style="font-size:12px;"><?= e(truncar($p['expectativas'] ?? '—', 500)) ?></td>
                 <td class="text-center">
                     <span class="badge <?= $nivelBadge($p['nivel_influencia']) ?>" style="font-size:10px;">
                         <?= $p['nivel_influencia'] ?>

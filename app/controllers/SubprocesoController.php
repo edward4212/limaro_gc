@@ -93,7 +93,8 @@ class SubprocesoController extends Controller
             registrarAuditoria('subprocesos', 'CREAR', 'subproceso', $id, null, $data);
             $this->redirectSuccess('/subprocesos', 'Subproceso creado exitosamente.');
         } catch (\Throwable $e) {
-            Session::flash('error', 'Error al crear el subproceso: Error interno. Contacte al administrador.');
+            error_log('[SubprocesoController::guardar] ' . $e->getMessage());
+            Session::flash('error', 'Error al crear el subproceso. Intente nuevamente.');
             Session::setOldInput($data);
             $this->redirect('/subprocesos/crear');
         }

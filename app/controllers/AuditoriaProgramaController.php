@@ -26,7 +26,7 @@ class AuditoriaProgramaController extends Controller
     {
         $filtros = ['anio' => Request::get('anio',''), 'estado' => Request::get('estado','')];
         $this->view('sgc/auditoria_programa/index', [
-            'pageTitle' => 'Programas de Auditoría §9.2',
+            'pageTitle' => 'Programas de Auditoría',
             'programas' => $this->model->listar($filtros),
             'filtros'   => $filtros,
         ]);

@@ -17,7 +17,7 @@
 <div class="alert alert-secondary d-flex gap-3 align-items-center py-2 mb-4">
     <i class="bi bi-file-earmark-text fs-4 text-primary"></i>
     <div>
-        <code class="fs-6"><?= e($item['codigo'] ?? '') ?></code>
+        <code class="fs-6"><?= e($item['codigo'] ?? '') ?></span>
         <span class="ms-2 fw-semibold"><?= e($item['nombre_documento']) ?></span>
         <div class="text-muted" style="font-size:12px;">Proceso actual: <?= e($item['proceso'] ?? '—') ?></div>
     </div>

@@ -43,7 +43,7 @@ endif; ?>
                     <td><?= prioridadLabel($a['prioridad'] ?? '') ?></td>
                     <td><span class="badge bg-primary"><?= e($a['rol_asignacion']) ?></span></td>
                     <td><?= fechaEs($a['fecha_asignacion']) ?></td>
-                    <td><?= badgeEstado($a['estado_solicitud']) ?></td>
+                    <td><?= badgeEstado($d['estado_solicitud'] ?? 'CREADO') ?></td>
                     <td>
                         <?php if (!$a['id_tarea']): ?>
                         <form method="POST" action="<?= e(APP_URL) ?>/tareas/iniciar/<?= $a['id_solicitud'] ?>" style="display:inline;">

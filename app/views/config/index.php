@@ -10,16 +10,16 @@
             </div>
             <div class="card-body">
                 <p class="text-muted small mb-3">
-                    La configuración SMTP se gestiona en el archivo <code>.env</code> del servidor.
+                    La configuración SMTP se gestiona en el archivo <span>.env</span> del servidor.
                     Aquí puede verificar la configuración actual y enviar un correo de prueba.
                 </p>
 
                 <table class="table table-sm table-bordered">
                     <tbody>
-                        <tr><th style="width:180px">Servidor SMTP</th><td><code><?= e($smtpHost) ?: '<span class="text-danger">No configurado</span>' ?></code></td></tr>
-                        <tr><th>Puerto</th><td><code><?= e($smtpPort) ?></code></td></tr>
-                        <tr><th>Cifrado</th><td><code><?= strtoupper(e($smtpEnc)) ?></code></td></tr>
-                        <tr><th>Usuario</th><td><code><?= e($smtpUser) ?: '<span class="text-danger">No configurado</span>' ?></code></td></tr>
+                        <tr><th style="width:180px">Servidor SMTP</th><td><span><?= e($smtpHost) ?: '<span class="text-danger">No configurado</span>' ?></span></td></tr>
+                        <tr><th>Puerto</th><td><span><?= e($smtpPort) ?></span></td></tr>
+                        <tr><th>Cifrado</th><td><span><?= strtoupper(e($smtpEnc)) ?></span></td></tr>
+                        <tr><th>Usuario</th><td><span><?= e($smtpUser) ?: '<span class="text-danger">No configurado</span>' ?></span></td></tr>
                         <tr><th>Remitente</th><td><?= e($mailFromName) ?> &lt;<?= e($mailFrom) ?>&gt;</td></tr>
                     </tbody>
                 </table>

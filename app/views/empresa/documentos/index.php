@@ -64,24 +64,29 @@ $totalInactivos = count(array_filter($documentos, fn($d) => ($d['estado'] ?? 'AC
                     $inactivo = ($d['estado'] ?? 'ACTIVO') === 'INACTIVO';
                     $grupoClave = ($d['macroproceso'] ?? '') . ' — ' . ($d['proceso'] ?? '');
                 ?>
-                <tr class="<?= $inactivo ? 'text-muted' : '' ?>">
+                <tr class="<?= $inactivo ? 'text-muted' : '' ?> ">
                     <td><?= e($grupoClave) ?></td>
                     <td>
-                        <span class="<?= $inactivo ? : '' ?>">
+                        <code class="<?= $inactivo ? : '' ?>">
                             <?= e($d['codigo']) ?>
-                        </span>
+                        </code>
+                        <!--<?php if (!empty($d['codigo_anterior'])): ?>-->
+                        <!--<br><small class="text-muted" style="font-size:12px;">-->
+                        <!--    <del><?= e($d['codigo_anterior']) ?></del>-->
+                        <!--</small>-->
+                        <!--<?php endif; ?>-->
                     </td>
-                    <td style="font-size:12px;"><?= e(truncar($d['nombre_documento'], 500)) ?></td>
-                    <td>
+                     <td style="font-size:12px;" title="<?= e($d['nombre_documento']) ?>"><?= e(truncar($d['nombre_documento'], 500)) ?></td>
+                    <!--<td>-->
                         <!-- CA-4 HU-006: sigla + nombre del tipo -->
-                        <span ><?= e($d['sigla_tipo_documento']) ?></span>
-                        <span > <?= e($d['tipo_documento']) ?></span>
-                    </td>
-                    <td style="font-size:11px;"><?= e($d['proceso']) ?></td>
+                    <!--    <span class="badge bg-secondary" style="font-size:12px;line-height:1.4;"><?= e($d['sigla_tipo_documento']) ?></span> -->
+                    <!--    <span class="badge bg-secondary" style="font-size:12px;line-height:1.4;"> <?= e($d['tipo_documento']) ?></span>-->
+                    <!--</td>-->
+                    <td><span class="badge bg-secondary" style="font-size:12px;line-height:1.4;"><?= e($d['sigla_tipo_documento'] ?? '') ?> - <small style='font-size:12px;font-weight:normal;opacity:.85;'><?= e($d['tipo_documento'] ?? '') ?></small></span></td>
+                    <td style="font-size:12px;"><?= e($d['proceso']) ?></td>
                     <td>
                         <?php if (!empty($d['nombre_subproceso'])): ?>
-                        <span class="badge bg-info text-dark"
-                              style="font-size:10px;"><?= e($d['nombre_subproceso']) ?></span>
+                        <span><?= e($d['nombre_subproceso']) ?></span>
                         <?php else: ?><span class="text-muted">—</span><?php endif; ?>
                     </td>
                     <td class="text-center">

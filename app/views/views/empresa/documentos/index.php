@@ -69,7 +69,7 @@ $totalInactivos = count(array_filter($documentos, fn($d) => ($d['estado'] ?? 'AC
                     <td>
                         <code class="<?= $inactivo ? : '' ?>">
                             <?= e($d['codigo']) ?>
-                        </code>
+                        </span>
                         <!--<?php if (!empty($d['codigo_anterior'])): ?>-->
                         <!--<br><small class="text-muted" style="font-size:12px;">-->
                         <!--    <del><?= e($d['codigo_anterior']) ?></del>-->

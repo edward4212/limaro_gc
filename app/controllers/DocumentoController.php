@@ -184,15 +184,20 @@ class DocumentoController extends Controller
             return;
         }
 
-        if ($idProcesoNuevo === (int)$antes['id_proceso']) {
-            Session::flash('error', 'El proceso destino es el mismo que el actual. Seleccione uno diferente.');
+        $idSubprocesoNuevo = !empty($data['id_subproceso_nuevo']) ? (int)$data['id_subproceso_nuevo'] : null;
+
+        // Bloquear solo si el proceso Y el subproceso son exactamente los mismos
+        $mismosProceso    = $idProcesoNuevo === (int)$antes['id_proceso'];
+        $mismoSubproceso  = $idSubprocesoNuevo === ((!empty($antes['id_subproceso'])) ? (int)$antes['id_subproceso'] : null);
+
+        if ($mismosProceso && $mismoSubproceso) {
+            Session::flash('error', 'El proceso y subproceso destino son los mismos que el actual. Seleccione una ubicación diferente.');
             $this->redirect("/documentos/reasignar/$id");
             return;
         }
 
         try {
-            $idSubprocesoNuevo = !empty($data['id_subproceso_nuevo']) ? (int)$data['id_subproceso_nuevo'] : null;
-            $this->model->reubicar($id, $idProcesoNuevo, $idSubprocesoNuevo, $data['observacion_reasignacion'] ?? '');
+            $this->model->reubicar($id, $idProcesoNuevo, $idSubprocesoNuevo, Auth::get('usuario', 'admin'), $data['observacion_reasignacion'] ?? '');
             registrarAuditoria('documentos', 'REASIGNAR', 'documento', $id, $antes, $data);
             $this->redirectSuccess('/documentos', 'Documento reasignado correctamente. El código fue actualizado.');
         } catch (\Throwable $e) {
@@ -312,11 +317,27 @@ public function ajaxProceso(int $id): void
  */
 public function ajaxTipo(): void
 {
-    $idProceso   = (int) Request::get('id_proceso', 0);
-    $idTipo      = (int) Request::get('id_tipo', 0);
+    $idProceso    = (int) Request::get('id_proceso', 0);
+    $idTipo       = (int) Request::get('id_tipo', 0);
     $idSubproceso = (int) Request::get('id_subproceso', 0) ?: null;
+    $soloTipos    = Request::get('solo_tipos', 0);
 
-    if (!$idProceso || !$idTipo) {
+    if (!$idProceso) {
+        $this->json(['error' => 'Parámetros incompletos.'], 400);
+        return;
+    }
+
+    // Modo solo_tipos=1: devuelve tarjetas de tipos filtradas por subproceso
+    if ($soloTipos && $idSubproceso) {
+        $tipos = $this->model->tipoConConteo($idProceso, $idSubproceso);
+        $this->json([
+            'tipos'   => $tipos,
+            'total'   => count($tipos),
+        ]);
+        return;
+    }
+
+    if (!$idTipo) {
         $this->json(['error' => 'Parámetros incompletos.'], 400);
         return;
     }

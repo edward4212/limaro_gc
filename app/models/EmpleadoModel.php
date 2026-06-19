@@ -39,6 +39,17 @@ class EmpleadoModel extends Model
         ")->fetchAll();
     }
 
+    /** HU-E02: valida que el id_empleado exista y esté ACTIVO, antes de usarlo como FK */
+    public function esActivo(int $idEmpleado): bool
+    {
+        if ($idEmpleado <= 0) return false;
+        $row = $this->query(
+            "SELECT 1 FROM empleado WHERE id_empleado = ? AND estado_empleado = 'ACTIVO' LIMIT 1",
+            [$idEmpleado]
+        )->fetch();
+        return (bool) $row;
+    }
+
     /**
      * Crear empleado vía SP.
      */

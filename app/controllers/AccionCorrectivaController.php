@@ -21,19 +21,21 @@ class AccionCorrectivaController extends Controller
     public function crear(): void
     {
         Session::clearOldInput();
-        $um = new \App\Models\UsuarioModel();
         $this->view('sgc/acciones/form', [
-            'pageTitle' => 'Nueva Acción Correctiva',
-            'item'      => null,
-            'codigo'    => $this->model->siguienteCodigo(),
-            'usuarios'  => $um->usuariosActivosTodos(),
+            'pageTitle'  => 'Nueva Acción Correctiva',
+            'item'       => null,
+            'codigo'     => $this->model->siguienteCodigo(),
+            'empleados'  => (new \App\Models\EmpleadoModel())->activos(),
+            'procesos'   => (new \App\Models\ProcesoModel())->activos(),
+            'origenes'   => ['AUDITORIA','QUEJA','RECLAMO','INDICADOR','PROCESO','OTRO'],
+            'estados_ac' => ['ABIERTA','EN_TRATAMIENTO','VERIFICACION','CERRADA','CANCELADA'],
         ]);
     }
 
     public function guardar(): void
     {
         Csrf::verify();
-        $data = Request::only(['codigo','origen','descripcion_nc','causa_raiz','accion_inmediata','accion_correctiva','responsable','fecha_planificada']);
+        $data = Request::only(['codigo','origen','descripcion_nc','causa_raiz','accion_inmediata','accion_correctiva','responsable','id_responsable','clausula_iso','id_proceso','fecha_planificada']);
         if (empty($data['descripcion_nc'])) {
             Session::flash('error', 'La descripción de la no conformidad es obligatoria.');
             $this->redirect('/acciones-correctivas/crear');
@@ -41,6 +43,7 @@ class AccionCorrectivaController extends Controller
         }
         $data['id_usuario']    = Auth::id();
         $data['id_responsable'] = !empty($data['id_responsable']) ? (int)$data['id_responsable'] : null;
+        $data['id_proceso']     = !empty($data['id_proceso']) ? (int)$data['id_proceso'] : null;
         if (empty($data['fecha_planificada'])) $data['fecha_planificada'] = null;
         $id = $this->model->insert($data);
         registrarAuditoria('acciones_correctivas','CREAR','accion_correctiva',$id,null,$data);
@@ -64,12 +67,14 @@ class AccionCorrectivaController extends Controller
             return;
         }
 
-        $um = new \App\Models\UsuarioModel();
         $this->view('sgc/acciones/form', [
-            'pageTitle' => 'Editar AC — ' . $item['codigo'],
-            'item'      => $item,
-            'codigo'    => $item['codigo'],
-            'usuarios'  => $um->usuariosActivosTodos(),
+            'pageTitle'  => 'Editar AC — ' . $item['codigo'],
+            'item'       => $item,
+            'codigo'     => $item['codigo'],
+            'empleados'  => (new \App\Models\EmpleadoModel())->activos(),
+            'procesos'   => (new \App\Models\ProcesoModel())->activos(),
+            'origenes'   => ['AUDITORIA','QUEJA','RECLAMO','INDICADOR','PROCESO','OTRO'],
+            'estados_ac' => ['ABIERTA','EN_TRATAMIENTO','VERIFICACION','CERRADA','CANCELADA'],
         ]);
     }
 
@@ -86,8 +91,10 @@ class AccionCorrectivaController extends Controller
         }
 
         $data  = Request::only(['origen','descripcion_nc','causa_raiz','accion_inmediata',
-            'accion_correctiva','responsable','id_responsable',
+            'accion_correctiva','responsable','id_responsable','clausula_iso','id_proceso',
             'fecha_planificada','fecha_cierre','eficacia','eficaz','estado']);
+        $data['id_responsable'] = !empty($data['id_responsable']) ? (int)$data['id_responsable'] : null;
+        $data['id_proceso']     = !empty($data['id_proceso']) ? (int)$data['id_proceso'] : null;
         $this->model->update($id, $data);
         registrarAuditoria('acciones_correctivas','EDITAR','accion_correctiva',$id,$antes,$data);
         $this->redirectSuccess('/acciones-correctivas', 'Acción correctiva actualizada.');
@@ -99,7 +106,7 @@ class AccionCorrectivaController extends Controller
         if (!$idResp) return;
 
         try {
-            $emp = (new \App\Models\EmpleadoModel())->porIdUsuario($idResp);
+            $emp = (new \App\Models\EmpleadoModel())->find($idResp);
 
             if (!$emp || !filter_var($emp['correo_empleado'] ?? '', FILTER_VALIDATE_EMAIL)) return;
 
@@ -152,12 +159,14 @@ class AccionCorrectivaController extends Controller
         $item = $this->model->find($id);
         if (!$item) $this->abort(404);
 
-        $um = new \App\Models\UsuarioModel();
         $this->view('sgc/acciones/form', [
             'pageTitle'  => 'AC ' . $item['codigo'] . ' — Solo Lectura',
             'item'       => $item,
             'codigo'     => $item['codigo'],
-            'usuarios'   => $um->usuariosActivosTodos(),
+            'empleados'  => (new \App\Models\EmpleadoModel())->activos(),
+            'procesos'   => (new \App\Models\ProcesoModel())->activos(),
+            'origenes'   => ['AUDITORIA','QUEJA','RECLAMO','INDICADOR','PROCESO','OTRO'],
+            'estados_ac' => ['ABIERTA','EN_TRATAMIENTO','VERIFICACION','CERRADA','CANCELADA'],
             'soloLectura'=> true,
         ]);
     }

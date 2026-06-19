@@ -77,7 +77,7 @@ $sgc = $resumen['sgc'] ?? [];
                     $color = $pct === null ? 'secondary' : ($pct >= 80 ? 'success' : ($pct >= 50 ? 'warning' : 'danger'));
                 ?>
                 <tr>
-                    <td><code style="font-size:12px;"><?= e($o['codigo']) ?></code></td>
+                    <td><code style="font-size:12px;"><?= e($o['codigo']) ?></span></td>
                     <td style="font-size:12px;"><?= e(truncar($o['objetivo'],45)) ?></td>
                     <td><span class="badge bg-primary" style="font-size:12px;"><?= e($o['meta']??'—') ?></span></td>
                     <td>
@@ -117,7 +117,7 @@ $sgc = $resumen['sgc'] ?? [];
                 ?>
                 <tr>
                     <td><span class="badge bg-<?= $ct ?>" style="font-size:12px;"><?= str_replace('_',' ',$h['tipo']) ?></span></td>
-                    <td><code style="font-size:12px;"><?= e($h['clausula_iso']??'—') ?></code></td>
+                    <td><code style="font-size:12px;"><?= e($h['clausula_iso']??'—') ?></span></td>
                     <td style="font-size:12px;"><?= e(truncar($h['descripcion'],50)) ?></td>
                     <td><?= badgeEstado($h['estado']) ?></td>
                 </tr>

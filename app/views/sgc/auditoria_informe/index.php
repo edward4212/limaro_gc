@@ -23,7 +23,7 @@
     <div class="col-md-2">
         <select name="estado" class="form-select form-select-sm" onchange="this.form.submit()">
             <option value="">Todos los estados</option>
-            <?php foreach (['BORRADOR','EN_REVISION','APROBADO','DISTRIBUIDO'] as $e): ?>
+            <?php foreach (['BORRADOR','EN_REVISION','FINALIZADO','DISTRIBUIDO'] as $e): ?>
             <option value="<?= $e ?>" <?= ($filtros['estado']??'')===$e?'selected':'' ?>><?= $e ?></option>
             <?php endforeach; ?>
         </select>
@@ -46,14 +46,14 @@
                 <tr><td colspan="8" class="text-center text-muted py-4">Sin informes registrados.</td></tr>
                 <?php else: foreach($informes as $inf): ?>
                 <tr>
-                    <td><code style="font-size:11px;"><?= e($inf['codigo']) ?></code></td>
+                    <td><code style="font-size:11px;"><?= e($inf['codigo']) ?></span></td>
                     <td style="font-size:11px;"><?= e($inf['tipo_auditoria']??'—') ?></td>
                     <td style="font-size:11px;"><?= e($inf['programa_codigo']??'—') ?></td>
                     <td style="font-size:11px;"><?= e($inf['plan_codigo']??'—') ?></td>
                     <td style="font-size:12px;"><?= e($inf['auditor_nombre']??'—') ?></td>
                     <td style="font-size:11px;"><?= $inf['fecha_informe']?fechaEs($inf['fecha_informe']):'—' ?></td>
                     <td class="text-center"><?= badgeEstado($inf['estado']) ?></td>
-                    <td class="text-center d-print-none" style="white-space:nowrap;">
+                    <td class="text-center d-print-none" style="white-space:normal;">
                         <a href="<?= e(APP_URL) ?>/auditoria/informe/<?= (int)$inf['id'] ?>"
                            class="btn btn-sm btn-outline-info py-0 px-2"><i class="bi bi-eye"></i></a>
                         <?php if ($inf['estado']==='BORRADOR' && Auth::puede('audit_informe','editar')): ?>

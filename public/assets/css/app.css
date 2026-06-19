@@ -165,7 +165,7 @@
     --lim-orange:      #F97316;
     --lim-orange-dark: #EA580C;
     --lim-amber:       #F59E0B;
-    --lim-sidebar-bg:  #0D2240;
+    --lim-sidebar-bg:  #0f1e38;
     --lim-sidebar-w:   262px;
     --lim-topbar-h:    60px;
     --lim-text:        #000000;
@@ -218,7 +218,7 @@ a:hover { color: var(--lim-blue-dark); }
 #sidebar {
     width: var(--lim-sidebar-w); min-width: var(--lim-sidebar-w);
     background: var(--lim-sidebar-bg);
-    color: #94A3B8;
+    color: rgba(255,255,255,0.85);
     display: flex; flex-direction: column;
     position: fixed; top: 0; left: 0; bottom: 0;
     z-index: 1000;
@@ -261,7 +261,7 @@ a:hover { color: var(--lim-blue-dark); }
 .sidebar-item { list-style: none; margin: 0; }
 .sidebar-link {
     display: flex; align-items: center; gap: 10px;
-    padding: 9px 16px; color: #94A3B8;
+    padding: 9px 16px; color: rgba(255,255,255,0.85);
     font-size: 13px; font-weight: 500;
     border-left: 3px solid transparent;
     border-radius: 0 8px 8px 0; margin: 1px 6px 1px 0;
@@ -413,12 +413,42 @@ table thead tr th, table.dataTable thead tr th,
     font-size: 12.5px !important; border: none !important;
     white-space: nowrap; padding: 10px 12px !important;
 }
-/* ── Tipografía global tablas ── */
-table, table th, table td,
-table.dataTable, table.dataTable th, table.dataTable td {
+/* ── Tipografía y bordes globales de tablas ── */
+table, table.dataTable {
+    font-family: Arial, 'Helvetica Neue', sans-serif !important;
+    font-size: 14px !important;
+    border-collapse: collapse !important;
+    border: 1px solid #dee2e6 !important;
+    width: 100% !important;
+}
+table th, table.dataTable th {
     font-family: Arial, 'Helvetica Neue', sans-serif !important;
     font-size: 14px !important;
     color: #000 !important;
+    border: 1px solid #dee2e6 !important;
+    border-bottom: 2px solid #adb5bd !important;
+    padding: 8px 10px !important;
+    white-space: nowrap;
+}
+table td, table.dataTable td {
+    font-family: Arial, 'Helvetica Neue', sans-serif !important;
+    font-size: 14px !important;
+    color: #000 !important;
+    border: 1px solid #dee2e6 !important;
+    padding: 7px 10px !important;
+}
+/* Separador entre filas más visible */
+table tbody tr {
+    border-bottom: 1px solid #dee2e6 !important;
+}
+/* Encabezado de tabla oscuro — texto blanco (no negro) */
+table thead th {
+    color: #fff !important;
+}
+/* RowGroup headers — sin borde extra */
+tr.group td {
+    border-top: 2px solid #adb5bd !important;
+    border-bottom: 1px solid #adb5bd !important;
 }
 
 /* ── Alineación global de tablas ── */
@@ -450,17 +480,17 @@ table td .btn, table td .btn-group {
     text-align: center !important;
 }
 table.dataTable tbody tr:hover { background-color: var(--lim-blue-light) !important; }
-table.dataTable tfoot { background: #EAF3F8; }
-table.dataTable tfoot tr td { padding: 5px 8px !important; border-top: 2px solid var(--lim-border) !important; vertical-align: middle; }
-table.dataTable tfoot input.col-filter {
+table.dataTable thead tr:nth-child(2) { background: #EAF3F8; }
+table.dataTable thead tr:nth-child(2) th { padding: 5px 8px !important; border-top: 2px solid var(--lim-border) !important; vertical-align: middle; font-weight: normal; }
+table.dataTable thead tr:nth-child(2) input.col-filter {
     display: block; width: 100%; font-size: 11px; padding: 3px 7px; height: 28px;
     border: 1px solid #B0D4E8; border-radius: 5px; background: #fff; color: var(--lim-text);
     box-sizing: border-box; transition: border-color .15s, box-shadow .15s;
 }
-table.dataTable tfoot input.col-filter:focus {
+table.dataTable thead tr:nth-child(2) input.col-filter:focus {
     border-color: var(--lim-cyan); outline: 0; box-shadow: 0 0 0 3px rgba(0,181,216,.15);
 }
-table.dataTable tfoot input.col-filter::placeholder { color: #adb5bd; font-size: 10.5px; }
+table.dataTable thead tr:nth-child(2) input.col-filter::placeholder { color: #adb5bd; font-size: 10.5px; }
 
 /* ── Formularios ────────────────────────────────────────────────────── */
 .form-label { font-weight: 500; font-size: 13px; color: #374151; }
@@ -503,7 +533,7 @@ table.dataTable tfoot input.col-filter::placeholder { color: #adb5bd; font-size:
     min-height: 100vh;
     display: flex;
     align-items: stretch;
-    background: linear-gradient(145deg, #0D2240 0%, #1B3A6B 50%, #0097B8 100%);
+    background: linear-gradient(145deg, #0f1e38 0%, #1B3A6B 50%, #0097B8 100%);
 }
 
 /* Panel izquierdo decorativo */
@@ -725,3 +755,18 @@ table.dataTable tfoot input.col-filter::placeholder { color: #adb5bd; font-size:
     body { font-size: 12px; color: #000; background: #fff; }
     table thead tr th { background: #f0f0f0 !important; color: #000 !important; }
 }
+
+/* ── Filtro Avanzado ──────────────────────────────────────────────────── */
+.filtro-avanzado .fa-toggle { background: var(--lim-blue); border-color: var(--lim-blue); color: #fff; }
+.filtro-avanzado .fa-toggle:hover { filter: brightness(1.1); }
+.filtro-avanzado .fa-panel { border: 1px solid var(--lim-border); box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+.filtro-avanzado .fa-sel-col  { border-color: #dc3545; min-width: 160px; }
+.filtro-avanzado .fa-sel-crit { border-color: #198754; }
+.filtro-avanzado .fa-inp-val,
+.filtro-avanzado .fa-sel-val  { border-color: #0d6efd; }
+.filtro-avanzado .fa-sel-col:focus,
+.filtro-avanzado .fa-sel-crit:focus,
+.filtro-avanzado .fa-inp-val:focus,
+.filtro-avanzado .fa-sel-val:focus  { box-shadow: 0 0 0 3px rgba(0,181,216,.15); }
+.filtro-avanzado .fa-crit-wrap { min-width: 160px; }
+.filtro-avanzado .fa-val-wrap  { min-width: 160px; }

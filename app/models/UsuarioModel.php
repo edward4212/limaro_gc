@@ -54,7 +54,7 @@ class UsuarioModel extends Model
                 }
                 // Actualizar a hash moderno automáticamente al primer login exitoso con AES
                 $this->cambiarClave((int)$row['id_usuario'], $clave);
-                error_log("[Limaro SGC] Clave de usuario '{$usuario}' migrada de AES a Argon2ID.");
+                error_log('[Limaro SGC] Clave de un usuario migrada de AES a Argon2ID satisfactoriamente.');
             } catch (\Throwable $e) {
                 return null;
             }
@@ -86,6 +86,41 @@ class UsuarioModel extends Model
     /**
      * Obtener todos los roles de un usuario.
      */
+    /**
+     * Buscar usuario por nombre de usuario o correo para recuperación de clave.
+     */
+    public function buscarParaRecuperar(string $identificador): ?array
+    {
+        return $this->query(
+            "SELECT u.id_usuario, u.usuario, u.estado,
+                    e.nombre_completo, e.correo_empleado AS correo
+             FROM usuario u
+             LEFT JOIN empleado e ON e.id_empleado = u.id_empleado
+             WHERE u.usuario = ? OR e.correo_empleado = ?
+             LIMIT 1",
+            [$identificador, $identificador]
+        )->fetch() ?: null;
+    }
+
+    /**
+     * Obtener correos de administradores y coordinadores de calidad activos.
+     */
+    public function adminYCoordinadores(): array
+    {
+        return $this->query(
+            "SELECT DISTINCT e.nombre_completo, e.correo_empleado AS correo
+             FROM usuario u
+             INNER JOIN empleado e ON e.id_empleado = u.id_empleado
+             INNER JOIN usuario_rol ur ON ur.id_usuario = u.id_usuario
+             INNER JOIN rol r ON r.id_rol = ur.id_rol
+             WHERE r.rol IN ('ADMINISTRADOR', 'COORDINADOR CALIDAD')
+               AND u.estado = 'ACTIVO'
+               AND e.correo_empleado IS NOT NULL
+               AND e.correo_empleado != ''",
+            []
+        )->fetchAll();
+    }
+
     public function rolesPorUsuario(int $idUsuario): array
     {
         return $this->query("
@@ -221,7 +256,7 @@ class UsuarioModel extends Model
     public function listar(): array
     {
         return $this->query("
-            SELECT u.id_usuario, u.usuario, u.estado, u.ultimo_login,
+            SELECT u.id_usuario, u.usuario, u.estado, u.ultimo_login, u.fecha_vencimiento,
                    u.intentos_fallidos, u.bloqueado_hasta,
                    e.nombre_completo, e.correo_empleado, e.img_empleado,
                    c.cargo,
@@ -522,14 +557,16 @@ class UsuarioModel extends Model
         int    $idCargo,
         ?string $telefono,
         ?string $documentoIdentidad,
-        int    $claveRequiereReset = -1  // -1 = no cambiar
+        int    $claveRequiereReset = -1,  // -1 = no cambiar
+        ?string $fechaVencimiento = null  // HU-E05 CA-7: extensión manual; null = no tocar
     ): void {
         $this->beginTransaction();
         try {
             // 1. Actualizar usuario.estado
             $this->update($idUsuario, array_filter([
                 'estado' => $estado,
-            ] + ($claveRequiereReset >= 0 ? ['clave_requiere_reset' => $claveRequiereReset] : [])));
+            ] + ($claveRequiereReset >= 0 ? ['clave_requiere_reset' => $claveRequiereReset] : [])
+              + ($fechaVencimiento !== null ? ['fecha_vencimiento' => $fechaVencimiento] : [])));
 
             // 2. Actualizar empleado (todos los campos editables)
             $idEmpleado = (int)($this->query(
@@ -567,6 +604,106 @@ class UsuarioModel extends Model
             $this->rollBack();
             throw $e;
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // HU-E05: Vencimiento automático de cuentas de usuario
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Al activar un usuario: registra fecha_activacion = NOW() y
+     * recalcula fecha_vencimiento = fecha_activacion + 1 año.
+     * Se usa tanto en la primera activación como al reactivar un usuario
+     * previamente inactivo (CA-5: recalcula desde la nueva fecha).
+     */
+    public function activarConVencimiento(int $idUsuario): void
+    {
+        $this->query("
+            UPDATE usuario
+            SET estado = 'ACTIVO',
+                fecha_activacion   = NOW(),
+                fecha_vencimiento  = DATE_ADD(NOW(), INTERVAL 1 YEAR),
+                fecha_inactivacion = NULL
+            WHERE id_usuario = ?
+        ", [$idUsuario]);
+    }
+
+    /**
+     * Extensión manual de la fecha de vencimiento por un administrador (CA-7).
+     */
+    public function extenderVencimiento(int $idUsuario, string $nuevaFecha): void
+    {
+        $this->query(
+            "UPDATE usuario SET fecha_vencimiento = ? WHERE id_usuario = ?",
+            [$nuevaFecha, $idUsuario]
+        );
+    }
+
+    /**
+     * Inactiva un usuario por vencimiento de cuenta (CA-4/CA-6).
+     * Usado tanto por el cron como por la verificación en el login.
+     */
+    public function inactivarPorVencimiento(int $idUsuario): void
+    {
+        $this->query("
+            UPDATE usuario
+            SET estado = 'INACTIVO',
+                fecha_inactivacion = NOW()
+            WHERE id_usuario = ?
+              AND estado = 'ACTIVO'
+        ", [$idUsuario]);
+    }
+
+    /**
+     * Usuarios ACTIVOS cuya fecha_vencimiento ya pasó — pendientes de inactivar (CA-4, cron).
+     */
+    public function usuariosVencidos(): array
+    {
+        return $this->query("
+            SELECT u.id_usuario, u.usuario, e.nombre_completo, e.correo_empleado, u.fecha_vencimiento
+            FROM usuario u
+            INNER JOIN empleado e ON e.id_empleado = u.id_empleado
+            WHERE u.estado = 'ACTIVO'
+              AND u.fecha_vencimiento IS NOT NULL
+              AND u.fecha_vencimiento <= NOW()
+        ")->fetchAll();
+    }
+
+    /**
+     * Usuarios ACTIVOS a los que les faltan exactamente $dias días para vencer (CA-3, cron de alertas).
+     * Se compara por fecha (no por hora) para que la alerta dispare una sola vez en el día correcto.
+     */
+    public function usuariosPorVencerEn(int $dias): array
+    {
+        return $this->query("
+            SELECT u.id_usuario, u.usuario, e.nombre_completo, e.correo_empleado, u.fecha_vencimiento
+            FROM usuario u
+            INNER JOIN empleado e ON e.id_empleado = u.id_empleado
+            WHERE u.estado = 'ACTIVO'
+              AND u.fecha_vencimiento IS NOT NULL
+              AND DATE(u.fecha_vencimiento) = DATE(DATE_ADD(NOW(), INTERVAL ? DAY))
+        ", [$dias])->fetchAll();
+    }
+
+    /**
+     * Administradores activos con correo válido (CA-3: notificar a "el administrador").
+     * A diferencia de adminYCoordinadores(), esta solo incluye ADMINISTRADOR y devuelve
+     * 'correo_empleado' (no 'correo') para ser compatible con notifCuentaPorVencer().
+     */
+    public function soloAdministradores(): array
+    {
+        return $this->query("
+            SELECT DISTINCT e.nombre_completo, e.correo_empleado
+            FROM usuario u
+            INNER JOIN empleado    e  ON e.id_empleado = u.id_empleado
+            INNER JOIN usuario_rol ur ON ur.id_usuario  = u.id_usuario
+            INNER JOIN rol         r  ON r.id_rol        = ur.id_rol
+            WHERE r.rol    = 'ADMINISTRADOR'
+              AND r.estado = 'ACTIVO'
+              AND u.estado = 'ACTIVO'
+              AND e.correo_empleado IS NOT NULL
+              AND e.correo_empleado != ''
+        ")->fetchAll();
     }
 
 }

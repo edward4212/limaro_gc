@@ -22,14 +22,14 @@ $action = $isEdit
             <?= csrfField() ?>
             <div class="mb-3">
                 <label class="form-label">Tipo de Documento <span class="text-danger">*</span></label>
-                <input type="text" class="form-control text-uppercase" name="tipo_documento"
+                <input type="text" class="form-control" name="tipo_documento"
                        value="<?= $isEdit ? e($item['tipo_documento']) : old('tipo_documento') ?>"
                        maxlength="100" required>
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Sigla <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control text-uppercase" name="sigla_tipo_documento"
+                    <input type="text" class="form-control" name="sigla_tipo_documento"
                            value="<?= $isEdit ? e($item['sigla_tipo_documento']) : old('sigla_tipo_documento') ?>"
                            maxlength="2" required placeholder="Ej: PR"
                            style="max-width:100px;text-transform:uppercase;">

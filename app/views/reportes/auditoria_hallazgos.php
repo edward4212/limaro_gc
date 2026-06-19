@@ -2,7 +2,7 @@
 <div class="page-header">
     <div>
         <h2><i class="bi bi-exclamation-triangle me-2"></i><?= e($pageTitle) ?></h2>
-        <small class="text-muted">Auditoría Interna ISO 9001:2015 §9.2</small>
+        <!--<small class="text-muted">Auditoría Interna ISO 9001:2015 §9.2</small>-->
     </div>
     <button onclick="window.print()" class="btn btn-outline-secondary btn-sm d-print-none">
         <i class="bi bi-printer me-1"></i>Imprimir

@@ -72,13 +72,10 @@ class SubprocesoModel extends Model
         string  $objetivo = '',
         string  $estado   = 'ACTIVO'
     ): int {
-        // Sigla: NULL si viene vacía para no violar el UNIQUE (id_proceso, sigla_subproceso)
-        $siglaVal = strtoupper(trim($sigla)) ?: null;
-
         return $this->insert([
             'id_proceso'       => $idProceso,
-            'subproceso'       => strtoupper(trim($nombre)),
-            'sigla_subproceso' => $siglaVal,
+            'subproceso'       => trim($nombre),
+            'sigla_subproceso' => strtoupper(trim($sigla)),
             'objetivo'         => trim($objetivo),
             'estado'           => $estado,
         ]);
@@ -95,12 +92,10 @@ class SubprocesoModel extends Model
         string $objetivo = '',
         string $estado   = 'ACTIVO'
     ): bool {
-        $siglaVal = strtoupper(trim($sigla)) ?: null;
-
         return $this->update($id, [
             'id_proceso'       => $idProceso,
-            'subproceso'       => strtoupper(trim($nombre)),
-            'sigla_subproceso' => $siglaVal,
+            'subproceso'       => trim($nombre),
+            'sigla_subproceso' => strtoupper(trim($sigla)),
             'objetivo'         => trim($objetivo),
             'estado'           => $estado,
         ]);

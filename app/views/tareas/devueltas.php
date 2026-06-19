@@ -98,7 +98,7 @@ endif; ?>
                     if (!empty($comentario)):
                     ?>
                     <span title="<?= e($comentario) ?>"
-                          style="display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:default;">
+                          style="display:block;overflow:hidden;white-space:normal;text-overflow:ellipsis;cursor:default;">
                         <i class="bi bi-chat-left-text me-1 text-warning"></i><?= e($comentario) ?>
                     </span>
                     <?php else: ?>

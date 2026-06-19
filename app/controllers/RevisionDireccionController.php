@@ -11,7 +11,7 @@ class RevisionDireccionController extends Controller
     public function index(): void
     {
         $this->view('sgc/revision/index', [
-            'pageTitle'  => 'Revisión por la Dirección — §9.3',
+            'pageTitle'  => 'Revisión por la Dirección',
             'revisiones' => $this->model->listar(),
         ]);
     }

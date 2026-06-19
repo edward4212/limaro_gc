@@ -207,6 +207,8 @@ class UsuarioController extends Controller
         $telefono           = trim(Request::post('telefono', ''));
         $documentoIdentidad = trim(Request::post('documento_identidad', ''));
         $resetClave         = (int)(bool) Request::post('clave_requiere_reset', 0);
+        $fechaVencimientoPost = trim((string) Request::post('fecha_vencimiento', ''));
+        $fechaVencimiento   = $fechaVencimientoPost !== '' ? $fechaVencimientoPost . ' 23:59:59' : null;
 
         $errors = [];
         if (empty($nombreCompleto))  $errors[] = 'El nombre completo es requerido.';
@@ -226,7 +228,7 @@ class UsuarioController extends Controller
                 $id, $estado, $idRoles,
                 $nombreCompleto, $correo, $idCargo,
                 $telefono ?: null, $documentoIdentidad ?: null,
-                $resetClave
+                $resetClave, $fechaVencimiento
             );
             registrarAuditoria('usuarios', 'EDITAR', 'usuario', $id, $antes, [
                 'estado' => $estado, 'nombre' => $nombreCompleto,
@@ -236,6 +238,30 @@ class UsuarioController extends Controller
             Session::flash('error', 'Error al actualizar: ' . $e->getMessage());
             $this->redirect("/usuarios/editar/$id");
         }
+    }
+
+    /** POST /usuarios/activar/{id} — activa usuario CREADO o INACTIVO */
+    public function activar(int $id): void
+    {
+        Csrf::verify();
+        if (!\App\Core\Auth::tieneRol('ADMINISTRADOR')) {
+            $this->abort(403);
+        }
+        if ($id === Auth::id()) {
+            $this->redirectError('/usuarios', 'No puede modificar el estado de su propia cuenta.');
+            return;
+        }
+        $usuario = $this->model->find($id);
+        if (!$usuario) {
+            $this->redirectError('/usuarios', 'Usuario no encontrado.');
+            return;
+        }
+        if ($usuario['estado'] === 'ACTIVO') {
+            $this->redirectError('/usuarios', 'El usuario ya está activo.');
+            return;
+        }
+        $this->model->activarConVencimiento($id);
+        $this->redirectSuccess('/usuarios', 'Usuario activado correctamente.');
     }
 
     /** POST /usuarios/eliminar/{id} */
@@ -254,8 +280,9 @@ class UsuarioController extends Controller
     public function resetearClave(int $id): void
     {
         Csrf::verify();
-
-        // CA-2: clave aleatoria segura — NUNCA se muestra en pantalla
+        if (!\App\Core\Auth::tieneRol('ADMINISTRADOR')) {
+            $this->abort(403);
+        }
         $nuevaClave = self::generarClaveAleatoria();
 
         $this->model->cambiarClave($id, $nuevaClave);

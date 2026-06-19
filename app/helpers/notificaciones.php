@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Helper de notificaciones por correo para Limaro SGC.
+ * Helper de notificaciones por correo para Limaro SGI.
  *
  * Usa PHPMailer si está disponible (vía Composer), de lo contrario
  * usa mail() nativo de PHP. Configura el servidor SMTP en config.php.
  *
  * Constantes requeridas en config.php:
- *   MAIL_FROM       correo remitente (ej: sgc@coopaipe.com.co)
- *   MAIL_FROM_NAME  nombre remitente (ej: Limaro SGC)
+ *   MAIL_FROM       correo remitente (ej: SGI@coopaipe.com.co)
+ *   MAIL_FROM_NAME  nombre remitente (ej: Limaro SGI)
  *   MAIL_SMTP_HOST  servidor SMTP (ej: mail.coopaipe.com.co)
  *   MAIL_SMTP_PORT  puerto (ej: 465 o 587)
  *   MAIL_SMTP_USER  usuario SMTP
@@ -29,7 +29,7 @@ if (!defined('MAIL_FROM')) {
         return (string)$default;
     }
     define('MAIL_FROM',      _mailEnv('MAIL_FROM',      'noreply@limaro.cloud'));
-    define('MAIL_FROM_NAME', _mailEnv('MAIL_FROM_NAME', 'Limaro SGC'));
+    define('MAIL_FROM_NAME', _mailEnv('MAIL_FROM_NAME', 'Limaro SGI'));
     define('MAIL_SMTP_HOST', _mailEnv('MAIL_SMTP_HOST', ''));
     define('MAIL_SMTP_PORT', _mailEnv('MAIL_SMTP_PORT', 465));
     define('MAIL_SMTP_USER', _mailEnv('MAIL_SMTP_USER', ''));
@@ -141,7 +141,7 @@ if (!function_exists('_enviarConMailNativo')) {
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         $headers .= "From: " . MAIL_FROM_NAME . " <" . MAIL_FROM . ">\r\n";
         $headers .= "Reply-To: " . MAIL_FROM . "\r\n";
-        $headers .= "X-Mailer: Limaro SGC\r\n";
+        $headers .= "X-Mailer: Limaro SGI\r\n";
 
         $cuerpo = _plantillaCorreo($asunto, $html);
 
@@ -156,7 +156,7 @@ if (!function_exists('_enviarConMailNativo')) {
 if (!function_exists('_plantillaCorreo')) {
     function _plantillaCorreo(string $titulo, string $contenido): string
     {
-        $empresa = empresa()['nombre_empresa'] ?? 'Limaro SGC';
+        $empresa = empresa()['nombre_empresa'] ?? 'Limaro SGI';
         $url     = APP_URL;
         $anio    = date('Y');
 
@@ -171,7 +171,7 @@ if (!function_exists('_plantillaCorreo')) {
       <!-- Header -->
       <tr>
         <td style="background:#1e5fbf;padding:24px 32px;text-align:center;">
-          <span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:1px;">Limaro SGC</span>
+          <span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:1px;">Limaro SGI</span>
           <br><span style="color:#c9d8f0;font-size:13px;">{$empresa}</span>
         </td>
       </tr>
@@ -185,7 +185,7 @@ if (!function_exists('_plantillaCorreo')) {
       <tr>
         <td style="background:#f8fafc;padding:16px 32px;text-align:center;border-top:1px solid #e5e7eb;">
           <span style="color:#9ca3af;font-size:12px;">
-            © {$anio} {$empresa} · Sistema de Gestión Documental<br>
+            © {$anio} {$empresa} · Sistema de Gestión Integrado (SGI)<br>
             <a href="{$url}" style="color:#1e5fbf;">Acceder al sistema</a>
           </span>
         </td>
@@ -200,7 +200,7 @@ HTML;
 }
 
 // ─────────────────────────────────────────────────────────────
-// NOTIFICACIONES ESPECÍFICAS DEL SGC
+// NOTIFICACIONES ESPECÍFICAS DEL SGI
 // ─────────────────────────────────────────────────────────────
 
 
@@ -242,7 +242,7 @@ if (!function_exists('notifAcuerdoCreado')) {
 
         $html = "
             <h2 style='color:#1e5fbf;margin-top:0;'>📋 Nuevo Acuerdo Registrado</h2>
-            <p>Se ha registrado un nuevo acuerdo en el Sistema de Gestión Documental:</p>
+            <p>Se ha registrado un nuevo acuerdo en el Sistema de Gestión Integrado (SGI):</p>
             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
               <tr style='background:#f8fafc;'>
                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;width:160px;border-bottom:1px solid #e5e7eb;'>Nombre:</td>
@@ -279,7 +279,7 @@ if (!function_exists('notifAcuerdoCreado')) {
               Este mensaje fue generado automáticamente. No responda a este correo.
             </p>";
 
-        $asunto = "Nuevo acuerdo SGC: {$nombre} ({$año})";
+        $asunto = "Nuevo acuerdo SGI: {$nombre} ({$año})";
 
         foreach ($usuarios as $u) {
             $correo = trim($u['correo_empleado'] ?? $u['correo'] ?? '');
@@ -368,11 +368,11 @@ if (!function_exists('notifVersionCreada')) {
         $desc     = htmlspecialchars($version['descripcion']      ?? '');
         $elab     = htmlspecialchars($version['elaborador']       ?? '');
         $url      = APP_URL . '/versionamiento';
-        $asunto   = "Nueva versión SGC: {$codigo} — V{$nVer} ({$estado})";
+        $asunto   = "Nueva versión SGI: {$codigo} — V{$nVer} ({$estado})";
 
         $html = "
             <h2 style='color:#1e5fbf;margin-top:0;'>📄 Nueva Versión de Documento</h2>
-            <p>Se ha registrado una nueva versión en el Sistema de Gestión Documental:</p>
+            <p>Se ha registrado una nueva versión en el Sistema de Gestión Integrado (SGI):</p>
             <table style='width:100%;border-collapse:collapse;font-size:14px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;'>
               <tr style='background:#f8fafc;'>
                 <td style='padding:10px 16px;color:#6b7280;font-weight:600;width:140px;border-bottom:1px solid #e5e7eb;'>Documento:</td>
@@ -453,7 +453,7 @@ if (!function_exists('notifSolicitudCreada')) {
         $justif = htmlspecialchars($solicitud['solicitud'] ?? '');
         $fecha  = date('d/m/Y H:i', strtotime($solicitud['fecha_solicitud'] ?? 'now'));
         $urlVer = APP_URL . '/solicitudes/ver/' . $idSol;
-        $asunto = "[SGC] Solicitud #{$idSol} — {$tipo}: {$codDoc}";
+        $asunto = "[SGI] Solicitud #{$idSol} — {$tipo}: {$codDoc}";
 
         $htmlBase = "
             <h2 style='color:#1e5fbf;margin-top:0;'>📋 Nueva Solicitud Radicada</h2>
@@ -538,5 +538,91 @@ if (!function_exists('notifSolicitudCreada')) {
         }
 
         return ['enviados' => $enviados, 'fallidos' => $fallidos];
+    }
+}
+
+if (!function_exists('notifCuentaPorVencer')) {
+    /**
+     * HU-E05 CA-3: Notifica al usuario y a los administradores que una cuenta
+     * está próxima a vencer (usado por scripts/cron_vencimiento_usuarios.php
+     * a los 30, 15 y 5 días antes del vencimiento).
+     *
+     * @param array $usuario   Fila con id_usuario, usuario, nombre_completo, correo_empleado, fecha_vencimiento
+     * @param array $admins    Lista de administradores [['nombre_completo'=>..,'correo_empleado'=>..], ...]
+     * @param int   $diasFaltantes 30, 15 o 5
+     */
+    function notifCuentaPorVencer(array $usuario, array $admins, int $diasFaltantes): array
+    {
+        $enviados = 0; $fallidos = 0;
+        $nombre   = htmlspecialchars($usuario['nombre_completo'] ?? $usuario['usuario'] ?? '');
+        $login    = htmlspecialchars($usuario['usuario'] ?? '');
+        $fecha    = !empty($usuario['fecha_vencimiento']) ? fechaEs($usuario['fecha_vencimiento']) : '—';
+        $asunto   = "[SGI] Su cuenta vence en {$diasFaltantes} día" . ($diasFaltantes === 1 ? '' : 's');
+
+        $htmlUsuario = "
+            <h2 style='color:#b45309;margin-top:0;'>⏰ Su cuenta está próxima a vencer</h2>
+            <p>Hola <strong>{$nombre}</strong>,</p>
+            <p>Su cuenta de usuario (<code>{$login}</code>) en Limaro SGI vencerá el
+               <strong>{$fecha}</strong> — faltan <strong>{$diasFaltantes} día(s)</strong>.</p>
+            <p>Si necesita continuar usando el sistema después de esa fecha, contacte al
+               administrador para extender su acceso.</p>
+            <br><p style='color:#9ca3af;font-size:12px;'>Mensaje automático. No responda.</p>";
+
+        $correoUsuario = trim($usuario['correo_empleado'] ?? '');
+        if (filter_var($correoUsuario, FILTER_VALIDATE_EMAIL)) {
+            $ok = enviarCorreo([$correoUsuario => $nombre], $asunto, $htmlUsuario);
+            _registrarNotificacionLog('CUENTA_POR_VENCER', $usuario['id_usuario'] ?? null,
+                'usuario', $correoUsuario, $nombre, $asunto,
+                $ok ? 'ENVIADO' : 'FALLIDO', $ok ? null : 'error', 0);
+            $ok ? $enviados++ : $fallidos++;
+        } else {
+            $fallidos++;
+        }
+
+        $htmlAdmin = "
+            <h2 style='color:#b45309;margin-top:0;'>⏰ Cuenta de usuario próxima a vencer</h2>
+            <p>La cuenta <strong>{$nombre}</strong> (<code>{$login}</code>) vencerá el
+               <strong>{$fecha}</strong> — faltan <strong>{$diasFaltantes} día(s)</strong>.</p>
+            <br>
+            <a href='" . APP_URL . "/usuarios' style='background:#b45309;color:#fff;padding:10px 24px;
+                border-radius:6px;text-decoration:none;font-size:14px;display:inline-block;'>
+               Ver Usuarios →
+            </a>
+            <br><br><p style='color:#9ca3af;font-size:12px;'>Mensaje automático. No responda.</p>";
+
+        foreach ($admins as $a) {
+            $c = trim($a['correo_empleado'] ?? '');
+            if (!filter_var($c, FILTER_VALIDATE_EMAIL)) { $fallidos++; continue; }
+            $nomAdmin = $a['nombre_completo'] ?? $c;
+            $ok = enviarCorreo([$c => $nomAdmin], $asunto . ' — ' . $login, $htmlAdmin);
+            _registrarNotificacionLog('CUENTA_POR_VENCER_ADMIN', $usuario['id_usuario'] ?? null,
+                'usuario', $c, $nomAdmin, $asunto, $ok ? 'ENVIADO' : 'FALLIDO', $ok ? null : 'error', 0);
+            $ok ? $enviados++ : $fallidos++;
+        }
+
+        return ['enviados' => $enviados, 'fallidos' => $fallidos];
+    }
+}
+
+if (!function_exists('notifCuentaInactivadaPorVencimiento')) {
+    /** HU-E05 CA-4: notifica al usuario que su cuenta fue inactivada por vencimiento. */
+    function notifCuentaInactivadaPorVencimiento(array $usuario): array
+    {
+        $correo = trim($usuario['correo_empleado'] ?? '');
+        if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) return ['enviados' => 0, 'fallidos' => 1];
+
+        $nombre = htmlspecialchars($usuario['nombre_completo'] ?? $usuario['usuario'] ?? '');
+        $asunto = '[SGI] Su cuenta ha sido inactivada por vencimiento';
+        $html = "
+            <h2 style='color:#b91c1c;margin-top:0;'>🔒 Cuenta inactivada</h2>
+            <p>Hola <strong>{$nombre}</strong>,</p>
+            <p>Su cuenta de usuario en Limaro SGI ha sido inactivada automáticamente por
+               vencimiento. Contacte al administrador si necesita reactivar su acceso.</p>
+            <br><p style='color:#9ca3af;font-size:12px;'>Mensaje automático. No responda.</p>";
+
+        $ok = enviarCorreo([$correo => $nombre], $asunto, $html);
+        _registrarNotificacionLog('CUENTA_INACTIVADA_VENCIMIENTO', $usuario['id_usuario'] ?? null,
+            'usuario', $correo, $nombre, $asunto, $ok ? 'ENVIADO' : 'FALLIDO', $ok ? null : 'error', 0);
+        return ['enviados' => $ok ? 1 : 0, 'fallidos' => $ok ? 0 : 1];
     }
 }

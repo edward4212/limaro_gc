@@ -48,7 +48,7 @@
             <div class="mt-2">
                 <?php foreach ($t['estados'] as $est): ?>
                 <div class="d-flex align-items-start mb-2">
-                    <div class="me-2 mt-1"><?= badgeEstado($est['tarea_estado']) ?></div>
+                    <div class="me-2 mt-1"><?= badgeEstado($d['tarea_estado'] ?? 'CREADO') ?></div>
                     <div>
                         <small class="text-muted"><?= fechaEs($est['fecha_estado'], 'hora') ?> — <?= e($est['nombre_completo'] ?? $est['usuario'] ?? '') ?></small>
                         <?php if ($est['descripcion'] ?? null): ?>

@@ -59,6 +59,26 @@ $estados_ac = ['ABIERTA','EN_TRATAMIENTO','VERIFICACION','CERRADA','CANCELADA'];
             </div>
             <?php endif; ?>
         </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Cláusula ISO / Criterio</label>
+                <input type="text" class="form-control" name="clausula_iso"
+                       placeholder="Ej: 7.5.3, 8.2.1"
+                       value="<?= $isEdit ? e($item['clausula_iso'] ?? '') : '' ?>">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Proceso Asociado</label>
+                <select class="form-select" name="id_proceso">
+                    <option value="">— Sin proceso —</option>
+                    <?php foreach ($procesos ?? [] as $p): ?>
+                    <option value="<?= (int)$p['id_proceso'] ?>"
+                        <?= ($isEdit && (int)($item['id_proceso'] ?? 0) === (int)$p['id_proceso']) ? 'selected' : '' ?>>
+                        <?= e($p['proceso']) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
         <div class="mb-3">
             <label class="form-label">Descripción de la No Conformidad <span class="text-danger">*</span></label>
             <textarea class="form-control" name="descripcion_nc" rows="3" required><?= $isEdit ? e($item['descripcion_nc']) : '' ?></textarea>
@@ -73,11 +93,11 @@ $estados_ac = ['ABIERTA','EN_TRATAMIENTO','VERIFICACION','CERRADA','CANCELADA'];
                 <select class="form-select" name="id_responsable"
                         id="selResponsable" onchange="actualizarResponsable()" required>
                     <option value="">-- Seleccione responsable --</option>
-                    <?php foreach ($usuarios ?? [] as $u): ?>
-                    <option value="<?= (int)$u['id_usuario'] ?>"
+                    <?php foreach ($empleados ?? [] as $u): ?>
+                    <option value="<?= (int)$u['id_empleado'] ?>"
                             data-nombre="<?= e($u['nombre_completo']) ?>"
-                            <?= ($isEdit && (int)($item['id_responsable'] ?? 0) === (int)$u['id_usuario']) ? 'selected' : '' ?>>
-                        <?= e($u['nombre_completo']) ?> — <?= e($u['usuario']) ?>
+                            <?= ($isEdit && (int)($item['id_responsable'] ?? 0) === (int)$u['id_empleado']) ? 'selected' : '' ?>>
+                        <?= e($u['nombre_completo']) ?><?= !empty($u['cargo']) ? ' — '.e($u['cargo']) : '' ?>
                     </option>
                     <?php endforeach; ?>
                 </select>

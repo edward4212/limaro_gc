@@ -61,7 +61,7 @@
             <?php foreach ($documentos as $d): ?>
             <tr>
                 <td><?= e(($d['macroproceso'] ?? '') . ' — ' . ($d['proceso'] ?? '')) ?></td>
-                <td><code style="font-size:12px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($d['codigo'] ?? $d['codigo_documento'] ?? '') ?></code></td>
+                <td><code style="font-size:12px;background:#f1f5f9;padding:2px 5px;border-radius:3px;"><?= e($d['codigo'] ?? $d['codigo_documento'] ?? '') ?></span></td>
                 <td style="font-size:12px;"><?= e($d['nombre_documento'] ?? '') ?></td>
                 <td>
                     <span class="badge bg-secondary" style="font-size:12px;">

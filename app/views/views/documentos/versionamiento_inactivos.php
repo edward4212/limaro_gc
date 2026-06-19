@@ -41,7 +41,7 @@ include APP_ROOT . '/app/views/partials/kpi_cards.php';
             <tbody>
             <?php foreach ($documentos as $d): ?>
             <tr>
-                <td><code style="font-size:12px;"><?= e($d['codigo']) ?></code></td>
+                <td><code style="font-size:12px;"><?= e($d['codigo']) ?></span></td>
                 <td style="font-size:12px;"><?= e(truncar($d['nombre_documento'],55)) ?></td>
                 <td style="font-size:12px;"><?= e($d['proceso'] ?? '—') ?></td>
                 <td style="font-size:12px;"><?= e($d['tipo_documento'] ?? '—') ?></td>

@@ -48,7 +48,7 @@
                 <?php else: ?>
                 <?php foreach ($programas as $p): ?>
                 <tr>
-                    <td><code style="font-size:11px;"><?= e($p['codigo'] ?? '—') ?></code></td>
+                    <td><code style="font-size:11px;"><?= e($p['codigo'] ?? '—') ?></span></td>
                     <td style="font-size:12px;max-width:200px;"><?= e($p['descripcion']) ?></td>
                     <td style="font-size:11px;"><?= e($p['tipo_auditoria'] ?? '—') ?></td>
                     <td style="font-size:11px;"><?= e($p['plan_codigo'] ?? '—') ?></td>
@@ -56,7 +56,7 @@
                     <td style="font-size:12px;"><?= e($p['auditor_nombre'] ?? '—') ?></td>
                     <td style="font-size:11px;"><?= $p['fecha_auditoria'] ? fechaEs($p['fecha_auditoria']) : '—' ?></td>
                     <td class="text-center"><?= badgeEstado($p['plan_estado'] ?? $p['estado']) ?></td>
-                    <td class="text-center d-print-none" style="white-space:nowrap;">
+                    <td class="text-center d-print-none" style="white-space:normal;">
                         <a href="<?= e(APP_URL) ?>/auditoria/programa/<?= (int)$p['id'] ?>"
                            class="btn btn-sm btn-outline-info py-0 px-2"><i class="bi bi-eye"></i></a>
                         <?php

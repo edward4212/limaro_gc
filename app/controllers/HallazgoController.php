@@ -1,7 +1,7 @@
 <?php
 namespace App\Controllers;
 use App\Core\{Controller, Csrf, Auth, Request, Session, Database};
-use App\Models\{HallazgoModel, AccionCorrectivaModel, AuditoriaInternaModel, EmpleadoModel};
+use App\Models\{HallazgoModel, AccionCorrectivaModel, AuditoriaInternaModel, EmpleadoModel, UsuarioModel, AuditoriaProgramaModel};
 
 class HallazgoController extends Controller
 {
@@ -113,7 +113,7 @@ class HallazgoController extends Controller
             'pageTitle' => 'Nuevo Hallazgo',
             'item'      => null,
             'programas' => $programas,
-            'usuarios'  => (new UsuarioModel())->usuariosActivos(),
+            'usuarios'  => (new EmpleadoModel())->activos(),
             'procesos'  => [],  // se cargan via AJAX al seleccionar programa
         ]);
     }

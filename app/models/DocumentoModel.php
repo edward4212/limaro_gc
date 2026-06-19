@@ -424,11 +424,20 @@ class DocumentoModel extends Model
         }
 
         // ── 4. Nuevo código ──────────────────────────────────────────
-        $codigoNuevo   = $this->generarCodigoParaProceso(
-            (int)$actual['id_tipo_documento'],
-            $idProcesoNuevo,
-            $actual['codigo']  // excluir el código actual del conteo
-        );
+        // Si solo cambia el subproceso (mismo proceso), conservar el código actual
+        $mismoProcesoSoloCambiaSubproceso = ((int)$actual['id_proceso'] === $idProcesoNuevo);
+
+        if ($mismoProcesoSoloCambiaSubproceso) {
+            // Solo se mueve a otro subproceso dentro del mismo proceso — código no cambia
+            $codigoNuevo    = $actual['codigo'];
+        } else {
+            // Cambio de proceso → generar nuevo código en el proceso destino
+            $codigoNuevo = $this->generarCodigoParaProceso(
+                (int)$actual['id_tipo_documento'],
+                $idProcesoNuevo,
+                $actual['codigo']  // excluir el código actual del conteo
+            );
+        }
         $codigoAnterior = $actual['codigo'];
 
         // ── 5. Paths de carpetas ─────────────────────────────────────
@@ -451,12 +460,16 @@ class DocumentoModel extends Model
         $this->beginTransaction();
         try {
             // Actualizar documento
-            $this->update($idDocumento, [
-                'id_proceso'      => $idProcesoNuevo,
-                'id_subproceso'   => $idSubprocesoNuevo,
-                'codigo'          => $codigoNuevo,
-                'codigo_anterior' => $codigoAnterior,
-            ]);
+            $camposUpdate = [
+                'id_proceso'    => $idProcesoNuevo,
+                'id_subproceso' => $idSubprocesoNuevo,
+                'codigo'        => $codigoNuevo,
+            ];
+            // Solo registrar codigo_anterior si el código realmente cambió
+            if ($codigoNuevo !== $codigoAnterior) {
+                $camposUpdate['codigo_anterior'] = $codigoAnterior;
+            }
+            $this->update($idDocumento, $camposUpdate);
 
             // Actualizar rutas en versionamiento si la carpeta cambia
             if ($carpetaAnterior !== $carpetaNueva) {
@@ -686,10 +699,13 @@ class DocumentoModel extends Model
     public function tipoConConteo(int $idProceso, ?int $idSubproceso = null): array
     {
         $params = [$idProceso];
-        $subSql = '';
         if ($idSubproceso) {
-            $subSql  = 'AND d.id_subproceso = ?';
+            // Filtrar por subproceso específico
+            $subSql   = 'AND d.id_subproceso = ?';
             $params[] = $idSubproceso;
+        } else {
+            // Sin subproceso: mostrar solo docs que NO tienen subproceso asignado
+            $subSql = 'AND d.id_subproceso IS NULL';
         }
         return $this->query("
             SELECT td.id_tipo_documento, td.tipo_documento, td.sigla_tipo_documento,
@@ -716,10 +732,13 @@ class DocumentoModel extends Model
     public function vigentesParaExplorador(int $idProceso, int $idTipo, ?int $idSubproceso = null): array
     {
         $params = [$idProceso, $idTipo];
-        $subSql = 'AND (d.id_subproceso IS NULL OR 1=1)';
         if ($idSubproceso) {
+            // Filtrar por subproceso específico
             $subSql   = 'AND d.id_subproceso = ?';
             $params[] = $idSubproceso;
+        } else {
+            // Sin subproceso: mostrar solo docs que NO tienen subproceso asignado
+            $subSql = 'AND d.id_subproceso IS NULL';
         }
         return $this->query("
             SELECT d.id_documento, d.codigo, d.nombre_documento,
