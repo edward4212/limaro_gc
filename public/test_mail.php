@@ -48,3 +48,4 @@ if ($to && filter_var($to, FILTER_VALIDATE_EMAIL)) {
 echo "\n  variables_order: " . ini_get('variables_order') . "\n";
 echo "  PHP: " . PHP_VERSION . "\n";
 echo '</pre>';
+
